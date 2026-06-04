@@ -31,7 +31,23 @@ exports.handler = async function(event) {
 
   try {
     const { getStore } = await import('@netlify/blobs');
-    const store = getStore('nita-style-live-database');
+    const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
+    const token = process.env.NETLIFY_AUTH_TOKEN;
+    if (!siteID || !token) {
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({
+          ok: false,
+          error: 'Missing NETLIFY_SITE_ID or NETLIFY_AUTH_TOKEN environment variable.'
+        })
+      };
+    }
+    const store = getStore({
+      name: 'nita-style-live-database',
+      siteID,
+      token
+    });
 
     if (event.httpMethod === 'GET') {
       const saved = await store.get('state', { type: 'json', consistency: 'strong' });
