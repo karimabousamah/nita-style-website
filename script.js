@@ -1252,3 +1252,96 @@ placeOrder=async function(){
   };
 })();
 // === END NITA STYLE ABSOLUTE FIX PATCH ===
+
+
+// === NITA STYLE SECTION PICKER + ADMIN SELECT POLISH ===
+(function(){
+  const COLOR_OPTIONS=['Black','White','Cream','Beige','Grey','Navy','Brown','Red','Pink','Blue','Green','Multi-color'];
+  const STYLE_OPTIONS=['Clean everyday piece','Elegant evening piece','Minimal essential','Soft feminine silhouette','Relaxed fit','Tailored look','Premium texture','Limited selected piece'];
+  const HOME_OPTIONS=[['trending-now','Trending Now'],['new-arrivals','New Arrivals']];
+  function opts(list,current){return list.map(x=>Array.isArray(x)?`<option value="${x[0]}" ${x[0]===current?'selected':''}>${x[1]}</option>`:`<option ${x===current?'selected':''}>${x}</option>`).join('')}
+  function parseNote(note=''){
+    const parts=String(note||'').split(' · ');
+    return {color: parts[0] || 'Black', style: parts[1] || parts[0] || 'Clean everyday piece'};
+  }
+  function productHomeSection(p){ return p.displaySection || p.homeSection || (p.collection === 'New Arrivals' ? 'new-arrivals' : 'trending-now'); }
+  window.productHomeSection = productHomeSection;
+
+  window.productEditorHTML=function(p){
+    p=normalizeProductStatus(p); const selected=p.sizes||[]; const current=p.status||'in-stock'; const n=parseNote(p.note); const currentThumbs=productImagesForDisplay(p).all.map((u,i)=>`<div class="admin-thumb ${i===(p.mainPhotoIndex||0)?'selected-main':''}" onclick="selectExistingMainPhoto('${String(p.id).replace(/'/g,"\\'")}',${i})"><img src="${String(u).startsWith('data:')?u:''}" style="${String(u).startsWith('data:')?'':'display:none'}"><span>${i===(p.mainPhotoIndex||0)?'Main photo':'Photo '+(i+1)}</span></div>`).join('');
+    return `<div class="admin-form"><div class="full"><label>Product availability</label><select class="field edit-status"><option value="in-stock" ${current==='in-stock'?'selected':''}>In stock</option><option value="coming-soon" ${current==='coming-soon'?'selected':''}>Coming soon</option><option value="out-of-stock" ${current==='out-of-stock'?'selected':''}>Out of stock</option></select></div><div><label>Product name</label><input class="field edit-name" value="${safe(p.name||'')}"></div><div><label>Regular price</label><input class="field edit-price" type="number" step="0.01" value="${Number(p.price||0)}"></div><div><label>Sale / price-drop price</label><input class="field edit-sale" type="number" step="0.01" value="${p.salePrice||''}" placeholder="Optional"></div><div><label>Section</label><select class="field edit-category">${renderOptions(ADMIN_CATEGORIES,p.category)}</select></div><div><label>Collection</label><select class="field edit-collection">${renderOptions(ADMIN_COLLECTIONS,p.collection)}</select></div><div><label>Color</label><select class="field edit-color">${opts(COLOR_OPTIONS,n.color)}</select></div><div><label>Style note</label><select class="field edit-style">${opts(STYLE_OPTIONS,n.style)}</select></div><div><label>Homepage section</label><select class="field edit-home-section">${opts(HOME_OPTIONS,productHomeSection(p))}</select></div><div class="full"><label>Current photos</label><p class="muted">Click one photo to choose the main photo shown first on the website.</p><div class="photo-preview existing-photos">${currentThumbs||'<p class="muted">No photos yet.</p>'}</div><label style="margin-top:18px">Replace / add product gallery</label><div class="upload-zone"><input type="file" accept="image/*" multiple onchange="previewEditPhotos(event,'${String(p.id).replace(/'/g,"\\'")}')"><p><b>Upload multiple photos</b><br><span class="muted">Select several images at once. Then choose the main one.</span></p></div><div class="photo-preview" id="editPreview-${safe(p.id)}"></div></div><div class="full"><label>Available sizes</label><div class="size-picker">${renderSizeButtons(selected)}</div></div><div class="full"><label>Description</label><textarea class="field edit-desc">${safe(p.desc||'')}</textarea></div></div><button class="btn" onclick="saveProductEditor('${String(p.id).replace(/'/g,"\\'")}')">SAVE PRODUCT CHANGES</button>`;
+  };
+
+  window.renderAdminProducts=function(){const box=document.getElementById('adminProducts'); if(!box)return; const ps=getProducts(); box.innerHTML=ps.length?ps.map(p=>{p=normalizeProductStatus(p); const img=productMainImage(p); const hs=productHomeSection(p)==='new-arrivals'?'New Arrivals':'Trending Now'; return `<div class="admin-product-card" id="edit-${safe(p.id)}"><div class="admin-product-top"><div class="admin-product-photo" style="${cssBgImage(img)};background-size:cover;background-position:center"></div><div><div class="admin-product-name">${safe(p.name)}</div><span class="muted">${safe(p.category||'')} · ${money(p.price||0)} ${p.salePrice?`· Sale ${money(p.salePrice)}`:''} · ${hs} · ${(p.photos||[]).length} photo${(p.photos||[]).length===1?'':'s'}</span><div>${stockStatusHtml(p.status)}</div></div><button onclick="toggleProductEditor('${String(p.id).replace(/'/g,"\\'")}')">Edit listing</button><button onclick="removeProduct('${String(p.id).replace(/'/g,"\\'")}')">Remove</button></div><div class="product-editor" id="editor-${safe(p.id)}">${productEditorHTML(p)}</div></div>`}).join(''):'<p class="muted">No products listed yet. Add a product above, and wait for “Saved globally.”</p>';};
+
+  window.addProductAdmin=async function(){
+    const name=document.getElementById('pname')?.value.trim(); const price=Number(document.getElementById('pprice')?.value||0); if(!name||!price){toast('Add a product name and price');return;}
+    await loadSharedStore(); if(!window.nitaBackendOnline){notify('Cannot add product: cloud database is offline, so it would only appear on this device. Deploy the full folder with Netlify Functions first.', false, true); return;}
+    const photos=(window.pendingAdminPhotos||[]).slice(); const main=Math.max(0,Math.min(Number(window.pendingAdminMainIndex||0),Math.max(photos.length-1,0))); const sale=document.getElementById('psale')?.value;
+    const color=document.getElementById('pcolor')?.value||'Black'; const style=document.getElementById('pstyle')?.value||'Clean everyday piece'; const displaySection=document.getElementById('phome')?.value||'trending-now';
+    const product=normalizeProductStatus({id:'p'+Date.now(),name,price,salePrice:sale===''?'':Number(sale),status:document.getElementById('pstatus')?.value||'in-stock',category:document.getElementById('pcat')?.value||'Dresses',collection:document.getElementById('pcollection')?.value||'Everyday Edit',displaySection,homeSection:displaySection,note:`${color} · ${style}`,sizes:selectedAdminSizes?.().length?selectedAdminSizes():['One Size'],photos,mainPhotoIndex:main,img:photos[main]||photos[0]||'linear-gradient(135deg,#fff,#ddd)',desc:document.getElementById('pdesc')?.value.trim()||'A carefully selected Italian-made piece for a clean, feminine wardrobe.'});
+    const products=getProducts(); products.push(product); const ok=await saveProducts(products); if(ok){window.pendingAdminPhotos=[];window.pendingAdminMainIndex=0;['pname','pprice','psale','pdesc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''}); const input=document.getElementById('pphotos'); if(input)input.value=''; const prev=document.getElementById('photoPreview'); if(prev)prev.innerHTML=''; await loadSharedStore(); renderAdmin(); toast('Product added globally.');}
+  };
+
+  window.saveProductEditor=async function(id){
+    await loadSharedStore(); if(!window.nitaBackendOnline){notify('Cannot save edit: cloud database is offline. It would not appear on phone.', false, true); return;}
+    const products=getProducts(); const p=products.find(x=>String(x.id)===String(id)); const root=document.getElementById('editor-'+id); if(!p||!root)return;
+    const old=Number(p.price||0); const entered=Number(root.querySelector('.edit-price')?.value||0); const saleInput=root.querySelector('.edit-sale')?.value;
+    p.name=root.querySelector('.edit-name')?.value.trim()||p.name; if(saleInput===''){ if(entered>0&&entered<old){p.salePrice=entered;p.price=old}else{p.price=entered;p.salePrice=''} } else {p.price=entered;p.salePrice=Number(saleInput)}
+    p.category=root.querySelector('.edit-category')?.value||p.category; p.collection=root.querySelector('.edit-collection')?.value||p.collection; p.displaySection=root.querySelector('.edit-home-section')?.value||productHomeSection(p); p.homeSection=p.displaySection; const color=root.querySelector('.edit-color')?.value||'Black'; const style=root.querySelector('.edit-style')?.value||'Clean everyday piece'; p.note=`${color} · ${style}`; p.desc=root.querySelector('.edit-desc')?.value.trim()||''; p.sizes=selectedAdminSizes(root).length?selectedAdminSizes(root):['One Size']; p.status=root.querySelector('.edit-status')?.value||productStatusValue(p); p.soldOut=p.status==='out-of-stock';
+    if(window.editingPhotoBuffers[id]?.length){p.photos=window.editingPhotoBuffers[id];p.mainPhotoIndex=Number(window.editingMainPhotoIndex[id]||0);p.img=p.photos[p.mainPhotoIndex]||p.photos[0];delete window.editingPhotoBuffers[id];delete window.editingMainPhotoIndex[id];}
+    else if(root.dataset.mainIndex!==undefined){p.mainPhotoIndex=Number(root.dataset.mainIndex)||0; const photos=(Array.isArray(p.photos)&&p.photos.length?p.photos:[p.img]).filter(Boolean); p.img=photos[p.mainPhotoIndex]||photos[0]||p.img;}
+    const ok=await saveProducts(products); if(ok){await loadSharedStore();renderAdmin();toast('Product updated globally.');}
+  };
+
+  window.renderHomeSections=function(){
+    const products=getProducts();
+    const trending=products.filter(p=>productHomeSection(p)==='trending-now');
+    const arrivals=products.filter(p=>productHomeSection(p)==='new-arrivals');
+    const trendBox=document.getElementById('trendingMarquee'); if(trendBox){const list=trending.length?trending:products.slice(0,6); trendBox.innerHTML=[...list,...list].map(p=>productCard(p)).join('')||'<p class="muted">No products listed yet.</p>';}
+    const arrBox=document.getElementById('newArrivalsMarquee'); if(arrBox){const list=arrivals.length?arrivals:products.slice(0,6); arrBox.innerHTML=[...list,...list].map(p=>productCard(p)).join('')||'<p class="muted">No products listed yet.</p>';}
+  };
+  window.addEventListener('nita-store-ready', window.renderHomeSections);
+  window.addEventListener('load',()=>setTimeout(window.renderHomeSections,900));
+})();
+// === END NITA STYLE SECTION PICKER + ADMIN SELECT POLISH ===
+
+
+// === FINAL MOBILE/UX STABILITY PATCH ===
+(function(){
+  function uniq(arr){return [...new Set((arr||[]).filter(Boolean).map(x=>String(x).trim()).filter(Boolean))];}
+  const oldNormalize=window.normalizeProductStatus;
+  window.normalizeProductStatus=function(p){
+    p=oldNormalize?oldNormalize(p||{}):(p||{});
+    p.sizes=uniq(p.sizes&&p.sizes.length?p.sizes:['One Size']);
+    if(!p.sizes.length) p.sizes=['One Size'];
+    return p;
+  };
+  const oldProductPage=window.productPage;
+  window.productPage=function(){
+    const detail=document.getElementById('detail');
+    if(!detail){ if(oldProductPage) return oldProductPage(); return; }
+    const id=new URL(location.href).searchParams.get('id');
+    const p=window.normalizeProductStatus((getProducts().find(x=>String(x.id)===String(id))||getProducts()[0]||{}));
+    if(!p.id){detail.innerHTML='<div class="card"><h1>Product not found</h1><a class="btn" href="shop.html">BACK TO SHOP</a></div>';return;}
+    const imgs=productImagesForDisplay(p);
+    window.selectedPhoto=Math.min(Number(window.selectedPhoto||0),imgs.all.length-1);
+    window.selectedSize=(window.selectedSize&&p.sizes.includes(window.selectedSize))?window.selectedSize:p.sizes[0];
+    const can=p.status==='in-stock';
+    const action=can?`<button class="btn" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}',selectedSize)">ADD TO CART</button><a class="btn light" href="checkout.html">BUY NOW</a>`:`<button class="btn disabled" disabled>${p.status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button>`;
+    detail.innerHTML=`<div class="product-media"><div class="detail-img" style="${cssBgImage(imgs.all[window.selectedPhoto])};background-size:cover;background-position:center"></div><div class="product-thumbs">${imgs.all.map((ph,i)=>`<button class="${i===window.selectedPhoto?'active':''}" onclick="selectedPhoto=${i};productPage()" style="${cssBgImage(ph)};background-size:cover;background-position:center"></button>`).join('')}</div></div><div class="product-info"><p class="muted">${safe(p.category||'')}</p><h1>${safe(p.name)}</h1>${productPriceStatusRow(p,'h2')}<p>${safe(p.desc||'')}</p><div class="sizes">${p.sizes.map(s=>`<span class="size ${s===window.selectedSize?'active':''}" onclick="selectedSize='${safe(s)}';productPage()">${safe(s)}</span>`).join('')}</div><div class="product-actions">${action}</div><hr><p class="muted">Cash on delivery available. Online payment will be available soon.</p></div>`;
+  };
+  const oldOpenQuick=window.openQuickView;
+  window.openQuickView=function(id){
+    const p=window.normalizeProductStatus(getProducts().find(x=>String(x.id)===String(id))||{});
+    if(!p.id){ if(oldOpenQuick) return oldOpenQuick(id); return; }
+    const imgs=productImagesForDisplay(p);
+    const sizes=(p.sizes||['One Size']).map((s,i)=>`<button class="size ${i===0?'active':''}" onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${safe(s)}</button>`).join('');
+    const can=p.status==='in-stock';
+    const btn=can?`<button class="btn" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}',document.querySelector('#quickContent .size.active')?.textContent||'One Size');closeQuickView()">ADD TO CART</button>`:`<button class="btn disabled" disabled>${p.status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button>`;
+    const q=document.getElementById('quickContent');
+    if(q) q.innerHTML=`<div class="quick-grid"><div class="quick-image" style="${cssBgImage(imgs.first)};background-size:cover;background-position:center"></div><div class="quick-info"><p class="muted">${safe(p.category||'')}</p><h2>${safe(p.name)}</h2>${productPriceStatusRow(p,'h3')}<p>${safe(p.desc||'')}</p><div class="sizes">${sizes}</div>${btn}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div></div>`;
+    document.getElementById('quickModal')?.classList.add('open');
+  };
+})();
+// === END FINAL MOBILE/UX STABILITY PATCH ===
