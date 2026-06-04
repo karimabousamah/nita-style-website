@@ -12,7 +12,7 @@ function header(){
  return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a href="${currentUser?'account.html':'login.html'}">${currentUser?'ACCOUNT':'SIGN IN'}</a>${admin}<button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, tops, pants..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`
 }
 
-function siteFooter(){return `<footer class="footer site-footer"><div><img class="footer-logo-img" src="assets/logo-cropped.png" alt="Nita Style"><p class="muted">Founded by Nicole and Tania, Nita Style curates Italian-made pieces for women who value clean silhouettes, refined textures, and effortless everyday elegance.</p></div><div><h4>Shop</h4><a href="shop.html">All products</a><a href="collections.html">Collections</a><a href="cart.html">Cart</a><a href="checkout.html">Checkout</a></div><div><h4>Support</h4><a href="contact.html">Contact</a><a href="about.html">About</a><a href="checkout.html">Cash on delivery</a><a href="checkout.html">WishMoney coming soon</a></div><div><h4>Join the list</h4><p class="muted">Receive the first-order code and new drop updates.</p><div class="footer-newsletter"><input placeholder="Email address"><button onclick="toast('Use code NITA10 for 10% off')">SIGN UP</button></div></div></footer><div class="copyright site-footer"><span>© 2026 Nita Style. All rights reserved.</span><span>Privacy Policy · Terms · Shipping</span></div>`}
+function siteFooter(){return `<footer class="footer site-footer"><div><img class="footer-logo-img" src="assets/logo-cropped.png" alt="Nita Style"><p class="muted">Founded by Nicole and Tania, Nita Style curates Italian-made pieces for women who value clean silhouettes, refined textures, and effortless everyday elegance.</p></div><div><h4>Shop</h4><a href="shop.html">All products</a><a href="collections.html">Collections</a><a href="cart.html">Cart</a><a href="checkout.html">Checkout</a></div><div><h4>Support</h4><a href="contact.html">Contact</a><a href="about.html">About</a><a href="checkout.html">Cash on delivery</a><a href="checkout.html">Online payment coming soon</a></div><div><h4>Join the list</h4><p class="muted">Receive the first-order code and new drop updates.</p><div class="footer-newsletter"><input placeholder="Email address"><button onclick="toast('Use code NITA10 for 10% off')">SIGN UP</button></div></div></footer><div class="copyright site-footer"><span>© 2026 Nita Style. All rights reserved.</span><span>Privacy Policy · Terms · Shipping</span></div>`}
 
 async function init(){
  await loadSharedStore();
@@ -24,8 +24,8 @@ async function init(){
  if(showIntro){sessionStorage.setItem('nitaIntroShown','1');setTimeout(()=>document.getElementById('introLoader')?.classList.add('hide'),1250);setTimeout(()=>document.getElementById('introLoader')?.remove(),1900)}
  updateCartCount(); renderCartPanel(); if(!document.querySelector('.site-footer') && !location.pathname.endsWith('admin.html')) document.body.insertAdjacentHTML('beforeend',siteFooter()); if(!localStorage.getItem('nitaPopupSeen'))setTimeout(()=>$('#signupPopup')?.classList.add('show'),1600)}
 function introLoader(){return `<div id="introLoader" class="intro-loader"><img src="assets/logo-cropped.png" alt="Nita Style"></div>`}
-function openSearch(){$('#searchPanel').classList.add('open');renderSearch();setTimeout(()=>$('#searchInput')?.focus(),100)} function closeSearch(){$('#searchPanel').classList.remove('open')}
-function openCart(){renderCartPanel();$('#cartPanel').classList.add('open')} function closeCart(){$('#cartPanel').classList.remove('open')}
+function openSearch(){const p=$('#searchPanel'); if(p){p.classList.add('open'); document.body.classList.add('panel-open');} renderSearch();setTimeout(()=>$('#searchInput')?.focus(),100)} function closeSearch(){const p=$('#searchPanel'); if(p){p.classList.remove('open');} document.body.classList.remove('panel-open')}
+function openCart(){renderCartPanel();const p=$('#cartPanel'); if(p){p.classList.add('open'); document.body.classList.add('panel-open');}} function closeCart(){const p=$('#cartPanel'); if(p){p.classList.remove('open');} document.body.classList.remove('panel-open')}
 function renderSearch(){let q=($('#searchInput')?.value||'').toLowerCase();let res=getProducts().filter(p=>!q||p.name.toLowerCase().includes(q)||p.category.toLowerCase().includes(q));$('#searchResults').innerHTML=res.map(p=>`<a href="product.html?id=${p.id}" style="display:grid;grid-template-columns:70px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid #eee"><span style="${productMainImage(p).startsWith('data:')?'background-image:url('+productMainImage(p)+')':'background:'+productMainImage(p)};background-size:cover;background-position:center;height:82px"></span><span><b>${p.name}</b><br><span class="muted">${p.category} · ${money(p.price)}</span></span></a>`).join('')}
 function productCard(p){let price=p.salePrice?`<p><span class="muted" style="text-decoration:line-through;margin-right:8px">${money(p.price)}</span><span class="price-drop">${money(p.salePrice)}</span></p>`:`<p>${money(p.price)}</p>`;return `<a class="product" href="product.html?id=${p.id}"><div class="product-img" style="background:${p.img}"></div><h3>${p.name}</h3>${price}</a>`}
 function renderProducts(el='#products',list=getProducts()){let node=$(el); if(node) node.innerHTML=list.map(productCard).join('')}
@@ -1345,3 +1345,261 @@ placeOrder=async function(){
   };
 })();
 // === END FINAL MOBILE/UX STABILITY PATCH ===
+
+// === FINAL ACCOUNT / ADMIN / SIGN-IN REDIRECT POLISH ===
+(function(){
+  const ORDER_STEPS = ['New order','Confirmed','Packing','Out for delivery','Delivered'];
+  function esc(v){ return typeof safe==='function'?safe(v):String(v||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+  function orderStepIndex(status){
+    status = String(status||'New order');
+    if(status==='Preparing') status='Packing';
+    if(status==='Cancelled') return -1;
+    const i = ORDER_STEPS.indexOf(status);
+    return i>=0?i:0;
+  }
+  window.orderRoadmapHtml = function(status){
+    const idx = orderStepIndex(status);
+    if(String(status)==='Cancelled') return `<div class="order-roadmap"><div class="road-step cancelled">Cancelled</div></div>`;
+    return `<div class="order-roadmap">${ORDER_STEPS.map((s,i)=>`<div class="road-step ${i<idx?'done':i===idx?'active':''}">${s==='New order'?'Order submitted':s}</div>`).join('')}</div>`;
+  };
+  window.accountOrdersHtml = function(orders, empty){
+    if(!orders || !orders.length) return `<p class="muted">${empty}</p>`;
+    const allProducts = (typeof getProducts==='function'?getProducts():[]);
+    return orders.map(o=>{
+      const items = (o.items||[]).map(it=>{
+        const p = allProducts.find(x=>String(x.id)===String(it.id));
+        const name = p?.name || it.name || 'Product';
+        const qty = it.qty || 1;
+        const size = it.size ? ` · ${esc(it.size)}` : '';
+        return `<div class="order-item-line"><span>${esc(name)}${size} × ${qty}</span><span>${typeof money==='function'?money((p?.salePrice||p?.price||0)*qty):''}</span></div>`;
+      }).join('') || '<p class="muted">No item details available.</p>';
+      return `<article class="order-card-pro"><div class="order-card-head"><div><h3>${esc(o.id||'Order')}</h3><div class="order-meta"><span>${esc(o.date||'')}</span><span>${esc(o.payment||'Cash on delivery')}</span><span>${esc(o.status||'New order')}</span></div></div><div class="order-total">${typeof money==='function'?money(o.total||0):''}</div></div>${orderRoadmapHtml(o.status)}<div class="order-items">${items}</div>${o.address?`<p class="muted"><b>Delivery:</b> ${esc(typeof o.address==='string'?o.address:[o.address.city,o.address.street,o.address.building,o.address.floor,o.address.apartment].filter(Boolean).join(', '))}</p>`:''}</article>`;
+    }).join('');
+  };
+  window.renderAccount = function(){
+    const root = document.getElementById('accountRoot'); if(!root) return;
+    if(!window.currentUser?.email){ root.innerHTML = `<div class="card account-auth"><h1>Sign in</h1><p class="muted">Sign in to view your saved details, addresses, and orders.</p><a class="btn" href="login.html">SIGN IN</a></div>`; return; }
+    const user = (typeof ensureCurrentUserRecord==='function' ? ensureCurrentUserRecord() : currentUser) || currentUser;
+    const addr = user.defaultAddress || {};
+    const orders = (typeof customerOrders==='function'?customerOrders(user.email):JSON.parse(localStorage.getItem('nitaOrders')||'[]').filter(o=>String(o.email||'').toLowerCase()===String(user.email).toLowerCase())).sort((a,b)=>String(b.id).localeCompare(String(a.id)));
+    const ongoing = orders.filter(o=>!['Delivered','Cancelled'].includes(o.status));
+    const previous = orders.filter(o=>['Delivered','Cancelled'].includes(o.status));
+    root.innerHTML = `<div class="account-hero clean-account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${user.firstName?' '+esc(user.firstName):''}</h1><p class="muted">Manage your profile, saved delivery address, and order tracking.</p></div></div><div class="account-grid"><section class="card account-card"><h2>Personal information</h2><p class="muted">Your email is your login and cannot be edited.</p><div class="form-grid"><div><label>First name</label><input class="field" id="accFirst" value="${esc(user.firstName||'')}" placeholder="First name"></div><div><label>Last name</label><input class="field" id="accLast" value="${esc(user.lastName||'')}" placeholder="Last name"></div><div><label>Email address</label><input class="field disabled-field" value="${esc(user.email)}" disabled></div><div><label>Phone number</label><input class="field" id="accPhone" value="${esc(user.phone||'')}" placeholder="Phone number"></div></div><button class="btn" onclick="saveAccountInfo()">SAVE DETAILS</button></section><section class="card account-card"><h2>Saved delivery address</h2>${typeof accountAddressFields==='function'?accountAddressFields('accAddr_',addr):''}<button class="btn" onclick="saveAccountAddress()">SAVE ADDRESS</button></section><section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${accountOrdersHtml(ongoing,'No ongoing orders yet.')}</div></section><section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${accountOrdersHtml(previous,'No previous orders yet.')}</div></section><section class="card danger-zone full-span"><h2>Account control</h2><p class="muted">Log out safely, or permanently remove your saved customer profile from this website.</p><button class="btn logout-btn" onclick="logoutUser()">LOG OUT</button><button class="btn danger delete-account-btn" onclick="deleteAccount()">DELETE ACCOUNT</button></section></div>`;
+  };
+  // Redirect every successful customer/admin sign-in or sign-up to homepage, as requested.
+  const oldSubmitAuth = window.submitAuth;
+  window.submitAuth = async function(){
+    const beforeHref = location.href;
+    const oldAssign = location.assign;
+    try{
+      if(typeof oldSubmitAuth==='function'){
+        // Reimplement the existing flow because location.href inside old function cannot be intercepted reliably.
+        const email=(window.normalizeEmail?normalizeEmail(document.getElementById('authEmail')?.value):String(document.getElementById('authEmail')?.value||'').trim().toLowerCase());
+        const password=document.getElementById('authPassword')?.value||'';
+        const msg=document.getElementById('authMessage');
+        if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ if(msg)msg.textContent='Please enter a valid email address.'; return; }
+        if(password.length<4){ if(msg)msg.textContent='Please enter a password.'; return; }
+        if(typeof loadSharedStore==='function') await loadSharedStore();
+        const users=(typeof getJSON==='function'?getJSON('nitaUsersByEmail',{}):JSON.parse(localStorage.getItem('nitaUsersByEmail')||'{}'));
+        const existing=users[email]; const mode=window.authMode||'signin';
+        if(mode==='signin' && existing && existing.password && existing.password!==password){ if(msg)msg.textContent='Wrong password for this account.'; return; }
+        if(mode==='signin' && !existing){ if(msg)msg.innerHTML='No account found with this email. Click <b>Sign up</b> to create one.'; return; }
+        const user={...(existing||{}),email,password,firstName:existing?.firstName||'',lastName:existing?.lastName||'',phone:existing?.phone||'',addresses:existing?.addresses||[],defaultAddress:existing?.defaultAddress||null,createdAt:existing?.createdAt||new Date().toISOString()};
+        if(mode==='signup'){
+          user.firstName=(document.getElementById('authFirst')?.value||user.firstName||'').trim();
+          user.lastName=(document.getElementById('authLast')?.value||user.lastName||'').trim();
+          user.phone=(document.getElementById('authPhone')?.value||user.phone||'').trim();
+          if(!existing) user.firstOrderCode='NITA10';
+        }
+        users[email]=user;
+        if(typeof setJSON==='function') setJSON('nitaUsersByEmail',users); else localStorage.setItem('nitaUsersByEmail',JSON.stringify(users));
+        localStorage.setItem('nitaUser',JSON.stringify(user)); window.currentUser=user;
+        if(typeof saveUsers==='function') await saveUsers(users);
+        if(mode==='signup' && !existing){ try{ await sendStoreEmail?.({type:'signup_discount',to:email,code:'NITA10',user}); }catch(e){} }
+        location.href='index.html';
+      }
+    }catch(e){ console.error(e); const msg=document.getElementById('authMessage'); if(msg) msg.textContent='Something went wrong. Please try again.'; }
+  };
+  window.login = window.submitAuth;
+  window.renderAdmin = async function(){
+    if(typeof protectAdmin==='function' && !protectAdmin()) return;
+    if(typeof loadSharedStore==='function') await loadSharedStore();
+    const sizePicker=document.getElementById('sizePicker'); if(sizePicker&&!sizePicker.dataset.ready&&typeof renderSizeButtons==='function'){sizePicker.innerHTML=renderSizeButtons(['S','M','L']);sizePicker.dataset.ready='1'}
+    const orders=(typeof getJSON==='function'?getJSON('nitaOrders',[]):JSON.parse(localStorage.getItem('nitaOrders')||'[]'));
+    const body=document.getElementById('orders');
+    if(body) body.innerHTML=orders.length?orders.map((o,i)=>`<tr class="admin-order-row"><td><b>${esc(o.id)}</b><br><span class="muted">${esc(o.date||'')}</span>${orderRoadmapHtml(o.status)}</td><td>${esc(o.customer||'-')}<br><span class="muted">${esc(o.email||'')}<br>${esc(o.phone||'')}</span></td><td>${typeof money==='function'?money(o.total||0):''}</td><td><select class="admin-order-status" onchange="updateOrder(${i},this.value)"><option>${esc(o.status||'New order')}</option><option>Confirmed</option><option>Packing</option><option>Out for delivery</option><option>Delivered</option><option>Cancelled</option></select><span class="admin-status-badge">${esc(o.status||'New order')}</span></td></tr>`).join(''):'<tr><td colspan="4"><div class="admin-empty">No orders yet.</div></td></tr>';
+    if(typeof renderAdminProducts==='function') renderAdminProducts();
+    if(typeof renderAdminCustomers==='function') renderAdminCustomers();
+    if(typeof renderCouponsAdmin==='function') renderCouponsAdmin();
+  };
+})();
+
+// --- Cart panel, Quick View and unavailable product final behavior ---
+(function(){
+  function esc(v){ return String(v ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch])); }
+  function getStatus(p){
+    p = (typeof normalizeProductStatus === 'function') ? normalizeProductStatus(p) : (p || {});
+    return p.status || (p.soldOut ? 'out-of-stock' : 'in-stock');
+  }
+  function getImgs(p){
+    if(typeof productImagesForDisplay === 'function') return productImagesForDisplay(p);
+    const arr = (p.photos && p.photos.length ? p.photos : [p.img]).filter(Boolean);
+    return {first: arr[0] || 'linear-gradient(135deg,#fff,#ddd)', second: arr[1] || arr[0] || 'linear-gradient(135deg,#fff,#ddd)', all: arr.length ? arr : ['linear-gradient(135deg,#fff,#ddd)']};
+  }
+  function bg(v){ return (typeof cssBgImage === 'function') ? cssBgImage(v) : (String(v||'').startsWith('data:') ? `background-image:url(${v})` : `background:${v||'linear-gradient(135deg,#fff,#ddd)'}`); }
+  function priceRow(p, tag='h3'){
+    return (typeof productPriceStatusRow === 'function') ? productPriceStatusRow(p, tag) : `<${tag}>${typeof money==='function'?money(p.price):('$'+p.price)}</${tag}>`;
+  }
+  function selectedSize(){ return document.querySelector('#quickContent .size.active')?.textContent || 'One Size'; }
+  window.notifyMe = function(productId){
+    const p = (typeof getProducts === 'function' ? getProducts() : []).find(x => String(x.id) === String(productId));
+    const userEmail = window.currentUser?.email || JSON.parse(localStorage.getItem('nitaCurrentUser') || 'null')?.email || '';
+    const email = userEmail || prompt('Enter your email and we will notify you when this item is available:');
+    if(!email) return;
+    const list = JSON.parse(localStorage.getItem('nitaNotifyRequests') || '[]');
+    list.push({productId, productName:p?.name || 'Product', email, date:new Date().toISOString()});
+    localStorage.setItem('nitaNotifyRequests', JSON.stringify(list));
+    if(typeof toast === 'function') toast('Thank you. We will notify you when it is available.');
+    else alert('Thank you. We will notify you when it is available.');
+  };
+  window.openCart = function(){
+    if(typeof renderCartPanel === 'function') renderCartPanel();
+    const panel = document.getElementById('cartPanel');
+    if(panel){ panel.classList.add('open'); document.body.classList.add('panel-open'); }
+  };
+  window.closeCart = function(){
+    document.getElementById('cartPanel')?.classList.remove('open');
+    document.body.classList.remove('panel-open');
+  };
+  const oldCloseSearch = window.closeSearch;
+  window.closeSearch = function(){ oldCloseSearch?.(); document.body.classList.remove('panel-open'); };
+  const oldOpenSearch = window.openSearch;
+  window.openSearch = function(){ oldOpenSearch?.(); document.body.classList.add('panel-open'); };
+  window.openQuickView = function(id){
+    const p = getStatus((typeof getProducts === 'function' ? getProducts() : []).find(x => String(x.id) === String(id)));
+    if(!p?.id) return;
+    const imgs = getImgs(p);
+    const sizes = (p.sizes && p.sizes.length ? p.sizes : ['One Size']).map((s,i)=>`<button class="size ${i===0?'active':''}" onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${esc(s)}</button>`).join('');
+    const canBuy = p.status === 'in-stock';
+    const action = canBuy
+      ? `<button class="btn" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}', selectedSize()); closeQuickView();">ADD TO CART</button>`
+      : `<button class="btn disabled" disabled aria-disabled="true">${p.status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button><button class="notify-btn" type="button" onclick="notifyMe('${String(p.id).replace(/'/g,"\\'")}')">NOTIFY ME</button>`;
+    const q = document.getElementById('quickContent');
+    if(!q) return;
+    q.innerHTML = `<div class="quick-grid"><div class="quick-image" style="${bg(imgs.first)}"></div><div class="quick-info"><p class="muted">${esc(p.category||'')}</p><h2>${esc(p.name)}</h2>${priceRow(p,'h3')}<p>${esc(p.desc||'')}</p><div class="sizes">${sizes}</div>${action}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div></div>`;
+    const modal = document.getElementById('quickModal');
+    modal?.classList.add('open');
+    modal?.setAttribute('aria-hidden','false');
+    document.body.classList.add('panel-open');
+  };
+  window.closeQuickView = function(){
+    const m=document.getElementById('quickModal');
+    if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}
+    document.body.classList.remove('panel-open');
+  };
+  const oldProductPage = window.productPage;
+  window.productPage = function(){
+    const detail=document.getElementById('detail');
+    if(!detail){ return oldProductPage?.(); }
+    const id=new URL(location.href).searchParams.get('id');
+    const all = typeof getProducts === 'function' ? getProducts() : [];
+    const p=getStatus(all.find(x=>String(x.id)===String(id)) || all[0]);
+    if(!p?.id){ detail.innerHTML='<div class="card"><h1>Product not found</h1><a class="btn" href="shop.html">BACK TO SHOP</a></div>'; return; }
+    const imgs=getImgs(p); const sizes=(p.sizes&&p.sizes.length?p.sizes:['One Size']);
+    window.selectedPhoto=Math.min(Number(window.selectedPhoto||0),imgs.all.length-1);
+    window.selectedSize=(window.selectedSize&&sizes.includes(window.selectedSize))?window.selectedSize:sizes[0];
+    const canBuy=p.status==='in-stock';
+    const action=canBuy
+      ? `<button class="btn" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}',selectedSize)">ADD TO CART</button><a class="btn light" href="checkout.html">BUY NOW</a>`
+      : `<button class="btn disabled" disabled aria-disabled="true">${p.status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button><button class="notify-btn" type="button" onclick="notifyMe('${String(p.id).replace(/'/g,"\\'")}')">NOTIFY ME</button>`;
+    detail.innerHTML=`<div class="product-media"><div class="detail-img" style="${bg(imgs.all[window.selectedPhoto])};background-size:contain;background-repeat:no-repeat;background-position:center;background-color:#f5f5f5"></div><div class="product-thumbs">${imgs.all.map((ph,i)=>`<button class="${i===window.selectedPhoto?'active':''}" onclick="selectedPhoto=${i};productPage()" style="${bg(ph)};background-size:cover;background-position:center"></button>`).join('')}</div></div><div class="product-info"><p class="muted">${esc(p.category||'')}</p><h1>${esc(p.name)}</h1>${priceRow(p,'h2')}<p>${esc(p.desc||'')}</p><div class="sizes">${sizes.map(s=>`<span class="size ${s===window.selectedSize?'active':''}" onclick="selectedSize='${esc(s)}';productPage()">${esc(s)}</span>`).join('')}</div><div class="product-actions">${action}</div><hr><p class="muted">Cash on delivery available. Online payment will be available soon.</p></div>`;
+  };
+  document.addEventListener('keydown', e => { if(e.key === 'Escape'){ closeCart(); closeQuickView(); document.getElementById('searchPanel')?.classList.remove('open'); document.body.classList.remove('panel-open'); } });
+})();
+
+
+// --- Final coupon apply button behavior + footer payment wording ---
+(function(){
+  function esc(v){ return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+  function getCheckoutSubtotal(){
+    const products = typeof getProducts === 'function' ? getProducts() : [];
+    return (window.cart || []).reduce((sum,item)=>{
+      const p = products.find(x=>String(x.id)===String(item.id));
+      const price = Number(p?.salePrice || p?.price || item.price || 0);
+      return sum + price * Number(item.qty || 1);
+    },0);
+  }
+  function appliedCode(){ return sessionStorage.getItem('nitaAppliedCoupon') || ''; }
+  function setAppliedCode(code){ if(code) sessionStorage.setItem('nitaAppliedCoupon', code); else sessionStorage.removeItem('nitaAppliedCoupon'); }
+  function feedback(msg, ok){ const el=document.getElementById('couponFeedback'); if(el){ el.className = ok ? 'coupon-feedback discount-good' : 'coupon-feedback discount-bad'; el.innerHTML = msg; } }
+  window.applyCouponCode = function(){
+    const form = document.getElementById('checkoutForm'); if(!form) return;
+    const code = normalizeCoupon(form.coupon?.value || '');
+    const email = String(form.email?.value || (typeof signedDiscountEmail==='function'?signedDiscountEmail():'')).trim().toLowerCase();
+    const subtotal = getCheckoutSubtotal();
+    if(!code){ setAppliedCode(''); feedback('Enter a coupon code first.', false); renderCheckoutSummary?.(); return; }
+    if(!subtotal){ setAppliedCode(''); feedback('No discount is applicable because your cart is empty.', false); renderCheckoutSummary?.(); return; }
+    const result = typeof calcCouponDiscount === 'function' ? calcCouponDiscount(code, email, subtotal) : {discount:0};
+    if(result && Number(result.discount) > 0){
+      setAppliedCode(code);
+      feedback(`Coupon applied successfully. You saved ${typeof money==='function'?money(result.discount):('$'+result.discount.toFixed(2))}.`, true);
+    } else {
+      setAppliedCode('');
+      feedback('Coupon code is expired, invalid, already used, or no discount is applicable.', false);
+    }
+    renderCheckoutSummary?.();
+  };
+  window.renderCheckoutSummary = function(){
+    const form = document.getElementById('checkoutForm');
+    const box = document.getElementById('checkoutSummary'); if(!box) return;
+    const subtotal = getCheckoutSubtotal();
+    const typed = normalizeCoupon(form?.coupon?.value || '');
+    const email = String(form?.email?.value || (typeof signedDiscountEmail==='function'?signedDiscountEmail():'')).trim().toLowerCase();
+    let code = appliedCode();
+    let discount = 0;
+    let couponLine = '';
+    if(code && typed && code === typed){
+      const result = typeof calcCouponDiscount === 'function' ? calcCouponDiscount(code, email, subtotal) : {discount:0};
+      discount = Number(result.discount || 0);
+      if(discount > 0) couponLine = `<p class="discount-good">Coupon applied: -${typeof money==='function'?money(discount):('$'+discount.toFixed(2))}</p>`;
+      else { setAppliedCode(''); couponLine = `<p class="discount-bad">Coupon code is expired, invalid, already used, or no discount is applicable.</p>`; }
+    } else if(typed && code !== typed){
+      couponLine = `<p class="muted">Click Apply Coupon Code to validate this code.</p>`;
+    }
+    const total = Math.max(0, subtotal - discount);
+    box.innerHTML = `<div class="summary-line"><span>Subtotal</span><b>${typeof money==='function'?money(subtotal):('$'+subtotal.toFixed(2))}</b></div>${discount>0?`<div class="summary-line discount-line"><span>Discount</span><b>-${typeof money==='function'?money(discount):('$'+discount.toFixed(2))}</b></div>`:''}<div class="summary-line total-line"><span>Total</span><b>${typeof money==='function'?money(total):('$'+total.toFixed(2))}</b></div>${couponLine}`;
+  };
+  const oldMarkCouponUse = window.markCouponUse;
+  window.placeOrder = async function(){
+    const formEl = document.getElementById('checkoutForm'); if(!formEl) return;
+    if(typeof validateCheckoutForm === 'function' && !validateCheckoutForm()) return;
+    const form = new FormData(formEl);
+    const typed = normalizeCoupon(form.get('coupon'));
+    const applied = appliedCode();
+    const code = typed && typed === applied ? applied : '';
+    const email = String(form.get('email') || (typeof signedDiscountEmail==='function'?signedDiscountEmail():'')).trim().toLowerCase();
+    const subtotal = getCheckoutSubtotal();
+    let result = code && typeof calcCouponDiscount === 'function' ? calcCouponDiscount(code,email,subtotal) : {discount:0};
+    let discount = Number(result.discount || 0);
+    if(typed && !code){ feedback('Please click Apply Coupon Code before placing the order, or remove the coupon code.', false); return; }
+    if(result.kind==='admin' && discount>0){
+      let coupons = typeof getCoupons==='function' ? getCoupons() : [];
+      let c = coupons.find(x=>normalizeCoupon(x.code)===code);
+      if(c && c.oneTime){ c.usedEmails = c.usedEmails || {}; c.usedEmails[email] = true; if(typeof saveCoupons==='function') await saveCoupons(coupons); }
+    }
+    if(result.kind==='nita10' && discount>0){
+      let uses = JSON.parse(localStorage.getItem('nitaDiscountUses')||'{}'); uses[email]=true; localStorage.setItem('nitaDiscountUses',JSON.stringify(uses));
+      try{ await saveCloudKey?.('nitaDiscountUses', uses); }catch(e){}
+    }
+    const address={city:form.get('city'),street:form.get('street'),building:form.get('building'),floor:form.get('floor'),apartment:form.get('apartment'),landmark:form.get('landmark'),preferredTime:form.get('preferredTime'),notes:form.get('notes')};
+    const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:(form.get('name')||'').trim(),phone:form.get('phone'),email,address,payment:'Cash on Delivery',status:'New order',items:window.cart||[],subtotal,discount,coupon:code,total:Math.max(0,subtotal-discount)};
+    let orders = JSON.parse(localStorage.getItem('nitaOrders')||'[]'); orders.push(order); localStorage.setItem('nitaOrders',JSON.stringify(orders));
+    try{ await saveCloudKey?.('nitaOrders', orders); }catch(e){}
+    if(form.get('saveAddress') && email){
+      try{ const users=JSON.parse(localStorage.getItem('nitaUsersByEmail')||'{}'); if(users[email]){users[email].defaultAddress=address; users[email].phone=form.get('phone')||users[email].phone; localStorage.setItem('nitaUsersByEmail',JSON.stringify(users)); await saveCloudKey?.('nitaUsersByEmail',users);} }catch(e){}
+    }
+    try{ await sendStoreEmail?.({type:'order_confirmation',to:email,order}); await sendStoreEmail?.({type:'admin_order',order}); }catch(e){}
+    window.cart=[]; if(typeof saveCart==='function') saveCart(); setAppliedCode(''); location.href='order-success.html';
+  };
+  document.addEventListener('input', e=>{ if(e.target?.name==='coupon'){ setAppliedCode(''); feedback('', true); renderCheckoutSummary?.(); } });
+})();
