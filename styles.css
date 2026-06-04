@@ -760,3 +760,57 @@ a,a:visited,button,button:visited{color:#080808!important;text-decoration:none!i
   .detail-img{height:480px!important;min-height:0!important;background-size:contain!important;background-repeat:no-repeat!important;}
   .topbar .brand img{width:210px!important;}
 }
+
+/* FINAL BUTTON CONTRAST FIX: every black button uses white text */
+.btn:not(.light),
+button.btn:not(.light),
+a.btn:not(.light),
+.auth-tabs button.active,
+.pill.on,
+.size.active,
+.footer-newsletter button,
+.auth-submit,
+.product-detail .btn:not(.light),
+.checkout .btn:not(.light),
+.admin-page .btn:not(.light),
+.login-page .btn:not(.light),
+.account-page .btn:not(.light),
+button[style*="background:#000"],
+button[style*="background: #000"],
+a[style*="background:#000"],
+a[style*="background: #000"]{
+  background:#000!important;
+  color:#fff!important;
+  border-color:#000!important;
+}
+.btn:not(.light) *,
+button.btn:not(.light) *,
+a.btn:not(.light) *,
+.auth-tabs button.active *,
+.pill.on *,
+.size.active *,
+.footer-newsletter button *,
+.auth-submit *,
+.product-detail .btn:not(.light) *,
+.checkout .btn:not(.light) *,
+.admin-page .btn:not(.light) *,
+.login-page .btn:not(.light) *,
+.account-page .btn:not(.light) *{
+  color:#fff!important;
+}
+.btn.light,
+a.btn.light,
+button.btn.light{
+  background:#fff!important;
+  color:#080808!important;
+  border-color:#080808!important;
+}
+.btn.light *,
+a.btn.light *,
+button.btn.light *{
+  color:#080808!important;
+}
+button:disabled,
+.btn.disabled{
+  color:#fff!important;
+}
