@@ -1,5 +1,3 @@
-const { getStore } = require('@netlify/blobs');
-
 const DEFAULT_STATE = {
   nitaProducts: [],
   nitaOrders: [],
@@ -32,6 +30,7 @@ exports.handler = async function(event) {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
 
   try {
+    const { getStore } = await import('@netlify/blobs');
     const store = getStore('nita-style-live-database');
 
     if (event.httpMethod === 'GET') {
