@@ -1086,3 +1086,17 @@ body.quick-open{overflow:hidden!important;}
 .sizes .size{flex:0 0 auto!important;}
 .product-size-list{display:flex!important;flex-wrap:wrap!important;gap:10px!important;overflow:visible!important;}
 /* === END FINAL FIX === */
+
+/* === NITA STYLE FINAL CRITICAL CSS: stock sizes + no-lag marquee === */
+.trending-scroll,.new-arrivals-scroll{overflow:hidden!important;touch-action:auto!important;-webkit-overflow-scrolling:auto!important;}
+.trending-scroll .product-marquee,.new-arrivals-scroll .product-marquee{display:flex!important;flex-wrap:nowrap!important;width:max-content!important;min-width:max-content!important;animation:nitaAlwaysScroll 42s linear infinite!important;will-change:transform!important;transform:translate3d(0,0,0)!important;}
+.trending-scroll .product-marquee:hover,.new-arrivals-scroll .product-marquee:hover{animation-play-state:running!important;}
+@keyframes nitaAlwaysScroll{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-50%,0,0)}}
+@media(max-width:900px){.trending-scroll .product-marquee,.new-arrivals-scroll .product-marquee{animation-duration:34s!important;}}
+.available-size-picker .pill.on{background:#000!important;color:#fff!important;border-color:#000!important;}
+.oos-picker .pill.on{background:#b00020!important;color:#fff!important;border-color:#b00020!important;}
+.size.size-disabled,.product-size-list .size.size-disabled,.quick-info .size.size-disabled{position:relative!important;background:#f2f2f2!important;color:#9b9b9b!important;border-color:#ddd!important;opacity:.72!important;cursor:not-allowed!important;pointer-events:none!important;}
+.size.size-disabled::after,.product-size-list .size.size-disabled::after,.quick-info .size.size-disabled::after{content:''!important;position:absolute!important;left:14%!important;right:14%!important;top:50%!important;height:1.5px!important;background:#8a8a8a!important;transform:rotate(-30deg)!important;transform-origin:center!important;}
+.product-size-list,.quick-info .sizes{display:flex!important;flex-wrap:wrap!important;gap:10px!important;overflow:visible!important;}
+.product-size-list .size,.quick-info .size{flex:0 0 auto!important;min-width:62px!important;}
+/* === END FINAL CRITICAL CSS === */

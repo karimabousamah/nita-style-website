@@ -2109,3 +2109,211 @@ placeOrder=async function(){
   window.addEventListener('load',()=>setTimeout(window.renderHomeSections,800));
 })();
 // === END FINAL SIZE STOCK + AUTO MARQUEE REVERT PATCH ===
+
+/* === NITA STYLE FINAL CRITICAL FIX: OUT-OF-STOCK SIZES + FIRST-LOAD MARQUEE === */
+(function(){
+  const SIZE_ORDER = ['XS','S','M','L','XL','One Size'];
+  const normSize = s => String(s || '').trim();
+  const keySize = s => normSize(s).toLowerCase();
+  const uniqSizes = arr => [...new Set((arr || []).map(normSize).filter(Boolean))]
+    .sort((a,b)=>{ const ia=SIZE_ORDER.findIndex(x=>keySize(x)===keySize(a)); const ib=SIZE_ORDER.findIndex(x=>keySize(x)===keySize(b)); return (ia<0?99:ia)-(ib<0?99:ib); });
+  const safe = v => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const cssBg = u => {
+    try { return typeof cssBgImage === 'function' ? cssBgImage(u) : (String(u || '').startsWith('data:') ? `background-image:url(${u})` : `background:${u || 'linear-gradient(135deg,#fff,#ddd)'}`); }
+    catch(e){ return 'background:linear-gradient(135deg,#fff,#ddd)'; }
+  };
+  const moneySafe = v => { try { return typeof money === 'function' ? money(v) : ('$' + Number(v || 0).toFixed(2)); } catch(e){ return '$' + Number(v || 0).toFixed(2); } };
+  const allProducts = () => { try { return typeof getProducts === 'function' ? getProducts() : []; } catch(e){ return []; } };
+  function normalizeProduct(p){
+    try { if(typeof normalizeProductStatus === 'function') p = normalizeProductStatus(p || {}); } catch(e){ p = p || {}; }
+    p.sizes = uniqSizes((Array.isArray(p.sizes) && p.sizes.length) ? p.sizes : ['One Size']);
+    p.outOfStockSizes = uniqSizes(p.outOfStockSizes || []).filter(s => p.sizes.some(x => keySize(x) === keySize(s)));
+    p.status = p.status || (p.soldOut ? 'out-of-stock' : 'in-stock');
+    return p;
+  }
+  function isSizeOut(p, size){
+    p = normalizeProduct(p);
+    return p.outOfStockSizes.some(s => keySize(s) === keySize(size));
+  }
+  function selectedPills(root, selector){
+    return uniqSizes([...root.querySelectorAll(selector)].map(b => b.dataset.size || b.textContent));
+  }
+  function pillButtons(selected=[], cls='available-size-picker'){
+    const set = new Set(uniqSizes(selected).map(keySize));
+    return `<div class="size-picker ${cls}">` + SIZE_ORDER.map(s => `<button type="button" class="pill ${set.has(keySize(s)) ? 'on' : ''}" data-size="${safe(s)}" onclick="this.classList.toggle('on')">${safe(s)}</button>`).join('') + `</div>`;
+  }
+
+  function upgradeAddProductSizePickers(){
+    const sp = document.getElementById('sizePicker');
+    if(!sp) return;
+    if(!sp.classList.contains('available-size-picker')) sp.classList.add('available-size-picker');
+    if(!sp.dataset.finalSizes){
+      const current = selectedPills(document, '#sizePicker .pill.on');
+      sp.innerHTML = SIZE_ORDER.map(s => `<button type="button" class="pill ${current.some(x=>keySize(x)===keySize(s)) ? 'on' : ''}" data-size="${safe(s)}" onclick="this.classList.toggle('on')">${safe(s)}</button>`).join('');
+      sp.dataset.finalSizes = '1';
+    }
+    if(!document.getElementById('sizeOutPicker')){
+      const wrap = document.createElement('div');
+      wrap.className = 'full admin-size-oos-wrap';
+      wrap.innerHTML = `<label>Out-of-stock sizes</label><p class="field-help">Select sizes that should be visible to customers but disabled with a diagonal line.</p>${pillButtons([], 'oos-picker')}`;
+      const picker = wrap.querySelector('.oos-picker'); if(picker) picker.id = 'sizeOutPicker';
+      (sp.closest('.full') || sp).insertAdjacentElement('afterend', wrap);
+    }
+  }
+
+  const oldRenderAdmin = window.renderAdmin;
+  window.renderAdmin = async function(){
+    let r; if(typeof oldRenderAdmin === 'function') r = await oldRenderAdmin.apply(this, arguments);
+    upgradeAddProductSizePickers();
+    return r;
+  };
+  window.addEventListener('load', () => setTimeout(upgradeAddProductSizePickers, 250));
+
+  window.productEditorHTML = function(raw){
+    const p = normalizeProduct(raw);
+    const photos = (Array.isArray(p.photos) && p.photos.length ? p.photos : [p.img]).filter(Boolean);
+    const main = Math.max(0, Math.min(Number(p.mainPhotoIndex || 0), Math.max(photos.length - 1, 0)));
+    const thumbs = photos.map((u,i)=>`<button type="button" class="admin-thumb ${i===main?'main':''}" onclick="this.closest('.product-editor').dataset.mainIndex='${i}';this.parentElement.querySelectorAll('.admin-thumb').forEach(x=>x.classList.remove('main'));this.classList.add('main')"><img src="${String(u).startsWith('data:') ? u : ''}" style="${String(u).startsWith('data:') ? '' : 'display:none'}"><span>${i===main?'Main photo':'Set as main'}</span></button>`).join('');
+    const opts = (arr,val) => arr.map(x => Array.isArray(x) ? `<option value="${safe(x[0])}" ${x[0]===val?'selected':''}>${safe(x[1])}</option>` : `<option ${x===val?'selected':''}>${safe(x)}</option>`).join('');
+    const home = p.displaySection || p.homeSection || (p.collection === 'New Arrivals' ? 'new-arrivals' : 'trending-now');
+    return `<div class="admin-form">
+      <div><label>Product name</label><input class="field edit-name" value="${safe(p.name || '')}"></div>
+      <div><label>Regular price</label><input class="field edit-price" type="number" step="0.01" value="${Number(p.price || 0)}"></div>
+      <div><label>Sale / price-drop price</label><input class="field edit-sale" type="number" step="0.01" value="${p.salePrice || ''}" placeholder="Optional"></div>
+      <div><label>Availability status</label><select class="field edit-status"><option value="in-stock" ${p.status==='in-stock'?'selected':''}>In stock</option><option value="coming-soon" ${p.status==='coming-soon'?'selected':''}>Coming soon</option><option value="out-of-stock" ${p.status==='out-of-stock'?'selected':''}>Out of stock</option></select></div>
+      <div><label>Product category</label><select class="field edit-category">${opts(['Dresses','Tops','Pants','Jackets','Accessories'], p.category || 'Tops')}</select></div>
+      <div><label>Collection</label><select class="field edit-collection">${opts(['Everyday Edit','Minimal Essentials','Evening Pieces','Accessories','Price Drops','New Arrivals'], p.collection || 'Everyday Edit')}</select></div>
+      <div><label>Homepage display section</label><select class="field edit-home-section">${opts([['trending-now','Trending Now'],['new-arrivals','New Arrivals']], home)}</select></div>
+      <div><label>Color</label><select class="field edit-color">${opts(['Black','White','Beige','Cream','Grey','Brown','Navy','Blue','Red','Pink','Green','Yellow','Print / Pattern','Multi-color'], (p.note||'').split(' · ')[0] || 'Black')}</select></div>
+      <div><label>Style note</label><select class="field edit-style">${opts(['Clean everyday piece','Elegant evening piece','Minimal essential','Soft feminine silhouette','Relaxed boutique fit','Premium casual look','Statement piece','Light summer piece','Structured tailored style'], (p.note||'').split(' · ')[1] || 'Clean everyday piece')}</select></div>
+      <div class="full"><label>Current photos</label><p class="muted">Click a photo to choose the main product image.</p><div class="photo-preview existing-photos">${thumbs || '<p class="muted">No photos yet.</p>'}</div><label style="margin-top:18px">Replace / add product gallery</label><div class="upload-zone"><input type="file" accept="image/*" multiple onchange="previewEditPhotos(event,'${String(p.id).replace(/'/g,"\\'")}')"><p><b>Upload multiple photos</b><br><span class="muted">Select several images at once. Then choose the main one.</span></p></div><div class="photo-preview" id="editPreview-${safe(p.id)}"></div></div>
+      <div class="full"><label>Product sizes</label><p class="field-help">Select every size that exists for this product.</p>${pillButtons(p.sizes, 'available-size-picker')}</div>
+      <div class="full admin-size-oos-wrap"><label>Out-of-stock sizes</label><p class="field-help">Only these sizes become grey, crossed, and unclickable for customers.</p>${pillButtons(p.outOfStockSizes, 'oos-picker edit-oos-picker')}</div>
+      <div class="full"><label>Description</label><textarea class="field edit-desc">${safe(p.desc || '')}</textarea></div>
+    </div><button class="btn" onclick="saveProductEditor('${String(p.id).replace(/'/g,"\\'")}')">SAVE PRODUCT CHANGES</button>`;
+  };
+
+  window.addProductAdmin = async function(){
+    const name = document.getElementById('pname')?.value.trim();
+    const price = Number(document.getElementById('pprice')?.value || 0);
+    if(!name || !price){ toast?.('Add a product name and price'); return; }
+    if(typeof loadSharedStore === 'function') await loadSharedStore();
+    if(window.nitaBackendOnline === false){ notify?.('Cannot add product: cloud database is offline.', false, true); return; }
+    const available = selectedPills(document, '#sizePicker .pill.on');
+    const out = selectedPills(document, '#sizeOutPicker .pill.on');
+    const sizes = uniqSizes([...available, ...out]);
+    const photos = (window.pendingAdminPhotos || []).slice();
+    const main = Math.max(0, Math.min(Number(window.pendingAdminMainIndex || 0), Math.max(photos.length - 1, 0)));
+    const saleRaw = document.getElementById('psale')?.value;
+    const color = document.getElementById('pcolor')?.value || 'Black';
+    const style = document.getElementById('pstyle')?.value || 'Clean everyday piece';
+    const section = document.getElementById('phome')?.value || 'trending-now';
+    const product = normalizeProduct({
+      id:'p' + Date.now(), name, price, salePrice:saleRaw===''?'':Number(saleRaw),
+      status:document.getElementById('pstatus')?.value || 'in-stock',
+      category:document.getElementById('pcat')?.value || 'Tops',
+      collection:document.getElementById('pcollection')?.value || 'Everyday Edit',
+      displaySection:section, homeSection:section, note:`${color} · ${style}`,
+      sizes:sizes.length ? sizes : ['One Size'], outOfStockSizes:out.filter(s => sizes.some(x=>keySize(x)===keySize(s))),
+      photos, mainPhotoIndex:main, img:photos[main] || photos[0] || 'linear-gradient(135deg,#fff,#ddd)',
+      desc:document.getElementById('pdesc')?.value.trim() || 'A carefully selected Italian-made piece for a clean, feminine wardrobe.'
+    });
+    const ps = allProducts(); ps.push(product);
+    const ok = await saveProducts(ps);
+    if(ok){
+      window.pendingAdminPhotos=[]; window.pendingAdminMainIndex=0;
+      ['pname','pprice','psale','pdesc'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+      document.querySelectorAll('#sizePicker .pill.on,#sizeOutPicker .pill.on').forEach(b=>b.classList.remove('on'));
+      const inp=document.getElementById('pphotos'); if(inp) inp.value='';
+      const prev=document.getElementById('photoPreview'); if(prev) prev.innerHTML='';
+      await loadSharedStore?.(); await window.renderAdmin?.(); toast?.('Product added globally.');
+    }
+  };
+
+  window.saveProductEditor = async function(id){
+    if(typeof loadSharedStore === 'function') await loadSharedStore();
+    if(window.nitaBackendOnline === false){ notify?.('Cannot save edit: cloud database is offline.', false, true); return; }
+    const ps = allProducts(); const p = ps.find(x => String(x.id) === String(id)); const root = document.getElementById('editor-' + id);
+    if(!p || !root) return;
+    const oldRegular = Number(p.price || 0); const entered = Number(root.querySelector('.edit-price')?.value || 0); const saleInput = root.querySelector('.edit-sale')?.value;
+    p.name = root.querySelector('.edit-name')?.value.trim() || p.name;
+    if(saleInput === ''){ if(entered > 0 && entered < oldRegular){ p.salePrice = entered; p.price = oldRegular; } else { p.price = entered; p.salePrice = ''; } }
+    else { p.price = entered; p.salePrice = Number(saleInput); }
+    p.status = root.querySelector('.edit-status')?.value || p.status || 'in-stock'; p.soldOut = p.status === 'out-of-stock';
+    p.category = root.querySelector('.edit-category')?.value || p.category; p.collection = root.querySelector('.edit-collection')?.value || p.collection;
+    p.displaySection = root.querySelector('.edit-home-section')?.value || p.displaySection || 'trending-now'; p.homeSection = p.displaySection;
+    const color = root.querySelector('.edit-color')?.value || 'Black'; const style = root.querySelector('.edit-style')?.value || 'Clean everyday piece'; p.note = `${color} · ${style}`;
+    const available = selectedPills(root, '.available-size-picker .pill.on'); const out = selectedPills(root, '.oos-picker .pill.on');
+    p.sizes = uniqSizes([...available, ...out]); if(!p.sizes.length) p.sizes = ['One Size'];
+    p.outOfStockSizes = out.filter(s => p.sizes.some(x => keySize(x) === keySize(s)));
+    p.desc = root.querySelector('.edit-desc')?.value.trim() || '';
+    if(window.editingPhotoBuffers?.[id]?.length){ p.photos = window.editingPhotoBuffers[id]; p.mainPhotoIndex = Number(window.editingMainPhotoIndex?.[id] || 0); p.img = p.photos[p.mainPhotoIndex] || p.photos[0]; delete window.editingPhotoBuffers[id]; delete window.editingMainPhotoIndex[id]; }
+    else if(root.dataset.mainIndex !== undefined){ const ph = (Array.isArray(p.photos) && p.photos.length ? p.photos : [p.img]).filter(Boolean); p.mainPhotoIndex = Number(root.dataset.mainIndex) || 0; p.img = ph[p.mainPhotoIndex] || ph[0] || p.img; }
+    normalizeProduct(p);
+    const ok = await saveProducts(ps);
+    if(ok){ await loadSharedStore?.(); await window.renderAdmin?.(); toast?.('Product updated globally.'); }
+  };
+
+  function customerSizeButtons(p, context){
+    p = normalizeProduct(p);
+    const firstAvailable = p.sizes.find(s => !isSizeOut(p,s)) || '';
+    if(context === 'quick') window.quickSelectedSize = (!isSizeOut(p, window.quickSelectedSize) && p.sizes.some(s=>keySize(s)===keySize(window.quickSelectedSize))) ? window.quickSelectedSize : firstAvailable;
+    else window.selectedSize = (!isSizeOut(p, window.selectedSize) && p.sizes.some(s=>keySize(s)===keySize(window.selectedSize))) ? window.selectedSize : firstAvailable;
+    const selected = context === 'quick' ? window.quickSelectedSize : window.selectedSize;
+    return p.sizes.map(s => {
+      const oos = isSizeOut(p,s); const active = !oos && keySize(s) === keySize(selected);
+      const click = context === 'quick' ? `quickSelectedSize='${safe(s)}'` : `selectedSize='${safe(s)}'; productPage()`;
+      return `<button type="button" class="size ${active?'active':''} ${oos?'size-disabled':''}" ${oos?'disabled aria-disabled="true" title="Out of stock"':`onclick="${click}; this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active')); this.classList.add('active')"`}>${safe(s)}</button>`;
+    }).join('');
+  }
+
+  const oldAddToCart = window.addToCart;
+  window.addToCart = function(id, size='One Size'){
+    const p = normalizeProduct(allProducts().find(x => String(x.id) === String(id)) || {});
+    if(p.status !== 'in-stock'){ toast?.('This product is not available yet.'); return; }
+    if(isSizeOut(p, size)){ toast?.('This size is out of stock.'); return; }
+    return oldAddToCart ? oldAddToCart(id, size) : undefined;
+  };
+
+  window.productPage = function(){
+    const detail = document.getElementById('detail'); if(!detail) return;
+    const id = new URL(location.href).searchParams.get('id'); const p = normalizeProduct(allProducts().find(x => String(x.id) === String(id)) || allProducts()[0]);
+    if(!p?.id){ detail.innerHTML = '<div class="card"><h1>Product not found</h1><a class="btn" href="shop.html">BACK TO SHOP</a></div>'; return; }
+    const im = typeof productImagesForDisplay === 'function' ? productImagesForDisplay(p) : {all:[p.img || 'linear-gradient(135deg,#fff,#ddd)']};
+    window.selectedPhoto = Math.max(0, Math.min(Number(window.selectedPhoto || 0), im.all.length - 1));
+    const sizeHtml = customerSizeButtons(p, 'page');
+    const sizeOos = !window.selectedSize || isSizeOut(p, window.selectedSize);
+    const canBuy = p.status === 'in-stock' && !sizeOos;
+    const action = canBuy ? `<button class="btn" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}', selectedSize || 'One Size')">ADD TO CART</button><a class="btn light" href="checkout.html">BUY NOW</a>` : `<button class="btn disabled" disabled aria-disabled="true">${p.status==='coming-soon'?'COMING SOON':(p.status==='out-of-stock'?'OUT OF STOCK':'SIZE OUT OF STOCK')}</button><button class="notify-btn" type="button" onclick="notifyMe&&notifyMe('${String(p.id).replace(/'/g,"\\'")}')">NOTIFY ME</button>`;
+    detail.innerHTML = `<div class="product-media"><div class="detail-img" style="${cssBg(im.all[window.selectedPhoto])}"></div><div class="product-thumbs">${im.all.map((ph,i)=>`<button class="${i===window.selectedPhoto?'active':''}" onclick="selectedPhoto=${i};productPage()" style="${cssBg(ph)}"></button>`).join('')}</div></div><div class="product-info"><p class="muted">${safe(p.category || '')}</p><h1>${safe(p.name || 'Product')}</h1>${typeof productPriceStatusRow === 'function' ? productPriceStatusRow(p,'h2') : `<h2>${moneySafe(p.salePrice || p.price)}</h2>`}<p>${safe(p.desc || '')}</p><div class="sizes product-size-list">${sizeHtml}</div><div class="product-actions">${action}</div><hr><p class="muted">Cash on delivery available. Online payment will be available soon.</p></div>`;
+  };
+
+  window.openQuickView = function(id){
+    const p = normalizeProduct(allProducts().find(x => String(x.id) === String(id))); if(!p?.id) return false;
+    const m = document.getElementById('quickModal'); const q = document.getElementById('quickContent'); if(!m || !q) return false;
+    const im = typeof productImagesForDisplay === 'function' ? productImagesForDisplay(p) : {first:p.img || 'linear-gradient(135deg,#fff,#ddd)'};
+    const sizeHtml = customerSizeButtons(p, 'quick');
+    const canBuy = p.status === 'in-stock' && window.quickSelectedSize && !isSizeOut(p, window.quickSelectedSize);
+    const action = canBuy ? `<button class="btn" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}', quickSelectedSize || 'One Size'); closeQuickView()">ADD TO CART</button>` : `<button class="btn disabled" disabled aria-disabled="true">${p.status==='coming-soon'?'COMING SOON':(p.status==='out-of-stock'?'OUT OF STOCK':'SIZE OUT OF STOCK')}</button><button class="notify-btn" type="button" onclick="notifyMe&&notifyMe('${String(p.id).replace(/'/g,"\\'")}')">NOTIFY ME</button>`;
+    q.innerHTML = `<div class="quick-grid"><div class="quick-image" style="${cssBg(im.first)}"></div><div class="quick-info"><p class="muted">${safe(p.category || '')}</p><h2>${safe(p.name || 'Product')}</h2>${typeof productPriceStatusRow === 'function' ? productPriceStatusRow(p,'h3') : `<h3>${moneySafe(p.salePrice || p.price)}</h3>`}<p>${safe(p.desc || '')}</p><div class="sizes">${sizeHtml}</div>${action}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div></div>`;
+    m.classList.add('open'); m.setAttribute('aria-hidden','false'); document.body.classList.add('quick-open','panel-open'); return false;
+  };
+
+  function homeSection(p){ return p.displaySection || p.homeSection || (p.collection === 'New Arrivals' ? 'new-arrivals' : 'trending-now'); }
+  function kickMarquee(id){
+    const el = document.getElementById(id); if(!el) return;
+    el.style.animation = 'none'; void el.offsetWidth;
+    el.style.animation = 'nitaAlwaysScroll 42s linear infinite';
+  }
+  window.renderHomeSections = function(){
+    const ps = allProducts().map(normalizeProduct);
+    const fill = (id, list) => { const box = document.getElementById(id); if(!box) return; const arr = list.length ? list : ps.slice(0,6); box.innerHTML = [...arr,...arr,...arr,...arr].map(p => productCard(p)).join('') || '<p class="muted">No products listed yet.</p>'; requestAnimationFrame(()=>kickMarquee(id)); };
+    fill('trendingMarquee', ps.filter(p => homeSection(p) === 'trending-now'));
+    fill('newArrivalsMarquee', ps.filter(p => homeSection(p) === 'new-arrivals'));
+  };
+  function bootHome(){ if(document.getElementById('trendingMarquee') || document.getElementById('newArrivalsMarquee')){ window.renderHomeSections(); setTimeout(()=>{kickMarquee('trendingMarquee'); kickMarquee('newArrivalsMarquee');}, 250); setTimeout(()=>{kickMarquee('trendingMarquee'); kickMarquee('newArrivalsMarquee');}, 1200); } }
+  window.addEventListener('DOMContentLoaded', bootHome);
+  window.addEventListener('load', bootHome);
+  window.addEventListener('nita-store-ready', bootHome);
+})();
+/* === END FINAL CRITICAL FIX === */
