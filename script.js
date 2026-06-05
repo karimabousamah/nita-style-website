@@ -2317,3 +2317,453 @@ placeOrder=async function(){
   window.addEventListener('nita-store-ready', bootHome);
 })();
 /* === END FINAL CRITICAL FIX === */
+
+/* === FINAL FIX: reliable homepage auto-scroll, product deletion, and $7 Aramex delivery === */
+(function(){
+  const DELIVERY_FEE = 7;
+  const DEFAULTS = (typeof defaultProducts !== 'undefined' && Array.isArray(defaultProducts)) ? defaultProducts : [];
+  const safeJSON = (key, fallback) => {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    try { return JSON.parse(raw); } catch { return fallback; }
+  };
+  const norm = (p) => typeof normalizeProduct === 'function' ? normalizeProduct(p) : (typeof normalizeProductStatus === 'function' ? normalizeProductStatus(p) : p);
+
+  // Important: if nitaProducts exists and is [], respect the empty list. Do not bring default items back.
+  window.getProducts = function(){
+    const raw = localStorage.getItem('nitaProducts');
+    let list;
+    if (raw !== null) {
+      try { list = JSON.parse(raw); } catch { list = []; }
+    } else {
+      list = DEFAULTS;
+    }
+    if (!Array.isArray(list)) list = [];
+    return list.map(p => norm({...p}));
+  };
+
+  window.saveProducts = async function(products){
+    const clean = (Array.isArray(products) ? products : []).map(p => norm({...p}));
+    localStorage.setItem('nitaProducts', JSON.stringify(clean));
+    try {
+      if (typeof saveCloudKey === 'function') await saveCloudKey('nitaProducts', clean);
+      else if (typeof nitaSaveKeyStrict === 'function') await nitaSaveKeyStrict('nitaProducts', clean);
+      if (typeof notify === 'function') notify('Saved globally. This update will appear on every device.');
+      else if (typeof toast === 'function') toast('Saved globally.');
+      return true;
+    } catch (err) {
+      console.error('Product cloud save failed:', err);
+      if (typeof notify === 'function') notify('Not saved globally: '+(err.message || err), false, true);
+      else if (typeof toast === 'function') toast('Not saved globally.');
+      return false;
+    }
+  };
+
+  window.removeProduct = async function(id){
+    if (!confirm('Remove this product from the website?')) return;
+    if (typeof loadSharedStore === 'function') { try { await loadSharedStore(); } catch(e){} }
+    const next = getProducts().filter(p => String(p.id) !== String(id));
+    const ok = await saveProducts(next);
+    if (ok) {
+      localStorage.setItem('nitaProducts', JSON.stringify(next));
+      if (typeof renderAdmin === 'function') await renderAdmin();
+      if (typeof renderHomeSections === 'function') renderHomeSections();
+      if (typeof renderProducts === 'function') renderProducts();
+      if (typeof toast === 'function') toast('Product removed globally.');
+    }
+  };
+
+  function homeSectionOf(p){
+    return p.displaySection || p.homeSection || (p.collection === 'New Arrivals' ? 'new-arrivals' : 'trending-now');
+  }
+
+  function cardFor(p){
+    if (typeof productCard === 'function') return productCard(p);
+    return `<a class="product" href="product.html?id=${encodeURIComponent(p.id)}"><div class="product-img"></div><h3>${p.name||'Product'}</h3></a>`;
+  }
+
+  const marqueeState = new WeakMap();
+  function startMarquee(track, speed){
+    if (!track) return;
+    const old = marqueeState.get(track);
+    if (old && old.raf) cancelAnimationFrame(old.raf);
+    track.style.animation = 'none';
+    track.style.transform = 'translate3d(0,0,0)';
+    track.style.willChange = 'transform';
+    track.dataset.autoMarquee = 'true';
+    let x = 0;
+    let last = performance.now();
+    const tick = (now) => {
+      const dt = Math.min(40, now - last); last = now;
+      const half = track.scrollWidth / 2;
+      if (half > 20) {
+        x = (x + speed * dt / 16.67) % half;
+        track.style.transform = `translate3d(${-x}px,0,0)`;
+      }
+      const state = marqueeState.get(track); if (state) state.raf = requestAnimationFrame(tick);
+    };
+    marqueeState.set(track, {raf: requestAnimationFrame(tick)});
+  }
+
+  window.renderHomeSections = function(){
+    const ps = getProducts();
+    const fill = (id, list) => {
+      const box = document.getElementById(id); if (!box) return;
+      const source = (list && list.length) ? list : ps.slice(0, 6);
+      if (!source.length) { box.innerHTML = '<p class="muted">No products listed yet.</p>'; return; }
+      // Duplicate enough times so the animation is seamless on laptop, tablet, and phone.
+      box.innerHTML = [...source, ...source, ...source, ...source, ...source, ...source].map(cardFor).join('');
+      requestAnimationFrame(() => startMarquee(box, window.innerWidth <= 760 ? 0.34 : 0.42));
+    };
+    fill('trendingMarquee', ps.filter(p => homeSectionOf(p) === 'trending-now'));
+    fill('newArrivalsMarquee', ps.filter(p => homeSectionOf(p) === 'new-arrivals'));
+  };
+
+  function bootHomeMarquee(){
+    if (document.getElementById('trendingMarquee') || document.getElementById('newArrivalsMarquee')) {
+      if (typeof loadSharedStore === 'function') {
+        loadSharedStore().finally(() => {
+          renderHomeSections();
+          setTimeout(renderHomeSections, 350);
+          setTimeout(renderHomeSections, 1200);
+        });
+      } else {
+        renderHomeSections();
+        setTimeout(renderHomeSections, 350);
+      }
+    }
+  }
+  window.addEventListener('DOMContentLoaded', bootHomeMarquee);
+  window.addEventListener('load', bootHomeMarquee);
+  window.addEventListener('nita-store-ready', bootHomeMarquee);
+  window.addEventListener('resize', () => setTimeout(() => { if (typeof renderHomeSections === 'function') renderHomeSections(); }, 150));
+
+  function line(label, amount, cls=''){
+    const m = typeof money === 'function' ? money(amount) : ('$'+Number(amount||0).toFixed(2));
+    return `<div class="summary-line ${cls}"><span>${label}</span><b>${m}</b></div>`;
+  }
+  function couponState(subtotal){
+    const form = document.getElementById('checkoutForm');
+    const code = (form?.querySelector('[name="coupon"]')?.value || '').trim().toUpperCase();
+    let discount = 0, message = '';
+    const applied = window.appliedCouponCode || localStorage.getItem('nitaAppliedCoupon') || '';
+    if (applied && code && applied === code) {
+      const coupons = safeJSON('nitaCoupons', []);
+      const found = (coupons || []).find(c => String(c.code||'').toUpperCase() === code);
+      const percent = found ? Number(found.percent || found.discount || 0) : (code === 'NITA10' ? 10 : 0);
+      if (percent > 0) { discount = subtotal * percent / 100; message = `<div class="summary-line discount-line"><span>Discount ${code}</span><b>-${typeof money==='function'?money(discount):('$'+discount.toFixed(2))}</b></div>`; }
+    }
+    return {discount, message};
+  }
+
+  window.renderCheckoutSummary = function(){
+    const box = document.getElementById('checkoutSummary'); if (!box) return;
+    const ps = getProducts();
+    let subtotal = 0;
+    const items = (cart && cart.length) ? cart.map(i => {
+      const p = ps.find(x => String(x.id) === String(i.id));
+      const unit = Number(p?.salePrice || p?.price || 0);
+      subtotal += unit * Number(i.qty || 1);
+      return `<div class="summary-line"><span><b>${p?.name || 'Product'}</b><br><span class="muted">${i.size || ''} × ${i.qty || 1}</span></span><span>${typeof money==='function'?money(unit * Number(i.qty || 1)):('$'+(unit*Number(i.qty||1)).toFixed(2))}</span></div>`;
+    }).join('') : '<p class="muted">Your cart is empty.</p>';
+    const c = couponState(subtotal);
+    const total = Math.max(0, subtotal - c.discount) + DELIVERY_FEE;
+    box.innerHTML = items + '<hr>' + line('Subtotal', subtotal) + c.message + line('Aramex delivery fee', DELIVERY_FEE) + `<p class="delivery-note">Delivery all over Lebanon in 2–3 business days.</p>` + line('Total', total, 'summary-total');
+  };
+
+  const oldApplyCoupon = window.applyCouponCode;
+  window.applyCouponCode = async function(){
+    if (oldApplyCoupon) await oldApplyCoupon();
+    renderCheckoutSummary();
+  };
+
+  const oldPlaceOrder = window.placeOrder;
+  window.placeOrder = async function(){
+    const formEl = document.getElementById('checkoutForm');
+    if (typeof validateCheckoutRequired === 'function' && !validateCheckoutRequired()) return;
+    if (!formEl) return oldPlaceOrder ? oldPlaceOrder() : undefined;
+    const form = new FormData(formEl);
+    const ps = getProducts();
+    let subtotal = 0;
+    const items = (cart || []).map(i => {
+      const p = ps.find(x => String(x.id) === String(i.id));
+      const unit = Number(p?.salePrice || p?.price || 0); subtotal += unit * Number(i.qty || 1);
+      return {...i, name:p?.name || 'Product', price:unit};
+    });
+    const c = couponState(subtotal);
+    const total = Math.max(0, subtotal - c.discount) + DELIVERY_FEE;
+    const orders = safeJSON('nitaOrders', []);
+    const order = {
+      id:'NS'+Date.now(), date:new Date().toLocaleString(), customer:form.get('name'), email:form.get('email'), phone:form.get('phone'),
+      address:{city:form.get('city'),street:form.get('street'),building:form.get('building'),floor:form.get('floor'),apartment:form.get('apartment'),landmark:form.get('landmark'),preferredTime:form.get('preferredTime'),notes:form.get('notes')},
+      payment:'Cash on delivery', deliveryMethod:'Aramex', deliveryFee:DELIVERY_FEE, deliveryTime:'2–3 business days across Lebanon', status:'Order submitted', items, subtotal, discount:c.discount, total
+    };
+    orders.push(order);
+    localStorage.setItem('nitaOrders', JSON.stringify(orders));
+    try { if (typeof saveCloudKey === 'function') await saveCloudKey('nitaOrders', orders); } catch(e){ console.warn(e); }
+    cart = []; saveCart(); location.href='order-success.html';
+  };
+
+  function patchCheckoutText(){
+    const form = document.getElementById('checkoutForm'); if (!form) return;
+    const pay = document.querySelector('.coming-soon-pay');
+    if (pay) pay.textContent = 'Online payment will be available soon.';
+    if (!document.querySelector('.delivery-mini-note')) {
+      const note = document.createElement('p');
+      note.className = 'delivery-mini-note muted';
+      note.textContent = 'Aramex delivery across Lebanon · $7 delivery fee · 2–3 business days.';
+      form.querySelector('h3')?.insertAdjacentElement('afterend', note);
+    }
+    renderCheckoutSummary();
+  }
+  window.addEventListener('DOMContentLoaded', patchCheckoutText);
+  window.addEventListener('load', patchCheckoutText);
+})();
+/* === END FINAL FIX === */
+
+/* === CART QUANTITY + INVENTORY + ORDER ROADMAP FINAL PATCH === */
+(function(){
+  const DELIVERY_FEE_FINAL = 7;
+  const moneyFinal = (n)=> (typeof money==='function'?money(n):('$'+Number(n||0).toFixed(2)));
+  const read = (k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f))}catch(e){return f}};
+  const write = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  const productsNow = ()=> (typeof getProducts==='function'?getProducts():read('nitaProducts',[]));
+  const saveProductsNow = async (ps)=>{write('nitaProducts',ps); try{ if(typeof saveProducts==='function') await saveProducts(ps); else if(typeof saveCloudKey==='function') await saveCloudKey('nitaProducts',ps);}catch(e){console.warn(e)} };
+  const primaryImg = (p)=>{try{return productMainImage(p)}catch(e){return (p?.photos?.[p.mainPhotoIndex||0] || p?.photos?.[0] || p?.img || 'linear-gradient(135deg,#fff,#ddd)')}};
+  const bgStyle = (url)=> String(url||'').startsWith('data:') ? `background-image:url(${url})` : `background:${url||'linear-gradient(135deg,#fff,#ddd)'}`;
+  const unitPrice = (p,i)=> Number(p?.salePrice || p?.price || i?.price || 0);
+  const itemName = (p,i)=> p?.name || i?.name || 'Product';
+  const itemPhoto = (p,i)=> primaryImg(p) || i?.photo || i?.img || 'linear-gradient(135deg,#fff,#ddd)';
+  const productQuantity = (p)=> p && p.quantity!==undefined && p.quantity!=='' && !Number.isNaN(Number(p.quantity)) ? Number(p.quantity) : null;
+
+  window.changeCartQty = function(index, delta){
+    cart = read('nitaCart',[]);
+    const item = cart[index]; if(!item) return;
+    const p = productsNow().find(x=>String(x.id)===String(item.id));
+    const max = productQuantity(p);
+    const next = Number(item.qty||1) + Number(delta||0);
+    if(next <= 0){ cart.splice(index,1); }
+    else if(max!==null && next > max){ if(typeof toast==='function') toast(`Only ${max} piece${max===1?'':'s'} available.`); return; }
+    else item.qty = next;
+    if(typeof saveCart==='function') saveCart(); else write('nitaCart',cart);
+    if(typeof renderCartPanel==='function') renderCartPanel();
+    if(typeof renderFullCart==='function') renderFullCart();
+    if(typeof renderCheckoutSummary==='function') renderCheckoutSummary();
+  };
+
+  window.renderCartPanel = function(){
+    const box=document.getElementById('cartItems'); if(!box) return;
+    cart = read('nitaCart',[]);
+    if(!cart.length){ box.innerHTML='<p class="muted">Your cart is empty.</p>'; if(typeof updateCartCount==='function')updateCartCount(); return; }
+    const ps=productsNow(); let total=0;
+    box.innerHTML = cart.map((i,idx)=>{
+      const p=ps.find(x=>String(x.id)===String(i.id)); const unit=unitPrice(p,i); const qty=Number(i.qty||1); total += unit*qty;
+      const img=itemPhoto(p,i);
+      return `<div class="cart-line"><span class="cart-thumb" style="${bgStyle(img)}"></span><div class="cart-copy"><b>${itemName(p,i)}</b><br><span class="muted">${i.size||''}</span><div class="qty-stepper" aria-label="Quantity selector"><button type="button" onclick="changeCartQty(${idx},-1)">−</button><span>${qty}</span><button type="button" onclick="changeCartQty(${idx},1)">+</button></div><strong>${moneyFinal(unit*qty)}</strong></div><button class="cart-remove" type="button" aria-label="Remove item" onclick="cart=JSON.parse(localStorage.getItem('nitaCart')||'[]');cart.splice(${idx},1);saveCart();renderCartPanel();">×</button></div>`;
+    }).join('') + `<div class="cart-total-line"><span>Subtotal</span><b>${moneyFinal(total)}</b></div><a class="btn cart-checkout-btn" href="checkout.html">CHECKOUT</a>`;
+    if(typeof updateCartCount==='function')updateCartCount();
+  };
+
+  window.renderFullCart = function(){
+    const root=document.getElementById('fullCart'); if(!root) return;
+    let temp=document.getElementById('cartItems');
+    if(!temp){temp=document.createElement('div'); temp.id='cartItems'; temp.style.display='none'; document.body.appendChild(temp)}
+    renderCartPanel();
+    root.innerHTML=temp.innerHTML;
+  };
+
+  window.addToCart = function(id,size='M'){
+    const ps=productsNow(); const p=ps.find(x=>String(x.id)===String(id));
+    if(!p){ if(typeof toast==='function') toast('Product not found.'); return; }
+    const status = (typeof productStatusValue==='function'?productStatusValue(p):(p.status||'in-stock'));
+    if(status!=='in-stock'){ if(typeof toast==='function') toast('This product is not available yet.'); return; }
+    if(typeof isOOS==='function' && isOOS(p,size)){ if(typeof toast==='function') toast('This size is out of stock.'); return; }
+    cart = read('nitaCart',[]);
+    const existing=cart.find(i=>String(i.id)===String(id) && String(i.size)===String(size));
+    const max=productQuantity(p);
+    const newQty=(existing?Number(existing.qty||1):0)+1;
+    if(max!==null && newQty>max){ if(typeof toast==='function') toast(`Only ${max} piece${max===1?'':'s'} available.`); return; }
+    if(existing) existing.qty=newQty;
+    else cart.push({id:p.id,size,qty:1,name:p.name,price:unitPrice(p),photo:primaryImg(p)});
+    if(typeof saveCart==='function') saveCart(); else write('nitaCart',cart);
+    if(typeof renderCartPanel==='function') renderCartPanel();
+    if(typeof toast==='function') toast('Added to cart');
+  };
+
+  window.renderCheckoutSummary = function(){
+    const box=document.getElementById('checkoutSummary'); if(!box) return;
+    cart=read('nitaCart',[]); const ps=productsNow(); let subtotal=0;
+    const rows = cart.length ? cart.map(i=>{
+      const p=ps.find(x=>String(x.id)===String(i.id)); const qty=Number(i.qty||1); const unit=unitPrice(p,i); subtotal+=unit*qty;
+      return `<div class="summary-line"><span><b>${itemName(p,i)}</b><br><span class="muted">${i.size||''} × ${qty}</span></span><span>${moneyFinal(unit*qty)}</span></div>`;
+    }).join('') : '<p class="muted">Your cart is empty.</p>';
+    let discount=0, msg='';
+    try{const c=typeof couponState==='function'?couponState(subtotal):{discount:0,message:''}; discount=Number(c.discount||0); msg=c.message||'';}catch(e){}
+    const total=Math.max(0,subtotal-discount)+DELIVERY_FEE_FINAL;
+    box.innerHTML = rows + '<hr>' + `<div class="summary-line"><span>Subtotal</span><b>${moneyFinal(subtotal)}</b></div>` + msg + `<div class="summary-line"><span>Aramex delivery fee</span><b>${moneyFinal(DELIVERY_FEE_FINAL)}</b></div><p class="delivery-note">Delivery all over Lebanon in 2–3 business days.</p><div class="summary-line summary-total"><span>Total</span><b>${moneyFinal(total)}</b></div>`;
+  };
+
+  window.placeOrder = async function(){
+    const formEl=document.getElementById('checkoutForm');
+    if(typeof validateCheckoutForm==='function' && !validateCheckoutForm()) return;
+    if(typeof validateCheckoutRequired==='function' && !validateCheckoutRequired()) return;
+    if(!formEl) return;
+    cart=read('nitaCart',[]); if(!cart.length){ if(typeof toast==='function') toast('Your cart is empty.'); return; }
+    const form=new FormData(formEl); const ps=productsNow(); let subtotal=0; const items=[];
+    for(const i of cart){
+      const p=ps.find(x=>String(x.id)===String(i.id)); const qty=Number(i.qty||1); const max=productQuantity(p);
+      if(!p){ if(typeof toast==='function') toast('A product in your cart is no longer available.'); return; }
+      if(max!==null && qty>max){ if(typeof toast==='function') toast(`${p.name} has only ${max} piece${max===1?'':'s'} left.`); return; }
+      const unit=unitPrice(p,i); subtotal+=unit*qty; items.push({id:p.id,name:p.name,size:i.size,qty,price:unit,total:unit*qty});
+    }
+    let discount=0; try{discount=Number((typeof couponState==='function'?couponState(subtotal):{}).discount||0)}catch(e){}
+    const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:form.get('name'),email:String(form.get('email')||'').toLowerCase(),phone:form.get('phone'),address:{city:form.get('city'),street:form.get('street'),building:form.get('building'),floor:form.get('floor'),apartment:form.get('apartment'),landmark:form.get('landmark'),preferredTime:form.get('preferredTime'),notes:form.get('notes')},payment:'Cash on delivery',deliveryMethod:'Aramex',deliveryFee:DELIVERY_FEE_FINAL,deliveryTime:'2–3 business days across Lebanon',status:'Order submitted',items,subtotal,discount,total:Math.max(0,subtotal-discount)+DELIVERY_FEE_FINAL};
+    const orders=read('nitaOrders',[]); orders.push(order); write('nitaOrders',orders);
+    // decrease private admin stock quantity after order submission
+    for(const item of items){
+      const p=ps.find(x=>String(x.id)===String(item.id)); if(!p) continue;
+      if(productQuantity(p)!==null){ p.quantity=Math.max(0,Number(p.quantity||0)-Number(item.qty||0)); if(p.quantity<=0){p.status='out-of-stock';p.soldOut=true;} }
+    }
+    await saveProductsNow(ps);
+    try{ if(typeof saveCloudKey==='function') await saveCloudKey('nitaOrders',orders); }catch(e){console.warn(e)}
+    cart=[]; if(typeof saveCart==='function') saveCart(); else write('nitaCart',cart);
+    location.href='order-success.html';
+  };
+
+  function ensureAdminQuantityField(){
+    const price=document.getElementById('pprice'); if(!price || document.getElementById('pquantity')) return;
+    const wrap=document.createElement('div');
+    wrap.innerHTML=`<label>Private quantity in stock</label><input id="pquantity" class="field" type="number" min="0" step="1" placeholder="Example: 15"><p class="field-help">Only admin sees this number. It decreases automatically after orders.</p>`;
+    price.closest('div')?.insertAdjacentElement('afterend',wrap);
+  }
+  const oldAddProductAdmin = window.addProductAdmin;
+  window.addProductAdmin = async function(){
+    if(!document.getElementById('pquantity')) ensureAdminQuantityField();
+    const qty = document.getElementById('pquantity')?.value;
+    await (oldAddProductAdmin ? oldAddProductAdmin() : undefined);
+    if(qty!==undefined && qty!==''){
+      const ps=productsNow(); const newest=ps[ps.length-1]; if(newest){newest.quantity=Number(qty); await saveProductsNow(ps);}
+      if(document.getElementById('pquantity')) document.getElementById('pquantity').value='';
+    }
+  };
+  const oldRenderAdmin = window.renderAdmin;
+  window.renderAdmin = function(){ if(oldRenderAdmin) oldRenderAdmin(); ensureAdminQuantityField(); document.querySelectorAll('.admin-product-card').forEach(card=>{
+      const id=(card.id||'').replace('edit-',''); const p=productsNow().find(x=>String(x.id)===String(id));
+      const info=card.querySelector('.admin-product-name')?.parentElement; if(info && p && !info.querySelector('.admin-private-qty')) info.insertAdjacentHTML('beforeend',`<div class="admin-private-qty">Private stock: ${p.quantity!==undefined&&p.quantity!==''?p.quantity:'Not set'}</div>`);
+    }); };
+
+  const oldProductEditorHTML = window.productEditorHTML;
+  window.productEditorHTML = function(p){
+    let html=oldProductEditorHTML ? oldProductEditorHTML(p) : '';
+    const q=`<div><label>Private quantity in stock</label><input class="field edit-quantity" type="number" min="0" step="1" value="${p.quantity!==undefined&&p.quantity!==''?p.quantity:''}" placeholder="Example: 15"><p class="field-help">Only admin sees this number. It decreases automatically after orders.</p></div>`;
+    if(html && !html.includes('edit-quantity')) html=html.replace(/<div><label>Regular price<\/label>/, q+'<div><label>Regular price</label>');
+    return html;
+  };
+  const oldSaveProductEditor = window.saveProductEditor;
+  window.saveProductEditor = async function(id){
+    const root=document.getElementById('editor-'+String(id).replace(/[^a-zA-Z0-9_-]/g,'')) || document.getElementById('editor-'+id);
+    const qty=root?.querySelector('.edit-quantity')?.value;
+    if(oldSaveProductEditor) await oldSaveProductEditor(id);
+    if(qty!==undefined){const ps=productsNow(); const p=ps.find(x=>String(x.id)===String(id)); if(p){p.quantity=qty===''?'':Number(qty); await saveProductsNow(ps); if(typeof renderAdmin==='function') renderAdmin();}}
+  };
+
+  // Make account order roadmaps readable on phone/tablet.
+  window.addEventListener('load',()=>{ensureAdminQuantityField(); if(document.getElementById('checkoutSummary')) renderCheckoutSummary();});
+  window.addEventListener('DOMContentLoaded',()=>{ensureAdminQuantityField(); if(document.getElementById('checkoutSummary')) setTimeout(renderCheckoutSummary,150);});
+})();
+/* === END CART QUANTITY + INVENTORY + ORDER ROADMAP FINAL PATCH === */
+
+/* === LOW STOCK AUTOMATIC STATUS FINAL PATCH === */
+(function(){
+  const STATUS_LABELS={
+    'in-stock':'In stock',
+    'low-stock':'Low in stock',
+    'coming-soon':'Coming soon',
+    'out-of-stock':'Out of stock'
+  };
+  const esc=(v)=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const read=(k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f))}catch(e){return f}};
+  const write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  const products=()=>{try{return typeof getProducts==='function'?getProducts():read('nitaProducts',[])}catch(e){return read('nitaProducts',[])}};
+  const saveProducts=async(ps)=>{write('nitaProducts',ps);try{if(typeof saveCloudKey==='function')await saveCloudKey('nitaProducts',ps);else if(window.saveProducts)await window.saveProducts(ps)}catch(e){console.warn(e)}};
+  const qtyNum=(v)=>v!==undefined&&v!==null&&v!==''&&!Number.isNaN(Number(v))?Number(v):null;
+  function ensureInitialQuantity(p){
+    const q=qtyNum(p?.quantity);
+    if(!p || q===null) return p;
+    const initial=qtyNum(p.initialQuantity);
+    if(initial===null || q>initial) p.initialQuantity=q;
+    return p;
+  }
+  function statusOf(p){
+    if(!p) return 'in-stock';
+    const manual=String(p.status||'in-stock');
+    const q=qtyNum(p.quantity); const initial=qtyNum(p.initialQuantity);
+    if(manual==='coming-soon') return 'coming-soon';
+    if(manual==='out-of-stock' || p.soldOut || q===0) return 'out-of-stock';
+    if(q!==null && initial!==null && initial>0 && q>0 && q<=initial*0.5) return 'low-stock';
+    return 'in-stock';
+  }
+  function normalize(p){
+    p=p||{}; ensureInitialQuantity(p); p.status=statusOf(p); p.soldOut=p.status==='out-of-stock';
+    if(!Array.isArray(p.sizes)||!p.sizes.length)p.sizes=['One Size'];
+    if(!Array.isArray(p.photos))p.photos=p.img&&String(p.img).startsWith('data:')?[p.img]:[];
+    p.mainPhotoIndex=Number(p.mainPhotoIndex||0);
+    return p;
+  }
+  window.productStatusValue=statusOf;
+  window.normalizeProductStatus=normalize;
+  window.stockStatusHtml=function(status){
+    status=status||'in-stock';
+    return `<span class="stock-status ${esc(status)}"><span class="stock-dot"></span><span>${STATUS_LABELS[status]||'In stock'}</span></span>`;
+  };
+  window.productPriceStatusRow=function(raw,tag='p'){
+    const p=normalize(raw);
+    const sale=p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price);
+    const price=sale?`<span class="muted old-price">${money(p.price)}</span><span class="price-drop">${money(p.salePrice)}</span>`:money(p.price||0);
+    return `<div class="product-price-row"><${tag} class="price-line">${price}</${tag}>${stockStatusHtml(p.status)}</div>`;
+  };
+  function mainImg(p){try{return productMainImage(p)}catch(e){return p?.photos?.[p.mainPhotoIndex||0]||p?.photos?.[0]||p?.img||'linear-gradient(135deg,#fff,#ddd)'}}
+  function imgs(p){try{return productImagesForDisplay(p)}catch(e){const first=mainImg(p);return{first,second:first,all:[first]}}}
+  function bg(u){try{return typeof cssBgImage==='function'?cssBgImage(u):(String(u||'').startsWith('data:')?`background-image:url(${u})`:`background:${u||'linear-gradient(135deg,#fff,#ddd)'}`)}catch(e){return 'background:linear-gradient(135deg,#fff,#ddd)'}}
+  window.productCard=function(raw){
+    const p=normalize(raw); const im=imgs(p); const sale=p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price);
+    return `<article class="product status-${esc(p.status)}" data-product-id="${esc(p.id)}"><a class="product-hit" href="product.html?id=${encodeURIComponent(p.id)}"><div class="product-img">${sale?'<span class="sale-badge">PRICE DROP</span>':''}<span class="product-img-layer product-img-primary" style="${bg(im.first)}"></span><span class="product-img-layer product-img-secondary" style="${bg(im.second)}"></span></div><h3>${esc(p.name||'Product')}</h3>${productPriceStatusRow(p,'p')}</a><button class="quick-view-btn" type="button" data-quick-id="${esc(p.id)}" onclick="event.stopPropagation();event.preventDefault();openQuickView('${String(p.id).replace(/'/g,"\\'")}')">QUICK VIEW</button></article>`;
+  };
+  window.renderProducts=function(el='#products',list=products()){const node=document.querySelector(el); if(node) node.innerHTML=(list||[]).map(window.productCard).join('') || '<p class="muted">No products listed yet.</p>';};
+  window.addToCart=function(id,size='One Size'){
+    const ps=products(); const p=normalize(ps.find(x=>String(x.id)===String(id)));
+    if(!p?.id){ if(typeof toast==='function')toast('Product not found.'); return; }
+    if(['coming-soon','out-of-stock'].includes(p.status)){ if(typeof toast==='function')toast('This product is not available yet.'); return; }
+    if(typeof isOOS==='function' && isOOS(p,size)){ if(typeof toast==='function')toast('This size is out of stock.'); return; }
+    let cart=read('nitaCart',[]); const existing=cart.find(i=>String(i.id)===String(id)&&String(i.size)===String(size));
+    const q=qtyNum(p.quantity); const next=(existing?Number(existing.qty||1):0)+1;
+    if(q!==null && next>q){ if(typeof toast==='function')toast(`Only ${q} piece${q===1?'':'s'} available.`); return; }
+    if(existing) existing.qty=next; else cart.push({id:p.id,size,qty:1,name:p.name,price:Number(p.salePrice||p.price||0),photo:mainImg(p)});
+    window.cart=cart; write('nitaCart',cart); if(typeof saveCart==='function')saveCart(); if(typeof renderCartPanel==='function')renderCartPanel(); if(typeof updateCartCount==='function')updateCartCount(); if(typeof toast==='function')toast('Added to cart');
+  };
+  window.openQuickView=function(id){
+    const p=normalize(products().find(x=>String(x.id)===String(id))); if(!p?.id)return false;
+    const im=imgs(p); const sizes=(p.sizes||['One Size']).map((s,i)=>`<button type="button" class="size ${i===0?'active':''}" onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${esc(s)}</button>`).join('');
+    const canBuy=!['coming-soon','out-of-stock'].includes(p.status);
+    const action=canBuy?`<button class="btn quick-add" type="button" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}', document.querySelector('#quickContent .size.active')?.textContent||'One Size'); closeQuickView && closeQuickView();">ADD TO CART</button>`:`<button class="btn disabled quick-disabled" type="button" disabled aria-disabled="true">${p.status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button><button class="notify-btn" type="button" onclick="notifyMe && notifyMe('${String(p.id).replace(/'/g,"\\'")}')">NOTIFY ME</button>`;
+    const q=document.getElementById('quickContent'); if(q)q.innerHTML=`<div class="quick-grid"><div class="quick-image" style="${bg(im.first)}"></div><div class="quick-info"><p class="muted">${esc(p.category||'')}</p><h2>${esc(p.name||'Product')}</h2>${productPriceStatusRow(p,'h3')}<p>${esc(p.desc||'')}</p><div class="sizes">${sizes}</div>${action}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div></div>`;
+    const m=document.getElementById('quickModal'); if(m){m.classList.add('open');m.setAttribute('aria-hidden','false')} document.body.classList.add('panel-open','quick-open'); return false;
+  };
+  const oldAdd=window.addProductAdmin;
+  window.addProductAdmin=async function(){
+    const qtyVal=document.getElementById('pquantity')?.value;
+    await (oldAdd?oldAdd():undefined);
+    const ps=products(); const newest=ps[ps.length-1];
+    if(newest && qtyVal!==undefined && qtyVal!==''){newest.quantity=Number(qtyVal); newest.initialQuantity=Number(qtyVal); normalize(newest); await saveProducts(ps); if(typeof renderAdmin==='function')renderAdmin();}
+  };
+  const oldSave=window.saveProductEditor;
+  window.saveProductEditor=async function(id){
+    await (oldSave?oldSave(id):undefined);
+    const ps=products(); const p=ps.find(x=>String(x.id)===String(id));
+    if(p){ensureInitialQuantity(p); normalize(p); await saveProducts(ps); if(typeof renderAdmin==='function')renderAdmin();}
+  };
+  function refresh(){try{const ps=products(); let changed=false; ps.forEach(p=>{const before=p.status; ensureInitialQuantity(p); const s=statusOf(p); if(p.status!==s){p.status=s;changed=true}}); if(changed)write('nitaProducts',ps); if(typeof renderProducts==='function')renderProducts('#products',ps); if(typeof renderHomeSections==='function')renderHomeSections();}catch(e){}}
+  window.addEventListener('nita-store-ready',()=>setTimeout(refresh,150));
+  window.addEventListener('load',()=>setTimeout(refresh,350));
+})();
+/* === END LOW STOCK AUTOMATIC STATUS FINAL PATCH === */
