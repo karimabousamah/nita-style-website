@@ -1979,3 +1979,133 @@ placeOrder=async function(){
   };
 })();
 // === END NITA STYLE PRODUCT IMAGE + OUT-OF-STOCK SIZE FINAL POLISH ===
+
+// === NITA STYLE FINAL SIZE STOCK + AUTO MARQUEE REVERT PATCH ===
+(function(){
+  const SIZE_OPTIONS = ['XS','S','M','L','XL','One Size'];
+  const esc = (v)=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const uniq = (arr)=>[...new Set((arr||[]).map(x=>String(x||'').trim()).filter(Boolean))];
+  const moneySafe=(v)=>{try{return typeof money==='function'?money(v):'$'+Number(v||0).toFixed(2)}catch(e){return '$'+Number(v||0).toFixed(2)}};
+  const bg=(u)=>{try{return typeof cssBgImage==='function'?cssBgImage(u):(String(u||'').startsWith('data:')?`background-image:url(${u})`:`background:${u||'linear-gradient(135deg,#fff,#ddd)'}`)}catch(e){return 'background:linear-gradient(135deg,#fff,#ddd)'}};
+  const products=()=>{try{return typeof getProducts==='function'?getProducts():[]}catch(e){return []}};
+  const norm=(p)=>{p=(p||{}); try{p=typeof normalizeProductStatus==='function'?normalizeProductStatus(p):p}catch(e){}; p.sizes=uniq(p.sizes&&p.sizes.length?p.sizes:['One Size']); p.outOfStockSizes=uniq(p.outOfStockSizes||[]).filter(s=>p.sizes.includes(s)); p.status=p.status||(p.soldOut?'out-of-stock':'in-stock'); return p;};
+  const isOOS=(p,s)=>uniq(p.outOfStockSizes||[]).map(x=>x.toLowerCase()).includes(String(s).toLowerCase());
+  const selectedFrom=(root,selector)=>uniq([...(root||document).querySelectorAll(selector)].map(b=>b.dataset.size||b.textContent.trim()));
+  const safeId=(id)=>String(id||'').replace(/'/g,"\\'");
+
+  window.selectedAdminSizes=function(root=document){
+    return selectedFrom(root, root===document ? '#sizePicker .pill.on' : '.available-size-picker .pill.on');
+  };
+  function sizePills(selected=[], cls='available-size-picker'){
+    const set=new Set(uniq(selected));
+    return `<div class="size-picker ${cls}">${SIZE_OPTIONS.map(s=>`<button type="button" class="pill ${set.has(s)?'on':''}" data-size="${esc(s)}" onclick="this.classList.toggle('on')">${esc(s)}</button>`).join('')}</div>`;
+  }
+  function ensureAddOosPicker(){
+    const sp=document.getElementById('sizePicker');
+    if(sp && !sp.classList.contains('available-size-picker')) sp.classList.add('available-size-picker');
+    if(sp && !document.getElementById('sizeOutPicker')){
+      const wrap=document.createElement('div');
+      wrap.className='full admin-size-oos-wrap';
+      wrap.innerHTML=`<label>Out-of-stock sizes</label><p class="field-help">Select sizes that exist for this product but cannot be purchased now.</p>${sizePills([], 'oos-picker')}`;
+      wrap.querySelector('.oos-picker').id='sizeOutPicker';
+      sp.closest('.full')?.insertAdjacentElement('afterend',wrap);
+    }
+  }
+  window.addEventListener('load',()=>setTimeout(ensureAddOosPicker,300));
+  const previousRenderAdmin=window.renderAdmin;
+  if(typeof previousRenderAdmin==='function'){
+    window.renderAdmin=async function(){const r=await previousRenderAdmin.apply(this,arguments); setTimeout(ensureAddOosPicker,80); return r;};
+  }
+
+  function parseNote(note=''){
+    const parts=String(note||'').split(' · ');
+    return {color:parts[0]||'Black',style:parts[1]||parts[0]||'Clean everyday piece'};
+  }
+  const COLORS=window.COLOR_OPTIONS||['Black','White','Beige','Cream','Grey','Brown','Navy','Blue','Red','Pink','Green','Yellow','Print / Pattern','Multi-color'];
+  const STYLES=window.STYLE_OPTIONS||['Clean everyday piece','Elegant evening piece','Minimal essential','Soft feminine silhouette','Relaxed boutique fit','Premium casual look','Statement piece','Light summer piece','Structured tailored style'];
+  const HOME=[['trending-now','Trending Now'],['new-arrivals','New Arrivals']];
+  const opts=(list,current)=>list.map(x=>Array.isArray(x)?`<option value="${esc(x[0])}" ${x[0]===current?'selected':''}>${esc(x[1])}</option>`:`<option ${x===current?'selected':''}>${esc(x)}</option>`).join('');
+  const homeSection=(p)=>p.displaySection||p.homeSection||(p.collection==='New Arrivals'?'new-arrivals':'trending-now');
+  window.productHomeSection=homeSection;
+
+  window.productEditorHTML=function(raw){
+    const p=norm(raw); const photos=(typeof productImagesForDisplay==='function'?productImagesForDisplay(p).all:(p.photos||[p.img])).filter(Boolean); const note=parseNote(p.note); const main=Number(p.mainPhotoIndex||0);
+    const thumbs=photos.map((u,i)=>`<button type="button" class="admin-thumb selectable-thumb existing-main-${esc(p.id)} ${i===main?'selected-main':''}" onclick="document.querySelectorAll('.existing-main-${safeId(p.id)}').forEach(b=>b.classList.remove('selected-main'));this.classList.add('selected-main');this.closest('.product-editor').dataset.mainIndex='${i}'"><img src="${String(u).startsWith('data:')?esc(u):''}" style="${String(u).startsWith('data:')?'':'display:none'}"><span>${i===main?'Main photo':'Photo '+(i+1)}</span></button>`).join('');
+    return `<div class="admin-form">
+      <div class="full"><label>Product availability</label><select class="field edit-status"><option value="in-stock" ${p.status==='in-stock'?'selected':''}>In stock</option><option value="coming-soon" ${p.status==='coming-soon'?'selected':''}>Coming soon</option><option value="out-of-stock" ${p.status==='out-of-stock'?'selected':''}>Out of stock</option></select></div>
+      <div><label>Product name</label><input class="field edit-name" value="${esc(p.name||'')}"></div>
+      <div><label>Regular price</label><input class="field edit-price" type="number" step="0.01" value="${Number(p.price||0)}"></div>
+      <div><label>Sale / price-drop price</label><input class="field edit-sale" type="number" step="0.01" value="${p.salePrice||''}" placeholder="Optional"></div>
+      <div><label>Product category</label><select class="field edit-category">${opts(window.ADMIN_CATEGORIES||['Dresses','Tops','Pants','Jackets','Accessories'],p.category)}</select></div>
+      <div><label>Collection</label><select class="field edit-collection">${opts(window.ADMIN_COLLECTIONS||['Everyday Edit','Minimal Essentials','Evening Pieces','Accessories','Price Drops'],p.collection)}</select></div>
+      <div><label>Color</label><select class="field edit-color">${opts(COLORS,note.color)}</select></div>
+      <div><label>Style note</label><select class="field edit-style">${opts(STYLES,note.style)}</select></div>
+      <div><label>Homepage display section</label><select class="field edit-home-section">${opts(HOME,homeSection(p))}</select></div>
+      <div class="full"><label>Current photos</label><p class="muted">Click one photo to choose the main photo.</p><div class="photo-preview existing-photos">${thumbs||'<p class="muted">No photos yet.</p>'}</div><label style="margin-top:18px">Replace / add product gallery</label><div class="upload-zone"><input type="file" accept="image/*" multiple onchange="previewEditPhotos(event,'${safeId(p.id)}')"><p><b>Upload multiple photos</b><br><span class="muted">Select several images at once. Then choose the main one.</span></p></div><div class="photo-preview" id="editPreview-${esc(p.id)}"></div></div>
+      <div class="full"><label>Available sizes</label><p class="field-help">Choose every size this product exists in.</p>${sizePills(p.sizes,'available-size-picker')}</div>
+      <div class="full admin-size-oos-wrap"><label>Out-of-stock sizes</label><p class="field-help">Only these selected sizes will be grey, crossed, and unclickable for customers.</p>${sizePills(p.outOfStockSizes,'oos-picker edit-oos-picker')}</div>
+      <div class="full"><label>Description</label><textarea class="field edit-desc">${esc(p.desc||'')}</textarea></div>
+    </div><button class="btn" onclick="saveProductEditor('${safeId(p.id)}')">SAVE PRODUCT CHANGES</button>`;
+  };
+
+  window.addProductAdmin=async function(){
+    const name=document.getElementById('pname')?.value.trim(); const price=Number(document.getElementById('pprice')?.value||0);
+    if(!name||!price){toast?.('Add a product name and price');return;}
+    if(typeof loadSharedStore==='function') await loadSharedStore();
+    if(window.nitaBackendOnline===false){notify?.('Cannot add product: cloud database is offline.', false, true); return;}
+    const sizes=selectedFrom(document,'#sizePicker .pill.on');
+    const out=selectedFrom(document,'#sizeOutPicker .pill.on').filter(s=>sizes.includes(s));
+    const photos=(window.pendingAdminPhotos||[]).slice(); const main=Math.max(0,Math.min(Number(window.pendingAdminMainIndex||0),Math.max(photos.length-1,0)));
+    const sale=document.getElementById('psale')?.value; const color=document.getElementById('pcolor')?.value||'Black'; const style=document.getElementById('pstyle')?.value||'Clean everyday piece'; const displaySection=document.getElementById('phome')?.value||'trending-now';
+    const product=norm({id:'p'+Date.now(),name,price,salePrice:sale===''?'':Number(sale),status:document.getElementById('pstatus')?.value||'in-stock',category:document.getElementById('pcat')?.value||'Tops',collection:document.getElementById('pcollection')?.value||'Everyday Edit',displaySection,homeSection:displaySection,note:`${color} · ${style}`,sizes:sizes.length?sizes:['One Size'],outOfStockSizes:out,photos,mainPhotoIndex:main,img:photos[main]||photos[0]||'linear-gradient(135deg,#fff,#ddd)',desc:document.getElementById('pdesc')?.value.trim()||'A carefully selected Italian-made piece for a clean, feminine wardrobe.'});
+    const ps=products(); ps.push(product); const ok=await saveProducts(ps); if(ok){window.pendingAdminPhotos=[];window.pendingAdminMainIndex=0;['pname','pprice','psale','pdesc'].forEach(id=>{const el=document.getElementById(id); if(el)el.value=''}); const inp=document.getElementById('pphotos'); if(inp)inp.value=''; const prev=document.getElementById('photoPreview'); if(prev)prev.innerHTML=''; await loadSharedStore?.(); renderAdmin?.(); toast?.('Product added globally.');}
+  };
+
+  window.saveProductEditor=async function(id){
+    if(typeof loadSharedStore==='function') await loadSharedStore();
+    if(window.nitaBackendOnline===false){notify?.('Cannot save edit: cloud database is offline.', false, true); return;}
+    const ps=products(); const p=ps.find(x=>String(x.id)===String(id)); const root=document.getElementById('editor-'+id); if(!p||!root)return;
+    const old=Number(p.price||0); const entered=Number(root.querySelector('.edit-price')?.value||0); const saleInput=root.querySelector('.edit-sale')?.value;
+    p.name=root.querySelector('.edit-name')?.value.trim()||p.name;
+    if(saleInput===''){ if(entered>0 && entered<old){p.salePrice=entered; p.price=old;} else {p.price=entered; p.salePrice='';} } else {p.price=entered; p.salePrice=Number(saleInput);}
+    p.category=root.querySelector('.edit-category')?.value||p.category; p.collection=root.querySelector('.edit-collection')?.value||p.collection; p.displaySection=root.querySelector('.edit-home-section')?.value||homeSection(p); p.homeSection=p.displaySection;
+    const color=root.querySelector('.edit-color')?.value||'Black'; const style=root.querySelector('.edit-style')?.value||'Clean everyday piece'; p.note=`${color} · ${style}`;
+    p.desc=root.querySelector('.edit-desc')?.value.trim()||''; p.sizes=selectedFrom(root,'.available-size-picker .pill.on'); if(!p.sizes.length)p.sizes=['One Size']; p.outOfStockSizes=selectedFrom(root,'.oos-picker .pill.on').filter(s=>p.sizes.includes(s));
+    p.status=root.querySelector('.edit-status')?.value||p.status||'in-stock'; p.soldOut=p.status==='out-of-stock';
+    if(window.editingPhotoBuffers?.[id]?.length){p.photos=window.editingPhotoBuffers[id]; p.mainPhotoIndex=Number(window.editingMainPhotoIndex?.[id]||0); p.img=p.photos[p.mainPhotoIndex]||p.photos[0]; delete window.editingPhotoBuffers[id]; delete window.editingMainPhotoIndex[id];}
+    else if(root.dataset.mainIndex!==undefined){p.mainPhotoIndex=Number(root.dataset.mainIndex)||0; const ph=(Array.isArray(p.photos)&&p.photos.length?p.photos:[p.img]).filter(Boolean); p.img=ph[p.mainPhotoIndex]||ph[0]||p.img;}
+    const ok=await saveProducts(ps); if(ok){await loadSharedStore?.(); renderAdmin?.(); toast?.('Product updated globally.');}
+  };
+
+  function sizeButtonsForCustomer(p){
+    p=norm(p); const active=p.sizes.find(s=>!isOOS(p,s))||p.sizes[0]; window.selectedSize=window.selectedSize && p.sizes.includes(window.selectedSize) && !isOOS(p,window.selectedSize) ? window.selectedSize : active;
+    return p.sizes.map(s=>`<button type="button" class="size ${s===window.selectedSize?'active':''} ${isOOS(p,s)?'size-disabled':''}" ${isOOS(p,s)?'disabled aria-disabled="true" title="Out of stock"':`onclick="selectedSize='${esc(s)}';productPage()"`}>${esc(s)}</button>`).join('');
+  }
+
+  window.productPage=function(){
+    const detail=document.getElementById('detail'); if(!detail)return; const id=new URL(location.href).searchParams.get('id'); const p=norm(products().find(x=>String(x.id)===String(id))||products()[0]);
+    if(!p?.id){detail.innerHTML='<div class="card"><h1>Product not found</h1><a class="btn" href="shop.html">BACK TO SHOP</a></div>';return;}
+    const im=typeof productImagesForDisplay==='function'?productImagesForDisplay(p):{all:[p.img||'linear-gradient(135deg,#fff,#ddd)']}; window.selectedPhoto=Math.min(Number(window.selectedPhoto||0),im.all.length-1);
+    const currentOos=isOOS(p,window.selectedSize); const canBuy=p.status==='in-stock' && !currentOos;
+    const action=canBuy?`<button class="btn" onclick="addToCart('${safeId(p.id)}',selectedSize||'One Size')">ADD TO CART</button><a class="btn light" href="checkout.html">BUY NOW</a>`:`<button class="btn disabled" disabled aria-disabled="true">${p.status==='coming-soon'?'COMING SOON':(p.status==='out-of-stock'?'OUT OF STOCK':'SIZE OUT OF STOCK')}</button><button class="notify-btn" type="button" onclick="notifyMe&&notifyMe('${safeId(p.id)}')">NOTIFY ME</button>`;
+    detail.innerHTML=`<div class="product-media"><div class="detail-img" style="${bg(im.all[window.selectedPhoto])}"></div><div class="product-thumbs">${im.all.map((ph,i)=>`<button class="${i===window.selectedPhoto?'active':''}" onclick="selectedPhoto=${i};productPage()" style="${bg(ph)}"></button>`).join('')}</div></div><div class="product-info"><p class="muted">${esc(p.category||'')}</p><h1>${esc(p.name||'Product')}</h1>${typeof productPriceStatusRow==='function'?productPriceStatusRow(p,'h2'):`<h2>${moneySafe(p.salePrice||p.price)}</h2>`}<p>${esc(p.desc||'')}</p><div class="sizes product-size-list">${sizeButtonsForCustomer(p)}</div><div class="product-actions">${action}</div><hr><p class="muted">Cash on delivery available. Online payment will be available soon.</p></div>`;
+  };
+
+  window.openQuickView=function(id){
+    const p=norm(products().find(x=>String(x.id)===String(id))); if(!p?.id)return; const im=typeof productImagesForDisplay==='function'?productImagesForDisplay(p):{first:p.img||'linear-gradient(135deg,#fff,#ddd)'}; const modal=document.getElementById('quickModal'); const q=document.getElementById('quickContent'); if(!modal||!q)return;
+    const available=p.sizes.find(s=>!isOOS(p,s))||p.sizes[0]; window.quickSelectedSize=available;
+    const sizes=p.sizes.map(s=>`<button type="button" class="size ${s===available&&!isOOS(p,s)?'active':''} ${isOOS(p,s)?'size-disabled':''}" ${isOOS(p,s)?'disabled aria-disabled="true" title="Out of stock"':`onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active');quickSelectedSize='${esc(s)}'"`}>${esc(s)}</button>`).join('');
+    const can=p.status==='in-stock' && available && !isOOS(p,available);
+    const action=can?`<button class="btn" onclick="addToCart('${safeId(p.id)}',quickSelectedSize||'One Size');closeQuickView()">ADD TO CART</button>`:`<button class="btn disabled" disabled>${p.status==='coming-soon'?'COMING SOON':(p.status==='out-of-stock'?'OUT OF STOCK':'SIZE OUT OF STOCK')}</button><button class="notify-btn" onclick="notifyMe&&notifyMe('${safeId(p.id)}')">NOTIFY ME</button>`;
+    q.innerHTML=`<div class="quick-grid"><div class="quick-image" style="${bg(im.first)}"></div><div class="quick-info"><p class="muted">${esc(p.category||'')}</p><h2>${esc(p.name||'Product')}</h2>${typeof productPriceStatusRow==='function'?productPriceStatusRow(p,'h3'):`<h3>${moneySafe(p.salePrice||p.price)}</h3>`}<p>${esc(p.desc||'')}</p><div class="sizes">${sizes}</div>${action}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div></div>`;
+    modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); document.body.classList.add('quick-open','panel-open');
+  };
+
+  window.renderHomeSections=function(){
+    const ps=products(); const listFor=(section)=>ps.filter(p=>homeSection(p)===section); const fill=(id,list)=>{const box=document.getElementById(id); if(box){const arr=(list.length?list:ps.slice(0,6)); box.innerHTML=[...arr,...arr,...arr,...arr].map(p=>productCard(p)).join('')||'<p class="muted">No products listed yet.</p>';}};
+    fill('trendingMarquee',listFor('trending-now')); fill('newArrivalsMarquee',listFor('new-arrivals'));
+  };
+  window.addEventListener('nita-store-ready',()=>setTimeout(window.renderHomeSections,50));
+  window.addEventListener('load',()=>setTimeout(window.renderHomeSections,800));
+})();
+// === END FINAL SIZE STOCK + AUTO MARQUEE REVERT PATCH ===
