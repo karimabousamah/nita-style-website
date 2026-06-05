@@ -1,1 +1,64 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Checkout | Nita Style</title><link rel="stylesheet" href="styles.css"></head><body onload="init().then(()=>summary())"><main class="page checkout-page"><h1>Checkout</h1><div class="checkout"><form id="checkoutForm" class="card checkout-card" onsubmit="event.preventDefault();placeOrder()"><h3>Delivery details</h3><div class="form-grid checkout-fields"><div><input name="name" class="field" placeholder="Full name" required><small class="field-error">Full name is required.</small></div><div><input name="phone" class="field" placeholder="Phone number" required><small class="field-error">Phone number is required.</small></div><div><input name="email" class="field" type="email" placeholder="Email address" required><small class="field-error">Valid email address is required.</small></div><div><input name="city" class="field" placeholder="City" required><small class="field-error">City is required.</small></div><div><input name="street" class="field" placeholder="Street name" required><small class="field-error">Street name is required.</small></div><div><input name="building" class="field" placeholder="Building name / number" required><small class="field-error">Building name or number is required.</small></div><div><input name="floor" class="field" placeholder="Floor" required><small class="field-error">Floor is required.</small></div><div><input name="apartment" class="field" placeholder="Apartment / door number" required><small class="field-error">Apartment or door number is required.</small></div><div><input name="landmark" class="field" placeholder="Nearby landmark (optional)"></div><div><input name="preferredTime" class="field" placeholder="Preferred delivery time (optional)"></div><div class="full"><textarea name="notes" class="field" placeholder="Delivery notes (optional)"></textarea></div></div><label class="save-address"><input type="checkbox" name="saveAddress"> Save this address for future orders</label><h3>Payment</h3><label class="payment-option"><input type="radio" checked name="payment" value="Cash on delivery"> <span>Cash on delivery</span></label><div class="coming-soon-pay">Online payment will be available soon.</div><h3>Discount code</h3><div class="coupon-apply"><input name="coupon" class="field" placeholder="Enter coupon code"><button type="button" class="btn apply-coupon-btn" onclick="applyCouponCode()">APPLY COUPON CODE</button></div><div id="couponFeedback" class="coupon-feedback"></div><button class="btn">PLACE ORDER</button></form><div class="card order-summary-card"><h3>Order summary</h3><div id="checkoutSummary"></div></div></div></main><script src="products.js"></script><script src="script.js"></script><script>function summary(){renderCheckoutSummary && renderCheckoutSummary()}</script></body></html>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Checkout | Nita Style</title><link rel="stylesheet" href="styles.css"></head><body onload="init().then(()=>nitaCheckoutBoot())">
+<main class="checkout-shell page">
+  <section class="checkout-main">
+    <form id="checkoutForm" class="checkout-form-modern" onsubmit="event.preventDefault();placeOrder()">
+      <section class="checkout-section">
+        <h2>Contact</h2>
+        <input name="email" class="field modern-field" type="email" placeholder="Email address" required>
+        <label class="checkout-check"><input type="checkbox" checked> Email me with news and offers</label>
+      </section>
+
+      <section class="checkout-section">
+        <h2>Delivery</h2>
+        <div id="savedAddressArea" class="saved-address-area"></div>
+        <button type="button" id="addNewAddressBtn" class="btn light add-address-btn" onclick="showNewCheckoutAddress(true)">ADD NEW LOCATION</button>
+        <div id="newAddressForm" class="new-address-form">
+          <input type="hidden" name="selectedAddressIndex" value="">
+          <div class="country-box"><span>Country/Region</span><b>Lebanon</b></div>
+          <div class="form-grid checkout-fields modern-checkout-grid">
+            <div><input name="firstName" class="field modern-field" placeholder="First name" required><small class="field-error">First name is required.</small></div>
+            <div><input name="lastName" class="field modern-field" placeholder="Last name" required><small class="field-error">Last name is required.</small></div>
+            <div class="full"><input name="addressLabel" class="field modern-field" placeholder="Address name, for example Home or Office"></div>
+            <div class="full"><input name="street" class="field modern-field" placeholder="Address / street name" required><small class="field-error">Address is required.</small></div>
+            <div class="full"><input name="building" class="field modern-field" placeholder="Building name / number" required><small class="field-error">Building is required.</small></div>
+            <div><input name="apartment" class="field modern-field" placeholder="Apartment / door number" required><small class="field-error">Apartment or door number is required.</small></div>
+            <div><input name="floor" class="field modern-field" placeholder="Floor" required><small class="field-error">Floor is required.</small></div>
+            <div><input name="city" class="field modern-field" placeholder="City" required><small class="field-error">City is required.</small></div>
+            <div><input name="postal" class="field modern-field" placeholder="Postal code (optional)"></div>
+            <div class="full"><input name="phone" class="field modern-field" placeholder="Phone" required><small class="field-error">Phone is required.</small></div>
+            <div><input name="landmark" class="field modern-field" placeholder="Nearby landmark (optional)"></div>
+            <div><input name="preferredTime" class="field modern-field" placeholder="Preferred delivery time (optional)"></div>
+            <div class="full"><textarea name="notes" class="field modern-field" placeholder="Delivery notes (optional)"></textarea></div>
+          </div>
+          <label class="checkout-check"><input type="checkbox" name="saveAddress"> Save this information for next time</label>
+        </div>
+      </section>
+
+      <section class="checkout-section">
+        <h2>Shipping method</h2>
+        <div class="shipping-method-box selected"><div><b>Aramex delivery across Lebanon</b><span>2–3 business days · orders under $150</span></div><b>$7.00</b></div>
+      </section>
+
+      <section class="checkout-section">
+        <h2>Payment</h2>
+        <p class="muted secure-note">All transactions are secure and encrypted.</p>
+        <label class="payment-method disabled-payment"><input type="radio" disabled><div><b>Credit card</b><span>Online payment coming soon.</span></div></label>
+        <label class="payment-method selected"><input type="radio" checked name="payment" value="Cash on delivery"><div><b>Cash on Delivery (COD)</b><span>Cash on delivery is available in Lebanon, and payments are in USD.</span></div></label>
+      </section>
+
+      <section class="checkout-section">
+        <h2>Billing address</h2>
+        <label class="payment-method selected"><input type="radio" checked name="billing" value="same"><div><b>Same as shipping address</b></div></label>
+      </section>
+
+      <button class="btn complete-order-btn" id="placeOrderBtn">COMPLETE ORDER</button>
+    </form>
+  </section>
+
+  <aside class="checkout-summary-modern">
+    <div id="checkoutSummary"></div>
+    <div class="coupon-apply modern-coupon"><input name="coupon" form="checkoutForm" class="field modern-field" placeholder="Discount code or gift card"><button type="button" class="btn light apply-coupon-btn" onclick="applyCouponCode()">APPLY</button></div>
+    <div id="couponFeedback" class="coupon-feedback"></div>
+  </aside>
+</main>
+<script src="products.js"></script><script src="script.js"></script><script>function nitaCheckoutBoot(){try{renderCheckoutSummary&&renderCheckoutSummary();}catch(e){} try{setupCheckoutAddresses&&setupCheckoutAddresses();}catch(e){}}</script></body></html>
