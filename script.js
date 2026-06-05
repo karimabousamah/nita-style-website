@@ -1757,7 +1757,7 @@ placeOrder=async function(){
   function orderCard(order){
     const steps=['Order submitted','Confirmed','Packing','Out for delivery','Delivered'];
     const items=(order.items||[]).map(i=>`<span>${safe(i.name||i.id||'Product')} × ${i.qty||1}</span>`).join('');
-    return `<div class="account-order detailed-order"><div class="order-top"><div><b>${safe(order.id||'Order')}</b><br><span class="muted">${safe(order.date||'')} · ${safe(order.payment||'Cash on Delivery')}</span></div><div><b>${typeof money==='function'?money(order.total||0):('$'+Number(order.total||0).toFixed(2))}</b><br><span class="order-status">${safe(order.status||'Order submitted')}</span></div></div><div class="order-roadmap">${steps.map(s=>`<span class="${statusStepClass(order.status||'Order submitted',s)}">${s}</span>`).join('')}</div><p class="muted order-items">${items||'Order details saved.'}</p></div>`;
+    return `<div class="account-order detailed-order"><div class="order-top"><div><b>${safe(order.id||'Order')}</b><br><span class="muted">${safe(order.date||'')} · ${safe(order.payment||'Cash on Delivery')}</span></div><div><b>${typeof money==='function'?money(order.total||0):('$'+Number(order.total||0).toFixed(2))}</b><br><span class="order-status">${safe(order.status||'Order submitted')}</span></div></div><div class="order-roadmap-wrap"><div class="order-roadmap">${steps.map(s=>`<span class="${statusStepClass(order.status||'Order submitted',s)}">${s}</span>`).join('')}</div></div><p class="muted order-items">${items||'Order details saved.'}</p></div>`;
   }
   function orderList(orders, empty){return orders.length ? orders.map(orderCard).join('') : `<p class="muted">${empty}</p>`;}
 
@@ -2767,3 +2767,200 @@ placeOrder=async function(){
   window.addEventListener('load',()=>setTimeout(refresh,350));
 })();
 /* === END LOW STOCK AUTOMATIC STATUS FINAL PATCH === */
+
+
+/* === FINAL REQUEST PATCH: reliable marquee + cart persistence fix === */
+(function(){
+  const readJSON=(k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f))}catch(e){return f}};
+  const writeJSON=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  const moneySafe=(n)=>{try{return typeof money==='function'?money(Number(n||0)):'$'+Number(n||0).toFixed(2)}catch(e){return '$'+Number(n||0).toFixed(2)}};
+  const productsSafe=()=>{try{return typeof getProducts==='function'?getProducts():readJSON('nitaProducts',[])}catch(e){return readJSON('nitaProducts',[])}};
+  const mainPhoto=(p)=>{try{return productMainImage(p)}catch(e){return (p&&p.photos&&p.photos[p.mainPhotoIndex||0])||(p&&p.photos&&p.photos[0])||(p&&p.img)||''}};
+  const bg=(img)=>{try{return typeof cssBgImage==='function'?cssBgImage(img):(String(img||'').startsWith('data:')?`background-image:url(${img})`:'background:linear-gradient(135deg,#f7f7f7,#ddd)')}catch(e){return 'background:linear-gradient(135deg,#f7f7f7,#ddd)'}};
+  const unit=(p,i)=>Number((p&&(p.salePrice!==''&&p.salePrice!=null?Number(p.salePrice):Number(p.price))) || (i&&i.price) || 0);
+  const statusVal=(p)=>{try{return typeof productStatusValue==='function'?productStatusValue(p):(p.status||'in-stock')}catch(e){return p?.status||'in-stock'}};
+  const card=(p)=>{try{return typeof productCard==='function'?productCard(p):''}catch(e){return ''}};
+
+  // Fix cart bug caused by older saveCart overwriting localStorage with the old in-memory cart.
+  window.saveCart=function(){
+    const c = Array.isArray(window.cart) ? window.cart : readJSON('nitaCart',[]);
+    writeJSON('nitaCart', c);
+    try{ if(typeof updateCartCount==='function') updateCartCount(); }catch(e){}
+  };
+  window.updateCartCount=function(){
+    const count = readJSON('nitaCart',[]).reduce((s,i)=>s+Number(i.qty||1),0);
+    document.querySelectorAll('.cart-count').forEach(el=>el.textContent=String(count));
+  };
+  window.renderCartPanel=function(){
+    const box=document.getElementById('cartItems'); if(!box)return;
+    const cart=readJSON('nitaCart',[]); window.cart=cart;
+    const ps=productsSafe();
+    if(!cart.length){box.innerHTML='<p class="muted">Your cart is empty.</p>'; updateCartCount(); return;}
+    let total=0;
+    box.innerHTML=cart.map((i,idx)=>{
+      const p=ps.find(x=>String(x.id)===String(i.id)); const qty=Math.max(1,Number(i.qty||1)); const price=unit(p,i); total+=price*qty;
+      const img=p?mainPhoto(p):i.photo;
+      return `<div class="cart-line"><span class="cart-thumb" style="${bg(img)}"></span><div class="cart-copy"><b>${(p&&p.name)||i.name||'Product'}</b><br><span class="muted">${i.size||''}</span><div class="qty-stepper" aria-label="Quantity selector"><button type="button" onclick="changeCartQty(${idx},-1)">−</button><span>${qty}</span><button type="button" onclick="changeCartQty(${idx},1)">+</button></div><strong>${moneySafe(price*qty)}</strong></div><button class="cart-remove" type="button" aria-label="Remove item" onclick="window.removeCartItem(${idx})">×</button></div>`;
+    }).join('') + `<div class="cart-total-line"><span>Subtotal</span><b>${moneySafe(total)}</b></div><a class="btn cart-checkout-btn" href="checkout.html">CHECKOUT</a>`;
+    updateCartCount();
+  };
+  window.removeCartItem=function(idx){const c=readJSON('nitaCart',[]);c.splice(idx,1);window.cart=c;saveCart();renderCartPanel();};
+  window.changeCartQty=function(idx,delta){
+    const c=readJSON('nitaCart',[]); const item=c[idx]; if(!item)return;
+    const next=Number(item.qty||1)+Number(delta||0);
+    if(next<=0)c.splice(idx,1); else item.qty=next;
+    window.cart=c; saveCart(); renderCartPanel(); if(document.getElementById('checkoutSummary')&&typeof renderCheckoutSummary==='function')renderCheckoutSummary();
+  };
+  window.addToCart=function(id,size='One Size'){
+    const ps=productsSafe(); const p=ps.find(x=>String(x.id)===String(id));
+    if(!p){if(typeof toast==='function')toast('Product not found.');return;}
+    const st=statusVal(p); if(st==='coming-soon'||st==='out-of-stock'){if(typeof toast==='function')toast('This product is not available yet.');return;}
+    if(typeof isOOS==='function' && isOOS(p,size)){if(typeof toast==='function')toast('This size is out of stock.');return;}
+    const c=readJSON('nitaCart',[]); const existing=c.find(i=>String(i.id)===String(id)&&String(i.size)===String(size));
+    if(existing) existing.qty=Number(existing.qty||1)+1;
+    else c.push({id:p.id,size,qty:1,name:p.name,price:unit(p),photo:mainPhoto(p)});
+    window.cart=c; writeJSON('nitaCart',c); saveCart(); renderCartPanel(); if(typeof toast==='function')toast('Added to cart');
+  };
+
+  // Rebuild homepage rows as pure CSS marquees, duplicated exactly enough for seamless movement.
+  function homeSectionOf(p){return p.displaySection||p.homeSection||(p.collection==='New Arrivals'?'new-arrivals':'trending-now');}
+  function fillMarquee(id,list){
+    const box=document.getElementById(id); if(!box)return;
+    const ps=productsSafe(); const src=(list&&list.length?list:ps.slice(0,6));
+    if(!src.length){box.innerHTML='<p class="muted">No products listed yet.</p>';return;}
+    const base=src.map(p=>card(p)||`<article class="product"><a href="product.html?id=${encodeURIComponent(p.id)}"><div class="product-img" style="${bg(mainPhoto(p))}"></div><h3>${p.name||'Product'}</h3><p>${moneySafe(p.price)}</p></a></article>`).join('');
+    // Two identical halves are required because CSS moves exactly -50%.
+    box.innerHTML=base+base;
+    box.style.animation='none';
+    void box.offsetWidth;
+    box.style.animation='nitaContinuousMarquee '+(window.innerWidth<=760?'28s':'34s')+' linear infinite';
+  }
+  window.renderHomeSections=function(){
+    const ps=productsSafe();
+    fillMarquee('trendingMarquee',ps.filter(p=>homeSectionOf(p)==='trending-now'));
+    fillMarquee('newArrivalsMarquee',ps.filter(p=>homeSectionOf(p)==='new-arrivals'));
+  };
+  function bootMarquees(){
+    if(!(document.getElementById('trendingMarquee')||document.getElementById('newArrivalsMarquee')))return;
+    const run=()=>{try{renderHomeSections();setTimeout(renderHomeSections,300);setTimeout(renderHomeSections,1000)}catch(e){console.error(e)}};
+    if(typeof loadSharedStore==='function') loadSharedStore().finally(run); else run();
+  }
+  document.addEventListener('DOMContentLoaded',bootMarquees);
+  window.addEventListener('load',bootMarquees);
+  window.addEventListener('pageshow',bootMarquees);
+  window.addEventListener('nita-store-ready',bootMarquees);
+  setTimeout(bootMarquees,1200);
+})();
+
+/* === FINAL PATCH: empty cart checkout guard + saved address selector + professional delivery box === */
+(function(){
+  const DELIVERY_FEE_NITA=7;
+  const read=(k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f))}catch(e){return f}};
+  const write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  const esc=(s)=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const moneyFmt=(n)=>{try{return typeof money==='function'?money(Number(n||0)):'$'+Number(n||0).toFixed(2)}catch(e){return '$'+Number(n||0).toFixed(2)}};
+  const productsSafe=()=>{try{return typeof getProducts==='function'?getProducts():read('nitaProducts',[])}catch(e){return read('nitaProducts',[])}};
+  const unit=(p,i)=>Number((p&&(p.salePrice!==''&&p.salePrice!=null?Number(p.salePrice):Number(p.price))) || (i&&i.price) || 0);
+  const mainPhoto=(p)=>{try{return productMainImage(p)}catch(e){return (p&&p.photos&&p.photos[p.mainPhotoIndex||0])||(p&&p.photos&&p.photos[0])||(p&&p.img)||''}};
+  const bg=(img)=>{try{return typeof cssBgImage==='function'?cssBgImage(img):(String(img||'').startsWith('data:')?`background-image:url(${img})`:'background:linear-gradient(135deg,#f7f7f7,#ddd)')}catch(e){return 'background:linear-gradient(135deg,#f7f7f7,#ddd)'}};
+  function currentEmail(){
+    const u=read('nitaUser',null)||read('nitaCurrentUser',null); return String(u?.email||localStorage.getItem('nitaSessionEmail')||'').toLowerCase();
+  }
+  function currentUserRecord(){
+    const email=currentEmail(); if(!email)return null; const users=read('nitaUsersByEmail',{}); return users[email]||read('nitaUser',null)||null;
+  }
+  function userAddresses(){
+    const u=currentUserRecord(); if(!u)return [];
+    const out=[];
+    if(Array.isArray(u.addresses)) out.push(...u.addresses);
+    if(u.defaultAddress) out.push(u.defaultAddress);
+    const seen=new Set();
+    return out.filter(a=>a&&typeof a==='object').map((a,i)=>({label:a.label||a.name||a.addressName||(i===0?'Home':'Address '+(i+1)),...a})).filter(a=>{const key=[a.city,a.street,a.building,a.floor,a.apartment].map(x=>String(x||'').toLowerCase()).join('|'); if(seen.has(key))return false; seen.add(key); return true;});
+  }
+  function collectCheckoutAddress(form){
+    return {label:String(form.get('addressLabel')||'').trim(),city:String(form.get('city')||'').trim(),street:String(form.get('street')||'').trim(),building:String(form.get('building')||'').trim(),floor:String(form.get('floor')||'').trim(),apartment:String(form.get('apartment')||'').trim(),landmark:String(form.get('landmark')||'').trim(),preferredTime:String(form.get('preferredTime')||'').trim(),notes:String(form.get('notes')||'').trim()};
+  }
+  window.fillCheckoutAddress=function(index){
+    const a=userAddresses()[Number(index)]; if(!a)return;
+    const form=document.getElementById('checkoutForm'); if(!form)return;
+    ['city','street','building','floor','apartment','landmark','preferredTime','notes'].forEach(k=>{if(form.elements[k]) form.elements[k].value=a[k]||''});
+    if(form.elements.addressLabel) form.elements.addressLabel.value=a.label||'';
+    document.querySelectorAll('.address-choice').forEach((el,i)=>el.classList.toggle('active',i===Number(index)));
+  };
+  async function saveAddressForUserIfNeeded(form){
+    const email=currentEmail(); if(!email)return;
+    const shouldSave=!!form.elements.saveAddress?.checked || !!form.elements.addressLabel?.value;
+    if(!shouldSave)return;
+    const users=read('nitaUsersByEmail',{}); const existing=users[email]||read('nitaUser',{})||{email};
+    const addr=collectCheckoutAddress(new FormData(form));
+    addr.label=addr.label || 'Address '+(((existing.addresses||[]).length||0)+1);
+    const key=[addr.city,addr.street,addr.building,addr.floor,addr.apartment].map(x=>String(x||'').toLowerCase()).join('|');
+    let addresses=Array.isArray(existing.addresses)?existing.addresses.slice():[];
+    const idx=addresses.findIndex(a=>[a.city,a.street,a.building,a.floor,a.apartment].map(x=>String(x||'').toLowerCase()).join('|')===key);
+    if(idx>=0) addresses[idx]={...addresses[idx],...addr}; else addresses.push(addr);
+    users[email]={...existing,email,phone:form.elements.phone?.value||existing.phone||'',defaultAddress:addr,addresses};
+    write('nitaUsersByEmail',users); write('nitaUser',users[email]);
+    try{ if(typeof saveCloudKey==='function') await saveCloudKey('nitaUsersByEmail',users); }catch(e){console.warn(e)}
+  }
+  function injectSavedAddressSelector(){
+    const form=document.getElementById('checkoutForm'); if(!form || document.getElementById('savedAddressSection'))return;
+    const fields=form.querySelector('.checkout-fields'); if(!fields)return;
+    const addresses=userAddresses();
+    const section=document.createElement('div'); section.id='savedAddressSection'; section.className='saved-address-section';
+    if(addresses.length){
+      section.innerHTML=`<h3>Saved addresses</h3><p class="muted">Choose a saved delivery address, or enter a new one below.</p><div class="address-choice-grid">${addresses.map((a,i)=>`<label class="address-choice" onclick="fillCheckoutAddress(${i})"><input type="radio" name="savedAddressChoice" value="${i}"><strong>${esc(a.label||('Address '+(i+1)))}</strong><small>${esc(a.city||'')}${a.street?' · '+esc(a.street):''}${a.building?' · '+esc(a.building):''}</small><div class="address-details">Floor ${esc(a.floor||'-')} · Apt ${esc(a.apartment||'-')}<br>${esc(a.landmark||'')}</div></label>`).join('')}</div><div class="address-label-row"><input class="field" name="addressLabel" placeholder="Address name, for example Home, Office, Chalet"></div>`;
+    } else {
+      section.innerHTML=`<h3>Delivery address</h3><p class="muted">Add a delivery address. You can save it for future orders.</p><div class="address-label-row"><input class="field" name="addressLabel" placeholder="Address name, for example Home or Office"></div>`;
+    }
+    form.insertBefore(section, fields);
+  }
+  function injectDeliveryBox(){
+    const form=document.getElementById('checkoutForm'); if(!form || document.getElementById('deliveryInfoBox'))return;
+    const payment=form.querySelector('h3:nth-of-type(2)') || form.querySelector('.payment-option');
+    const box=document.createElement('div'); box.id='deliveryInfoBox'; box.className='delivery-info-box';
+    box.innerHTML='<div><b>Aramex delivery across Lebanon</b><span>Estimated delivery: 2–3 business days.</span></div><strong>$7 delivery fee</strong>';
+    if(payment) form.insertBefore(box,payment); else form.appendChild(box);
+  }
+  function disableCheckoutIfEmpty(){
+    const cart=read('nitaCart',[]);
+    const empty=!cart.length;
+    document.querySelectorAll('.cart-checkout-btn').forEach(a=>{a.classList.toggle('disabled',empty); if(empty){a.removeAttribute('href');a.setAttribute('aria-disabled','true');a.onclick=(e)=>{e.preventDefault(); if(typeof toast==='function')toast('Your cart is empty.');};}else{a.href='checkout.html';a.removeAttribute('aria-disabled');a.onclick=null;}});
+    const form=document.getElementById('checkoutForm');
+    const place=form?.querySelector('button[type="submit"],button.btn:not([type])');
+    if(form && empty){
+      if(place){place.classList.add('place-order-disabled'); place.disabled=true; place.textContent='CART IS EMPTY';}
+      if(!document.querySelector('.empty-cart-checkout-note')){const n=document.createElement('div');n.className='empty-cart-checkout-note';n.textContent='Your cart is empty. Add a product before checkout.';form.prepend(n);}
+    }
+  }
+  const oldRenderCartPanel=window.renderCartPanel;
+  window.renderCartPanel=function(){
+    if(oldRenderCartPanel) oldRenderCartPanel();
+    const box=document.getElementById('cartItems'); const cart=read('nitaCart',[]); if(!box)return;
+    if(!cart.length){box.innerHTML='<p class="muted">Your cart is empty.</p><button class="btn disabled cart-checkout-btn" disabled>CHECKOUT</button>';}
+    disableCheckoutIfEmpty();
+  };
+  const oldChange=window.changeCartQty;
+  window.changeCartQty=function(idx,delta){ if(oldChange) oldChange(idx,delta); setTimeout(disableCheckoutIfEmpty,0); };
+  const oldRemove=window.removeCartItem;
+  window.removeCartItem=function(idx){ if(oldRemove) oldRemove(idx); setTimeout(disableCheckoutIfEmpty,0); };
+  const oldRenderSummary=window.renderCheckoutSummary;
+  window.renderCheckoutSummary=function(){
+    if(oldRenderSummary) oldRenderSummary();
+    const box=document.getElementById('checkoutSummary'); if(!box)return;
+    const cart=read('nitaCart',[]);
+    if(!cart.length){box.innerHTML='<p class="muted">Your cart is empty.</p><hr><div class="summary-line"><span>Subtotal</span><b>$0.00</b></div><div class="summary-line"><span>Aramex delivery fee</span><b>$0.00</b></div><div class="summary-line summary-total"><span>Total</span><b>$0.00</b></div>';}
+    else if(!box.querySelector('.delivery-note')){
+      const total=box.querySelector('.summary-total'); const p=document.createElement('p'); p.className='delivery-note'; p.textContent='Delivery all over Lebanon in 2–3 business days.'; if(total) box.insertBefore(p,total);
+    }
+    disableCheckoutIfEmpty();
+  };
+  const oldPlace=window.placeOrder;
+  window.placeOrder=async function(){
+    const form=document.getElementById('checkoutForm');
+    if(!read('nitaCart',[]).length){ if(typeof toast==='function')toast('Your cart is empty.'); disableCheckoutIfEmpty(); return; }
+    if(form) await saveAddressForUserIfNeeded(form);
+    if(oldPlace) return oldPlace();
+  };
+  function boot(){injectSavedAddressSelector();injectDeliveryBox();try{window.renderCartPanel&&window.renderCartPanel();}catch(e){}try{window.renderCheckoutSummary&&window.renderCheckoutSummary();}catch(e){}disableCheckoutIfEmpty();}
+  document.addEventListener('DOMContentLoaded',boot); window.addEventListener('load',boot); window.addEventListener('pageshow',boot); setTimeout(boot,500); setTimeout(boot,1300);
+})();

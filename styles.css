@@ -1210,3 +1210,168 @@ body.quick-open{overflow:hidden!important;}
   .category-icons .cat-bubble.cat-icon{width:66px!important;height:66px!important;}
   .category-icons .cat-icon svg{width:58px!important;height:58px!important;stroke-width:2.2!important;}
 }
+
+
+/* === FINAL REQUEST PATCH: remove explore video, reliable autoplay marquee, cart button safety === */
+.explore-video-section .explore-bg-video,
+.explore-video-section .explore-video-shade{display:none!important;}
+.banner.banner-photo{background:linear-gradient(120deg,#f4f4f4,#fff)!important;position:relative;overflow:hidden;}
+.banner.banner-photo:before{display:block!important;content:"";position:absolute;inset:0;background:linear-gradient(120deg,#f4f4f4,#fff)!important;z-index:0;}
+.banner.banner-photo .banner-overlay{position:relative!important;z-index:2!important;}
+
+/* Product marquee: force true right-to-left infinite movement on all devices */
+.trending-scroll,.new-arrivals-scroll{overflow:hidden!important;}
+.product-marquee{display:flex!important;flex-wrap:nowrap!important;gap:28px!important;width:max-content!important;min-width:max-content!important;will-change:transform!important;animation:nitaContinuousMarquee 34s linear infinite!important;}
+.product-marquee .product{flex:0 0 260px!important;width:260px!important;min-width:260px!important;}
+@keyframes nitaContinuousMarquee{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-50%,0,0)}}
+@media(max-width:760px){
+  .product-marquee{gap:20px!important;animation-duration:28s!important;}
+  .product-marquee .product{flex-basis:210px!important;width:210px!important;min-width:210px!important;}
+  .product-marquee .product-img{height:260px!important;}
+}
+
+/* Ensure black buttons stay readable */
+.btn:not(.light),button.btn:not(.light),a.btn:not(.light),.quick-add,.cart-checkout-btn{background:#000!important;color:#fff!important;border-color:#000!important;}
+.btn:not(.light) *,button.btn:not(.light) *,a.btn:not(.light) *{color:#fff!important;}
+
+/* === MOBILE/TABLET ACCOUNT ORDER ROADMAP FINAL FIX === */
+.account-order.detailed-order{
+  overflow:visible!important;
+}
+.account-order.detailed-order .order-roadmap,
+.detailed-order .order-roadmap{
+  display:grid!important;
+  grid-template-columns:repeat(5,minmax(96px,1fr))!important;
+  gap:0!important;
+  align-items:start!important;
+  position:relative!important;
+  border-left:0!important;
+  padding:24px 0 10px!important;
+  margin:18px 0 12px!important;
+  width:100%!important;
+  overflow:visible!important;
+}
+.account-order.detailed-order .order-roadmap:before,
+.detailed-order .order-roadmap:before{
+  content:""!important;
+  position:absolute!important;
+  top:33px!important;
+  left:48px!important;
+  right:48px!important;
+  height:2px!important;
+  background:#e4e4e4!important;
+  z-index:0!important;
+}
+.account-order.detailed-order .order-roadmap span,
+.detailed-order .order-roadmap span{
+  position:relative!important;
+  z-index:1!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  text-align:center!important;
+  gap:10px!important;
+  min-width:0!important;
+  font-size:12px!important;
+  line-height:1.1!important;
+  font-weight:900!important;
+  letter-spacing:.035em!important;
+  text-transform:uppercase!important;
+  color:#9a9a9a!important;
+  white-space:normal!important;
+}
+.account-order.detailed-order .order-roadmap span:before,
+.detailed-order .order-roadmap span:before{
+  content:""!important;
+  width:20px!important;
+  height:20px!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  border:3px solid #d8d8d8!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  display:block!important;
+}
+.account-order.detailed-order .order-roadmap span.done,
+.detailed-order .order-roadmap span.done{
+  color:#111!important;
+}
+.account-order.detailed-order .order-roadmap span.done:before,
+.detailed-order .order-roadmap span.done:before{
+  background:#111!important;
+  border-color:#111!important;
+}
+.account-order.detailed-order .order-top,
+.detailed-order .order-top{
+  display:flex!important;
+  justify-content:space-between!important;
+  gap:18px!important;
+  align-items:flex-start!important;
+}
+@media(max-width:760px){
+  .account-order.detailed-order,
+  .detailed-order{
+    padding:18px!important;
+  }
+  .account-order.detailed-order .order-top,
+  .detailed-order .order-top{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+  }
+  .account-order.detailed-order .order-roadmap,
+  .detailed-order .order-roadmap{
+    grid-template-columns:repeat(5,76px)!important;
+    width:max-content!important;
+    min-width:380px!important;
+    max-width:none!important;
+    overflow:visible!important;
+    padding:22px 0 8px!important;
+    margin:18px 0 10px!important;
+  }
+  .account-order.detailed-order .order-roadmap-wrap,
+  .detailed-order .order-roadmap-wrap{
+    overflow-x:auto!important;
+  }
+  .account-order.detailed-order .order-roadmap:before,
+  .detailed-order .order-roadmap:before{
+    left:38px!important;
+    right:38px!important;
+    top:31px!important;
+  }
+  .account-order.detailed-order .order-roadmap span,
+  .detailed-order .order-roadmap span{
+    font-size:10px!important;
+    letter-spacing:.025em!important;
+    gap:8px!important;
+  }
+  .account-order.detailed-order .order-roadmap span:before,
+  .detailed-order .order-roadmap span:before{
+    width:18px!important;
+    height:18px!important;
+    border-width:3px!important;
+  }
+}
+/* === END MOBILE/TABLET ACCOUNT ORDER ROADMAP FINAL FIX === */
+
+/* === Checkout empty cart + saved address polish === */
+.btn.disabled,.btn[disabled],.cart-checkout-btn.disabled,.place-order-disabled{background:#d9d9d9!important;border-color:#d9d9d9!important;color:#8c8c8c!important;cursor:not-allowed!important;box-shadow:none!important;transform:none!important;pointer-events:none!important;}
+.saved-address-section{margin:18px 0 24px;border:1px solid #e7e7e7;background:#fff;padding:18px;}
+.saved-address-section h3{margin:0 0 8px;font-size:18px;text-transform:uppercase;letter-spacing:.03em;}
+.saved-address-section .muted{margin:0 0 14px;}
+.address-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:14px;}
+.address-choice{border:1px solid #e2e2e2;padding:14px;background:#fafafa;cursor:pointer;transition:.22s;position:relative;}
+.address-choice:hover,.address-choice.active{border-color:#111;background:#fff;box-shadow:0 10px 26px rgba(0,0,0,.06);}
+.address-choice input{position:absolute;top:14px;right:14px;accent-color:#111;}
+.address-choice strong{display:block;text-transform:uppercase;font-size:13px;letter-spacing:.05em;margin-bottom:7px;padding-right:26px;}
+.address-choice small{display:block;color:#6c6c6c;line-height:1.45;}
+.address-choice .address-details{display:none;margin-top:10px;color:#555;font-size:12px;line-height:1.55;border-top:1px solid #eee;padding-top:10px;}
+.address-choice.active .address-details{display:block;}
+.address-label-row{margin:8px 0 18px;}
+.delivery-info-box{border:1px solid #dedede;background:#fbfbfb;padding:16px 18px;margin:18px 0 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.delivery-info-box b{display:block;text-transform:uppercase;letter-spacing:.04em;font-size:13px;}
+.delivery-info-box span{color:#666;font-size:13px;}
+.delivery-info-box strong{white-space:nowrap;font-size:14px;}
+.empty-cart-checkout-note{border:1px solid #e4e4e4;background:#fafafa;padding:18px;margin:14px 0;color:#777;}
+@media(max-width:760px){.address-choice-grid{grid-template-columns:1fr}.delivery-info-box{display:block}.delivery-info-box strong{display:block;margin-top:10px}.saved-address-section{padding:14px}.address-choice{padding:13px}}
