@@ -3494,3 +3494,154 @@ placeOrder=async function(){
   };
 })();
 /* === END NITA STYLE EMAIL AUTOMATION FINAL PATCH 2026-06-08 === */
+
+/* === NITA STYLE ORDER + EMAIL + SUCCESS FINAL RELIABILITY PATCH 2026-06-08 === */
+(function(){
+  const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
+  const DELIVERY_FEE = 7;
+  const DELIVERY_THRESHOLD = 150;
+  const ORDER_STEPS = ['Order submitted','Confirmed','Packing','Out for delivery','Delivered'];
+  function readJSON(k,f){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f));}catch(e){return f;}}
+  function writeJSON(k,v){localStorage.setItem(k,JSON.stringify(v));}
+  function norm(v){return String(v||'').trim().toLowerCase();}
+  function safe(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+  function money2(n){try{return typeof money==='function'?money(Number(n||0)):'$'+Number(n||0).toFixed(2)}catch(e){return '$'+Number(n||0).toFixed(2)}}
+  function msg(t){try{toast(t)}catch(e){console.log(t)}}
+  function getLocalProducts(){try{return typeof getProducts==='function'?getProducts():readJSON('nitaProducts',[])}catch(e){return readJSON('nitaProducts',[])}}
+  function getCart(){return readJSON('nitaCart',[])}
+  function setCartSafe(c){writeJSON('nitaCart',c||[]); try{window.cart=c||[]}catch(e){} try{updateCartCount&&updateCartCount()}catch(e){}}
+  async function cloudSet(key,value){
+    writeJSON(key,value);
+    try{
+      if(typeof saveCloudKey==='function') return await saveCloudKey(key,value);
+      if(typeof saveSharedKeyNow==='function') return await saveSharedKeyNow(key,value);
+      const res=await fetch('/.netlify/functions/store',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key,value})});
+      if(!res.ok) throw new Error(await res.text());
+      return true;
+    }catch(e){console.warn('Cloud save failed for '+key,e); return false;}
+  }
+  async function cloudLoad(){try{if(typeof loadSharedStore==='function') await loadSharedStore();}catch(e){console.warn('Cloud load skipped',e)}}
+  function userMap(){return readJSON('nitaUsersByEmail',{});} 
+  function currentEmail(){return norm(readJSON('nitaUser',{})?.email || localStorage.getItem('nitaSessionEmail') || '');}
+  function currentUser(){const email=currentEmail(); if(!email)return null; const users=userMap(); return users[email] || readJSON('nitaUser',null);}
+  async function saveUser(user){if(!user||!user.email)return null; user.email=norm(user.email); const users=userMap(); users[user.email]={...(users[user.email]||{}),...user,updatedAt:new Date().toISOString()}; writeJSON('nitaUsersByEmail',users); writeJSON('nitaUser',users[user.email]); localStorage.setItem('nitaSessionEmail',user.email); window.currentUser=users[user.email]; await cloudSet('nitaUsersByEmail',users); return users[user.email];}
+  async function emailSend(payload){
+    const res=await fetch('/.netlify/functions/send-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload||{})});
+    let body=null;
+    try{body=await res.json()}catch(e){body={error:await res.text()}}
+    if(!res.ok || body.ok===false) throw new Error(body.error||'Email failed');
+    return body;
+  }
+  window.sendStoreEmail=emailSend;
+  function genCode(){return String(Math.floor(100000+Math.random()*900000));}
+  function pendingSignup(){return readJSON('nitaPendingSignup',null)}
+  function setPending(obj){writeJSON('nitaPendingSignup',obj)}
+  function clearPending(){localStorage.removeItem('nitaPendingSignup')}
+
+  // Strong sign-up verification flow: account is created only after the 6-digit email code is verified.
+  window.renderLoginPage=function(){
+    const root=document.getElementById('loginRoot'); if(!root)return;
+    root.innerHTML=`<section class="auth-shell"><div class="auth-brand"><img src="assets/logo-cropped.png" alt="Nita Style"><p>Customer account</p><h1>Sign in or create your account</h1><p class="muted">Save your addresses, follow your orders, and receive your first-order code.</p></div><div class="auth-card"><div class="auth-tabs"><button class="active" id="signinTab" type="button" onclick="switchAuthMode('signin')">SIGN IN</button><button id="signupTab" type="button" onclick="switchAuthMode('signup')">SIGN UP</button></div><div id="authMessage" class="auth-message"></div><label>Email address</label><input id="authEmail" class="field" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" class="field" type="password" autocomplete="current-password" placeholder="Password"><div id="signupFields" style="display:none"><div class="form-grid"><div><label>First name</label><input id="authFirst" class="field" placeholder="First name"></div><div><label>Last name</label><input id="authLast" class="field" placeholder="Last name"></div></div><label>Phone number</label><input id="authPhone" class="field" placeholder="Phone number"><div id="verifyBox" class="verification-box" style="display:none"><h3>One step left</h3><p class="muted">We sent a six-digit verification code to your email. Enter it below to create your account.</p><input id="authCode" class="field verification-code-input" inputmode="numeric" maxlength="6" placeholder="6-digit code"><button type="button" class="btn light" onclick="resendVerificationCode()">RESEND CODE</button></div></div><button class="btn auth-submit" id="authSubmitBtn" type="button" onclick="submitAuth()">CONTINUE</button><p class="muted mini-note">Your account is created only after email verification.</p></div></section>`;
+    window.authMode='signin'; clearPending();
+  };
+  window.switchAuthMode=function(mode){
+    window.authMode=mode; clearPending();
+    document.getElementById('signinTab')?.classList.toggle('active',mode==='signin');
+    document.getElementById('signupTab')?.classList.toggle('active',mode==='signup');
+    const fields=document.getElementById('signupFields'); if(fields) fields.style.display=mode==='signup'?'block':'none';
+    const verify=document.getElementById('verifyBox'); if(verify) verify.style.display='none';
+    const btn=document.getElementById('authSubmitBtn'); if(btn) btn.textContent='CONTINUE';
+    const m=document.getElementById('authMessage'); if(m) m.textContent='';
+  };
+  window.resendVerificationCode=async function(){
+    const p=pendingSignup(); const m=document.getElementById('authMessage');
+    if(!p||!p.email){if(m)m.textContent='Please start sign up again.';return;}
+    const code=genCode(); p.code=code; p.createdAt=Date.now(); setPending(p);
+    try{await emailSend({type:'verification',to:p.email,code}); if(m)m.textContent='A new verification code was sent.';}catch(e){if(m)m.textContent='Email sending failed. Check Netlify environment variables and Resend setup.'; console.error(e);}
+  };
+  window.submitAuth=async function(){
+    const email=norm(document.getElementById('authEmail')?.value); const password=String(document.getElementById('authPassword')?.value||''); const m=document.getElementById('authMessage');
+    if(!EMAIL_REGEX.test(email)){if(m)m.textContent='Please enter a valid email address.';return;}
+    if(password.length<4){if(m)m.textContent='Please enter a password with at least 4 characters.';return;}
+    await cloudLoad(); const users=userMap(); const mode=window.authMode||'signin';
+    if(mode==='signin'){
+      const u=users[email]; if(!u){if(m)m.innerHTML='No account found. Click <b>Sign up</b> to create one.';return;}
+      if(u.password && u.password!==password){if(m)m.textContent='Wrong password.';return;}
+      writeJSON('nitaUser',u); localStorage.setItem('nitaSessionEmail',email); window.currentUser=u; location.href='index.html'; return;
+    }
+    const firstName=String(document.getElementById('authFirst')?.value||'').trim(); const lastName=String(document.getElementById('authLast')?.value||'').trim(); const phone=String(document.getElementById('authPhone')?.value||'').trim(); const p=pendingSignup(); const entered=String(document.getElementById('authCode')?.value||'').trim();
+    if(!p || p.email!==email){
+      if(users[email]){if(m)m.textContent='This email already has an account. Please sign in.';return;}
+      const code=genCode(); setPending({email,password,firstName,lastName,phone,code,createdAt:Date.now()});
+      if(m)m.textContent='Sending verification code...';
+      try{await emailSend({type:'verification',to:email,code}); document.getElementById('verifyBox').style.display='block'; document.getElementById('authSubmitBtn').textContent='VERIFY & CREATE ACCOUNT'; if(m)m.textContent='Verification email sent. Check your inbox.';}catch(e){clearPending(); if(m)m.textContent='Email could not be sent. Check RESEND_API_KEY / FROM_EMAIL in Netlify and verify Resend domain settings.'; console.error(e);} return;
+    }
+    if(!entered || entered!==p.code){if(m)m.textContent='Wrong verification code. Please try again.';return;}
+    const user={email,password,firstName:firstName||p.firstName||'',lastName:lastName||p.lastName||'',phone:phone||p.phone||'',addresses:[],defaultAddress:null,emailVerified:true,firstOrderCode:'NITA10',createdAt:new Date().toISOString()};
+    users[email]=user; await cloudSet('nitaUsersByEmail',users); writeJSON('nitaUser',user); localStorage.setItem('nitaSessionEmail',email); window.currentUser=user;
+    try{await emailSend({type:'signup_discount',to:email,code:'NITA10',user});}catch(e){console.warn('Discount email failed',e)}
+    clearPending(); location.href='index.html';
+  };
+  window.login=window.submitAuth;
+
+  // Robust order save + customer/admin emails + inventory update.
+  window.placeOrder=async function(){
+    const form=document.getElementById('checkoutForm'); if(!form)return;
+    const cart=getCart(); if(!cart.length){msg('Your cart is empty.'); return;}
+    const customer=String(form.name?.value||form.querySelector('[name="name"]')?.value||'').trim();
+    const email=norm(form.email?.value||form.querySelector('[name="email"]')?.value||currentEmail());
+    const phone=String(form.phone?.value||form.querySelector('[name="phone"]')?.value||'').trim();
+    if(!customer||!EMAIL_REGEX.test(email)||!phone){msg('Please complete your contact details.'); return;}
+    // Address is controlled by the premium address patch when available.
+    let address=null;
+    try{
+      const addresses = (typeof allCheckoutAddresses==='function') ? allCheckoutAddresses() : [];
+      if(addresses && addresses.length && window.nitaCheckoutMode!=='new') address=addresses[Number(window.nitaSelectedCheckoutAddress||0)];
+      if(!address && window.nitaCheckoutTempAddress) address=window.nitaCheckoutTempAddress;
+    }catch(e){}
+    if(!address){
+      const saved=readJSON('nitaGuestAddresses',[])[0] || currentUser()?.addresses?.[0] || currentUser()?.defaultAddress || null;
+      address=saved;
+    }
+    const requiredAddressOk=address && (address.label||address.city||address.street||address.address);
+    if(!requiredAddressOk){msg('Please add and save a delivery address.'); if(typeof nitaShowCheckoutAddressForm==='function') nitaShowCheckoutAddressForm(); return;}
+    await cloudLoad(); const products=getLocalProducts(); let subtotal=0; const items=[];
+    cart.forEach(item=>{const p=products.find(x=>String(x.id)===String(item.id)); if(!p)return; const qty=Math.max(1,Number(item.qty||1)); const price=Number(p.salePrice||p.price||item.price||0); subtotal+=price*qty; items.push({id:p.id,name:p.name,size:item.size||'One Size',qty,price,total:price*qty}); if(p.quantity!==undefined && p.quantity!==''){p.quantity=Math.max(0,Number(p.quantity||0)-qty); if(p.quantity<=0)p.status='out-of-stock';}});
+    const fee=subtotal>0 && subtotal<DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
+    const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer,email,phone,address,payment:'Cash on Delivery',deliveryMethod:'Aramex',deliveryFee:fee,deliveryTime:'2–3 business days across Lebanon',status:'Order submitted',items,subtotal,discount:0,total:subtotal+fee};
+    const orders=readJSON('nitaOrders',[]); orders.push(order);
+    await cloudSet('nitaOrders',orders); await cloudSet('nitaProducts',products); writeJSON('nitaLastOrder',order);
+    const users=userMap(); if(users[email]){users[email].orders=users[email].orders||[]; users[email].orders.push(order.id); await cloudSet('nitaUsersByEmail',users);}
+    const emailFailures=[];
+    try{await emailSend({type:'order_confirmation',to:email,order});}catch(e){emailFailures.push('customer confirmation'); console.warn(e)}
+    try{await emailSend({type:'admin_order',order});}catch(e){emailFailures.push('admin notification'); console.warn(e)}
+    if(emailFailures.length) localStorage.setItem('nitaLastEmailError','Failed: '+emailFailures.join(', ')+'. Check Resend logs and Netlify env variables.'); else localStorage.removeItem('nitaLastEmailError');
+    setCartSafe([]); location.href='order-success.html';
+  };
+
+  // Admin order table + status emails.
+  window.updateOrder=async function(i,status){
+    await cloudLoad(); const orders=readJSON('nitaOrders',[]); const order=orders[i]; if(!order)return;
+    const old=order.status||'Order submitted'; if(status===old)return;
+    if(!confirm(`Confirm order status update?\n\nOrder: ${order.id}\nFrom: ${old}\nTo: ${status}`)){try{renderAdmin()}catch(e){} return;}
+    order.status=status; await cloudSet('nitaOrders',orders);
+    if(order.email){try{await emailSend({type:'order_status',to:order.email,order});}catch(e){console.warn('Order status email failed',e); msg('Status updated, but email failed. Check Resend/Netlify.');}}
+    msg('Order status updated.'); try{renderAdmin()}catch(e){}
+  };
+  const previousRenderAdmin=window.renderAdmin;
+  window.renderAdmin=async function(){
+    await cloudLoad();
+    if(typeof previousRenderAdmin==='function') await previousRenderAdmin.apply(this,arguments);
+    const tbody=document.getElementById('orders'); if(tbody){const orders=readJSON('nitaOrders',[]); tbody.innerHTML=orders.length?orders.map((o,i)=>`<tr><td><b>${safe(o.id)}</b><br><span class="muted">${safe(o.date||'')}</span></td><td>${safe(o.customer||'-')}<br><span class="muted">${safe(o.email||'')} · ${safe(o.phone||'')}</span></td><td>${money2(o.total||0)}</td><td><select onchange="updateOrder(${i},this.value)"><option>${safe(o.status||'Order submitted')}</option>${ORDER_STEPS.concat(['Cancelled']).filter(s=>s!==o.status).map(s=>`<option>${safe(s)}</option>`).join('')}</select></td></tr>`).join(''):'<tr><td colspan="4">No orders yet.</td></tr>';}
+  };
+  const previousRenderAccount=window.renderAccount;
+  window.renderAccount=async function(){await cloudLoad(); if(typeof previousRenderAccount==='function') return previousRenderAccount.apply(this,arguments);};
+
+  window.renderOrderSuccess=function(){
+    const root=document.getElementById('orderSuccessRoot'); if(!root)return;
+    const order=readJSON('nitaLastOrder',null); const emailError=localStorage.getItem('nitaLastEmailError');
+    root.innerHTML=`<section class="order-success-wrap"><div class="success-mark"><span>✓</span></div><p class="eyebrow">Order received</p><h1>Thank you for your purchase</h1><p class="muted">Your Nita Style order has been submitted successfully. We will prepare your order and contact you if any detail needs confirmation.</p>${order?`<div class="success-summary"><div><span>Order number</span><b>${safe(order.id)}</b></div><div><span>Total</span><b>${money2(order.total)}</b></div><div><span>Delivery</span><b>Aramex · 2–3 business days</b></div><div><span>Payment</span><b>Cash on Delivery</b></div></div>`:''}${emailError?`<p class="email-warning">${safe(emailError)}</p>`:''}<div class="success-actions"><a class="btn" href="shop.html">CONTINUE SHOPPING</a><a class="btn light" href="account.html">VIEW MY ORDER</a></div></section>`;
+  };
+  document.addEventListener('DOMContentLoaded',function(){if(document.getElementById('orderSuccessRoot')) renderOrderSuccess();});
+})();
+/* === END NITA STYLE ORDER + EMAIL + SUCCESS FINAL RELIABILITY PATCH 2026-06-08 === */
