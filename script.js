@@ -2964,3 +2964,194 @@ placeOrder=async function(){
   function boot(){injectSavedAddressSelector();injectDeliveryBox();try{window.renderCartPanel&&window.renderCartPanel();}catch(e){}try{window.renderCheckoutSummary&&window.renderCheckoutSummary();}catch(e){}disableCheckoutIfEmpty();}
   document.addEventListener('DOMContentLoaded',boot); window.addEventListener('load',boot); window.addEventListener('pageshow',boot); setTimeout(boot,500); setTimeout(boot,1300);
 })();
+
+
+/* === NITA STYLE PREMIUM ADDRESS + CHECKOUT FINAL SAFE PATCH === */
+(function(){
+  const DELIVERY_THRESHOLD = 150;
+  const DELIVERY_FEE = 7;
+  const ORDER_STEPS = ['Order submitted','Confirmed','Packing','Out for delivery','Delivered'];
+  const esc = (v)=>String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const read = (k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f));}catch(e){return f;}};
+  const write = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  const moneySafe = (n)=> typeof money==='function' ? money(Number(n||0)) : ('$'+Number(n||0).toFixed(2));
+  const normalizeEmail = (v)=>String(v||'').trim().toLowerCase();
+  const productList = ()=>{try{return typeof getProducts==='function'?getProducts():read('nitaProducts',[]);}catch(e){return read('nitaProducts',[]);}};
+  const saveCloud = async (key,value)=>{ write(key,value); try{ if(typeof saveCloudKey==='function') await saveCloudKey(key,value); else if(key==='nitaProducts' && typeof saveProducts==='function') await saveProducts(value); }catch(e){ console.warn('Cloud save skipped:', e); } };
+  const activeUser = ()=>{
+    const sessionEmail = normalizeEmail(localStorage.getItem('nitaSessionEmail'));
+    let u = read('nitaUser', null) || null;
+    const users = read('nitaUsersByEmail', {});
+    const email = normalizeEmail(u?.email || sessionEmail);
+    if(email && users[email]) u = {...users[email], email};
+    if(u && u.email){ write('nitaUser', u); localStorage.setItem('nitaSessionEmail', normalizeEmail(u.email)); try{window.currentUser=u; currentUser=u;}catch(e){} return u; }
+    return null;
+  };
+  const saveUser = async (user)=>{
+    if(!user || !user.email) return;
+    user.email = normalizeEmail(user.email);
+    const users = read('nitaUsersByEmail', {});
+    users[user.email] = {...(users[user.email]||{}), ...user};
+    write('nitaUsersByEmail', users); write('nitaUser', users[user.email]); localStorage.setItem('nitaSessionEmail', user.email);
+    await saveCloud('nitaUsersByEmail', users);
+  };
+  const getUserAddresses = (user)=>{
+    const list = Array.isArray(user?.addresses) ? user.addresses.filter(Boolean) : [];
+    if(!list.length && user?.defaultAddress && Object.keys(user.defaultAddress).length){ return [{label:user.defaultAddress.label||'Main address', ...user.defaultAddress}]; }
+    return list;
+  };
+  const emptyAddress = ()=>({label:'',city:'',street:'',building:'',floor:'',apartment:'',landmark:'',notes:''});
+  const addressSummary = (a)=>[a.city,a.street,a.building].filter(Boolean).join(' · ');
+  const addressDetailsHtml = (a)=>`<div class="saved-address-details"><p><b>City:</b> ${esc(a.city||'-')}</p><p><b>Street:</b> ${esc(a.street||'-')}</p><p><b>Building:</b> ${esc(a.building||'-')}</p><p><b>Floor:</b> ${esc(a.floor||'-')}</p><p><b>Apartment / door:</b> ${esc(a.apartment||'-')}</p>${a.landmark?`<p><b>Landmark:</b> ${esc(a.landmark)}</p>`:''}${a.notes?`<p><b>Notes:</b> ${esc(a.notes)}</p>`:''}</div>`;
+  const addressFormHtml = (prefix,a={},opts={})=>{
+    a={...emptyAddress(),...a};
+    return `<div class="address-form premium-address-form ${opts.hidden?'is-hidden':''}" id="${prefix}Form">
+      <div class="form-grid two">
+        <div class="full"><input class="field" id="${prefix}Label" name="addressLabel" placeholder="Address name, for example Home or Office" value="${esc(a.label)}" required></div>
+        <div><input class="field" id="${prefix}City" name="city" placeholder="City" value="${esc(a.city)}" required></div>
+        <div><input class="field" id="${prefix}Street" name="street" placeholder="Street name" value="${esc(a.street)}" required></div>
+        <div><input class="field" id="${prefix}Building" name="building" placeholder="Building name / number" value="${esc(a.building)}" required></div>
+        <div><input class="field" id="${prefix}Floor" name="floor" placeholder="Floor" value="${esc(a.floor)}" required></div>
+        <div><input class="field" id="${prefix}Apartment" name="apartment" placeholder="Apartment / door number" value="${esc(a.apartment)}" required></div>
+        <div><input class="field" id="${prefix}Landmark" name="landmark" placeholder="Nearby landmark (optional)" value="${esc(a.landmark)}"></div>
+        <div class="full"><textarea class="field" id="${prefix}Notes" name="notes" placeholder="Delivery notes (optional)">${esc(a.notes)}</textarea></div>
+      </div>
+      ${opts.checkout?'<label class="save-address"><input type="checkbox" id="checkoutSaveAddress" checked> Save this address for future orders</label>':''}
+      <div class="address-form-actions"><button class="btn" type="button" onclick="${opts.checkout?'nitaSaveCheckoutAddress()':'nitaSaveAccountAddress()'}">SAVE ADDRESS</button>${opts.cancel?`<button class="btn light" type="button" onclick="${opts.checkout?'nitaCancelCheckoutAddressForm()':'nitaCancelAccountAddressForm()'}">CANCEL</button>`:''}</div>
+    </div>`;
+  };
+  const collectAddressFromPrefix = (prefix)=>({
+    label:document.getElementById(prefix+'Label')?.value?.trim()||'Address',
+    city:document.getElementById(prefix+'City')?.value?.trim()||'',
+    street:document.getElementById(prefix+'Street')?.value?.trim()||'',
+    building:document.getElementById(prefix+'Building')?.value?.trim()||'',
+    floor:document.getElementById(prefix+'Floor')?.value?.trim()||'',
+    apartment:document.getElementById(prefix+'Apartment')?.value?.trim()||'',
+    landmark:document.getElementById(prefix+'Landmark')?.value?.trim()||'',
+    notes:document.getElementById(prefix+'Notes')?.value?.trim()||''
+  });
+  const validateAddress = (a)=>!!(a.label && a.city && a.street && a.building && a.floor && a.apartment);
+
+  window.nitaToggleAddressDetails = function(id){ const el=document.getElementById(id); if(el) el.classList.toggle('open'); };
+
+  window.nitaShowAccountAddressForm = function(index){
+    const user=activeUser(); if(!user) return;
+    const addresses=getUserAddresses(user); const editing = Number.isInteger(index) && index>=0;
+    window.nitaEditingAccountAddress = editing ? index : null;
+    const box=document.getElementById('accountAddressFormBox'); if(box){ box.innerHTML=addressFormHtml('accountAddr', editing?addresses[index]:{}, {cancel:true}); box.classList.add('open'); }
+  };
+  window.nitaCancelAccountAddressForm=function(){ const box=document.getElementById('accountAddressFormBox'); if(box){box.innerHTML='';box.classList.remove('open');} window.nitaEditingAccountAddress=null; };
+  window.nitaSaveAccountAddress = async function(){
+    const user=activeUser(); if(!user) return;
+    const addr=collectAddressFromPrefix('accountAddr');
+    if(!validateAddress(addr)){ if(typeof toast==='function') toast('Please complete the required address fields.'); return; }
+    const addresses=getUserAddresses(user).slice();
+    const idx=window.nitaEditingAccountAddress;
+    if(Number.isInteger(idx) && idx>=0) addresses[idx]=addr; else addresses.push(addr);
+    user.addresses=addresses; user.defaultAddress=addresses[0]||addr;
+    await saveUser(user);
+    window.nitaEditingAccountAddress=null;
+    if(typeof toast==='function') toast('Address saved.');
+    if(typeof renderAccount==='function') renderAccount();
+  };
+  window.nitaDeleteAccountAddress = async function(index){
+    const user=activeUser(); if(!user) return;
+    if(!confirm('Remove this saved address?')) return;
+    const addresses=getUserAddresses(user).filter((_,i)=>i!==index); user.addresses=addresses; user.defaultAddress=addresses[0]||null; await saveUser(user); renderAccount();
+  };
+
+  const baseOrderCard = (order)=>{
+    const status = String(order.status||'Order submitted');
+    const idx = Math.max(0, ORDER_STEPS.indexOf(status));
+    const items = (order.items||[]).map(i=>`<span>${esc(i.name||i.id||'Product')} × ${esc(i.qty||1)}</span>`).join('');
+    return `<div class="account-order detailed-order"><div class="order-top"><div><b>${esc(order.id||'Order')}</b><br><span class="muted">${esc(order.date||'')} · ${esc(order.payment||'Cash on delivery')}</span></div><div><b>${moneySafe(order.total||0)}</b><br><span class="order-status">${esc(status)}</span></div></div><div class="order-roadmap-wrap"><div class="order-roadmap">${ORDER_STEPS.map((s,i)=>`<span class="${i<=idx?'done':''}">${esc(s)}</span>`).join('')}</div></div><p class="muted order-items">${items||'Order details saved.'}</p></div>`;
+  };
+
+  window.renderAccount = async function(){
+    if(typeof loadSharedStore==='function'){ try{ await loadSharedStore(); }catch(e){} }
+    const root=document.getElementById('accountRoot'); if(!root) return;
+    const user=activeUser();
+    if(!user){ root.innerHTML=`<div class="card account-auth"><h1>Sign in</h1><p class="muted">Sign in to manage your profile, saved delivery addresses, and order tracking.</p><a class="btn" href="login.html">SIGN IN / CREATE ACCOUNT</a></div>`; return; }
+    const addresses=getUserAddresses(user);
+    const orders=read('nitaOrders',[]).filter(o=>normalizeEmail(o.email)===normalizeEmail(user.email));
+    const previous=orders.filter(o=>String(o.status||'').toLowerCase()==='delivered');
+    const ongoing=orders.filter(o=>String(o.status||'').toLowerCase()!=='delivered');
+    root.innerHTML=`<div class="account-hero clean-account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${user.firstName?' '+esc(user.firstName):''}</h1><p class="muted">Manage your profile, saved delivery addresses, and order tracking.</p></div></div><div class="account-grid"><section class="card account-card"><h2>Personal information</h2><p class="muted">Your email is your login and cannot be edited.</p><div class="form-grid"><div><label>First name</label><input class="field" id="accFirst" value="${esc(user.firstName||'')}" placeholder="First name"></div><div><label>Last name</label><input class="field" id="accLast" value="${esc(user.lastName||'')}" placeholder="Last name"></div><div><label>Email address</label><input class="field disabled-field" value="${esc(user.email)}" disabled></div><div><label>Phone number</label><input class="field" id="accPhone" value="${esc(user.phone||'')}" placeholder="Phone number"></div></div><button class="btn" onclick="saveAccountInfo()">SAVE DETAILS</button></section><section class="card account-card"><div class="checkout-title-row"><h2>Saved delivery addresses</h2><button class="btn light small-btn" type="button" onclick="nitaShowAccountAddressForm()">ADD NEW ADDRESS</button></div><div class="saved-address-list">${addresses.length?addresses.map((a,i)=>`<div class="saved-address-card"><div class="saved-address-head"><button type="button" class="saved-address-title" onclick="nitaToggleAddressDetails('accAddrDetails${i}')"><b>${esc(a.label||'Address '+(i+1))}</b><span>${esc(addressSummary(a)||'View address details')}</span></button><button class="btn light small-btn" type="button" onclick="nitaShowAccountAddressForm(${i})">EDIT</button></div><div id="accAddrDetails${i}" class="saved-address-collapse">${addressDetailsHtml(a)}</div></div>`).join(''):`<p class="muted">No saved delivery address yet.</p><button class="btn" type="button" onclick="nitaShowAccountAddressForm()">ADD NEW ADDRESS</button>`}</div><div id="accountAddressFormBox" class="account-address-form-box"></div></section><section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${ongoing.length?ongoing.map(baseOrderCard).join(''):'<p class="muted">No ongoing orders yet.</p>'}</div></section><section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${previous.length?previous.map(baseOrderCard).join(''):'<p class="muted">No previous orders yet.</p>'}</div></section><section class="card danger-zone full-span"><h2>Account control</h2><p class="muted">Log out safely, or permanently remove your saved customer profile from this website.</p><button class="btn logout-btn" onclick="logoutUser()">LOG OUT</button><button class="btn danger delete-account-btn" onclick="deleteAccount()">DELETE ACCOUNT</button></section></div>`;
+  };
+
+  function currentCart(){ return read('nitaCart',[]); }
+  function cartSubtotal(){ const ps=productList(); return currentCart().reduce((sum,item)=>{ const p=ps.find(x=>String(x.id)===String(item.id)); const price=Number(p?.salePrice || p?.price || item.price || 0); return sum + price*Number(item.qty||1); },0); }
+  function deliveryFee(subtotal){ return subtotal>0 && subtotal<DELIVERY_THRESHOLD ? DELIVERY_FEE : 0; }
+  function couponDiscount(subtotal){
+    const form=document.getElementById('checkoutForm'); const code=String(sessionStorage.getItem('nitaAppliedCoupon')||'').toUpperCase();
+    const typed=String(form?.coupon?.value||'').trim().toUpperCase(); const email=normalizeEmail(form?.email?.value || activeUser()?.email);
+    if(!code || code!==typed) return 0;
+    try{ const res=typeof calcCouponDiscount==='function'?calcCouponDiscount(code,email,subtotal):{discount:0}; return Number(res.discount||0); }catch(e){ return code==='NITA10'?subtotal*0.10:0; }
+  }
+  window.renderCheckoutSummary = function(){
+    const box=document.getElementById('checkoutSummary'); if(!box) return;
+    const cart=currentCart(); const ps=productList(); let subtotal=0;
+    const rows=cart.length?cart.map(item=>{const p=ps.find(x=>String(x.id)===String(item.id)); const qty=Number(item.qty||1); const price=Number(p?.salePrice||p?.price||item.price||0); subtotal+=price*qty; return `<div class="premium-summary-item"><span><b>${esc(p?.name||item.name||'Product')}</b><small>${esc(item.size||'')} × ${qty}</small></span><strong>${moneySafe(price*qty)}</strong></div>`;}).join(''):'<p class="muted">Your cart is empty.</p>';
+    const discount=couponDiscount(subtotal); const fee=deliveryFee(subtotal); const total=Math.max(0,subtotal-discount)+fee;
+    box.innerHTML=`${rows}<hr><div class="summary-line"><span>Subtotal</span><b>${moneySafe(subtotal)}</b></div>${discount>0?`<div class="summary-line discount-line"><span>Discount</span><b>-${moneySafe(discount)}</b></div>`:''}<div class="summary-line"><span>Aramex delivery</span><b>${fee?moneySafe(fee):'Free'}</b></div><p class="delivery-note">Aramex delivery across Lebanon. $7 for orders under $150. Estimated delivery: 2–3 business days.</p><div class="summary-line summary-total"><span>Total</span><b>${moneySafe(total)}</b></div>`;
+    const submit=document.querySelector('.complete-order-btn'); if(submit){ submit.disabled=!cart.length; submit.classList.toggle('disabled',!cart.length); submit.textContent=cart.length?'COMPLETE ORDER':'CART IS EMPTY'; }
+  };
+
+  window.nitaShowCheckoutAddressForm = function(){ const area=document.getElementById('checkoutAddressArea'); if(!area) return; window.nitaCheckoutMode='new'; area.querySelector('.checkout-address-form-holder')?.remove(); area.insertAdjacentHTML('beforeend', `<div class="checkout-address-form-holder">${addressFormHtml('checkoutAddr', {}, {checkout:true,cancel:true})}</div>`); };
+  window.nitaCancelCheckoutAddressForm = function(){ window.nitaCheckoutMode='saved'; document.querySelector('.checkout-address-form-holder')?.remove(); };
+  window.nitaSaveCheckoutAddress = async function(){
+    const user=activeUser(); const addr=collectAddressFromPrefix('checkoutAddr');
+    if(!validateAddress(addr)){ if(typeof toast==='function') toast('Please complete the required address fields.'); return false; }
+    window.nitaCheckoutTempAddress=addr;
+    if(user && document.getElementById('checkoutSaveAddress')?.checked){ const addresses=getUserAddresses(user); addresses.push(addr); user.addresses=addresses; user.defaultAddress=addresses[0]||addr; await saveUser(user); }
+    if(typeof toast==='function') toast('Delivery address saved for this checkout.');
+    nitaPremiumCheckoutInit();
+    return true;
+  };
+  window.nitaSelectCheckoutAddress = function(i){ window.nitaSelectedCheckoutAddress=Number(i); document.querySelectorAll('.checkout-address-card').forEach((c,idx)=>c.classList.toggle('active',idx===Number(i))); };
+  window.nitaPremiumCheckoutInit = function(){
+    const form=document.getElementById('checkoutForm'); const area=document.getElementById('checkoutAddressArea'); if(!form || !area) return;
+    const user=activeUser(); if(user){ if(form.email) form.email.value=user.email||''; if(form.name && !form.name.value) form.name.value=[user.firstName,user.lastName].filter(Boolean).join(' '); if(form.phone && !form.phone.value) form.phone.value=user.phone||''; }
+    const addresses=getUserAddresses(user); window.nitaSelectedCheckoutAddress = window.nitaSelectedCheckoutAddress ?? (addresses.length?0:null);
+    if(addresses.length && window.nitaCheckoutMode!=='new'){
+      area.innerHTML=`<div class="saved-address-list checkout-address-list">${addresses.map((a,i)=>`<div class="saved-address-card checkout-address-card ${i===window.nitaSelectedCheckoutAddress?'active':''}"><label class="saved-address-head"><input type="radio" name="selectedCheckoutAddress" ${i===window.nitaSelectedCheckoutAddress?'checked':''} onchange="nitaSelectCheckoutAddress(${i})"><button type="button" class="saved-address-title" onclick="event.preventDefault(); nitaToggleAddressDetails('checkoutAddrDetails${i}')"><b>${esc(a.label||'Address '+(i+1))}</b><span>${esc(addressSummary(a)||'View address details')}</span></button></label><div id="checkoutAddrDetails${i}" class="saved-address-collapse">${addressDetailsHtml(a)}</div></div>`).join('')}</div><button class="btn light add-location-btn" type="button" onclick="nitaShowCheckoutAddressForm()">ADD NEW LOCATION</button>`;
+    } else {
+      area.innerHTML=`<p class="muted">No saved delivery address yet. Add a new delivery address to continue.</p><button class="btn" type="button" onclick="nitaShowCheckoutAddressForm()">ADD NEW DELIVERY ADDRESS</button>`;
+      setTimeout(()=>{ if(!document.querySelector('.checkout-address-form-holder')) nitaShowCheckoutAddressForm(); },0);
+    }
+    const shipping=document.getElementById('shippingMethodBox'); if(shipping) shipping.innerHTML=`<div><b>Aramex delivery across Lebanon</b><span>$7 delivery fee for orders under $150 · 2–3 business days</span></div><strong>$7</strong>`;
+    renderCheckoutSummary();
+  };
+
+  window.applyCouponCode = function(){
+    const form=document.getElementById('checkoutForm'); const feedback=document.getElementById('couponFeedback'); if(!form) return;
+    const subtotal=cartSubtotal(); const code=String(form.coupon?.value||'').trim().toUpperCase(); const email=normalizeEmail(form.email?.value||activeUser()?.email);
+    if(!code){ if(feedback){feedback.className='coupon-feedback discount-bad';feedback.textContent='Enter a coupon code first.';} sessionStorage.removeItem('nitaAppliedCoupon'); renderCheckoutSummary(); return; }
+    let discount=0; try{ const r=typeof calcCouponDiscount==='function'?calcCouponDiscount(code,email,subtotal):{discount:0}; discount=Number(r.discount||0); }catch(e){ discount=(code==='NITA10'&&subtotal>0)?subtotal*.10:0; }
+    if(discount>0){ sessionStorage.setItem('nitaAppliedCoupon',code); if(feedback){feedback.className='coupon-feedback discount-good';feedback.textContent=`Coupon applied. You saved ${moneySafe(discount)}.`;} }
+    else { sessionStorage.removeItem('nitaAppliedCoupon'); if(feedback){feedback.className='coupon-feedback discount-bad';feedback.textContent='Coupon code is expired, invalid, already used, or no discount is applicable.';} }
+    renderCheckoutSummary();
+  };
+
+  function selectedCheckoutAddress(){ const user=activeUser(); const addresses=getUserAddresses(user); if(addresses.length && window.nitaCheckoutMode!=='new') return addresses[Number(window.nitaSelectedCheckoutAddress||0)]; return window.nitaCheckoutTempAddress || collectAddressFromPrefix('checkoutAddr'); }
+  window.placeOrder = async function(){
+    const form=document.getElementById('checkoutForm'); if(!form) return;
+    if(!currentCart().length){ if(typeof toast==='function') toast('Your cart is empty.'); renderCheckoutSummary(); return; }
+    if(!form.name.value.trim() || !form.phone.value.trim() || !form.email.value.trim()){ if(typeof toast==='function') toast('Please complete your contact details.'); return; }
+    let address=selectedCheckoutAddress();
+    if(!validateAddress(address)){
+      if(document.querySelector('#checkoutAddrForm')){ if(typeof toast==='function') toast('Please complete and save your delivery address.'); return; }
+      nitaShowCheckoutAddressForm(); if(typeof toast==='function') toast('Please add a delivery address.'); return;
+    }
+    const ps=productList(); const cart=currentCart(); let subtotal=0; const items=[];
+    for(const item of cart){ const p=ps.find(x=>String(x.id)===String(item.id)); const qty=Number(item.qty||1); if(!p){ if(typeof toast==='function')toast('A product in your cart is no longer available.'); return; } const price=Number(p.salePrice||p.price||item.price||0); subtotal+=price*qty; items.push({id:p.id,name:p.name,size:item.size,qty,price,total:price*qty}); if(p.quantity!==undefined && p.quantity!==''){ p.quantity=Math.max(0,Number(p.quantity||0)-qty); if(p.quantity<=0){p.status='out-of-stock';p.soldOut=true;} } }
+    const discount=couponDiscount(subtotal); const fee=deliveryFee(subtotal); const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:form.name.value.trim(),email:normalizeEmail(form.email.value),phone:form.phone.value.trim(),address,payment:'Cash on delivery',deliveryMethod:'Aramex',deliveryFee:fee,deliveryTime:'2–3 business days across Lebanon',status:'Order submitted',items,subtotal,discount,total:Math.max(0,subtotal-discount)+fee};
+    const orders=read('nitaOrders',[]); orders.push(order); await saveCloud('nitaOrders',orders); await saveCloud('nitaProducts',ps);
+    write('nitaCart',[]); window.cart=[]; if(typeof updateCartCount==='function') updateCartCount(); sessionStorage.removeItem('nitaAppliedCoupon'); location.href='order-success.html';
+  };
+
+  document.addEventListener('input',e=>{ if(e.target?.name==='coupon') { sessionStorage.removeItem('nitaAppliedCoupon'); const f=document.getElementById('couponFeedback'); if(f)f.textContent=''; renderCheckoutSummary(); }});
+  document.addEventListener('DOMContentLoaded',()=>{ if(document.getElementById('checkoutForm')) setTimeout(nitaPremiumCheckoutInit,50); });
+  window.addEventListener('pageshow',()=>{ if(document.getElementById('checkoutForm')) setTimeout(nitaPremiumCheckoutInit,50); });
+})();
+/* === END NITA STYLE PREMIUM ADDRESS + CHECKOUT FINAL SAFE PATCH === */
