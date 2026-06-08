@@ -369,13 +369,13 @@ function renderAccount(){
   const previous=orders.filter(o=>['Delivered','Cancelled'].includes(o.status));
   const addr=user.defaultAddress||{};
   document.getElementById('accountRoot').innerHTML=`
-  <div class="account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${user.firstName?' '+user.firstName:''}</h1><p class="muted">Manage your profile, saved delivery address, and orders.</p></div><button class="btn light" onclick="logoutUser()">LOG OUT</button></div>
+  <div class="account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${user.firstName?' '+user.firstName:''}</h1><p class="muted">Manage your profile, saved delivery address, and orders.</p></div><button class="logout-outline-btn" type="button" onclick="logoutUser()" style="background:#fff!important;color:#111!important;border:2px solid #b00020!important;">LOG OUT</button></div>
   <div class="account-grid">
     <section class="card account-card"><h2>Personal information</h2><p class="muted">Your email is your login and cannot be edited.</p><div class="form-grid"><div><label>First name</label><input class="field" id="accFirst" value="${user.firstName||''}" placeholder="First name"></div><div><label>Last name</label><input class="field" id="accLast" value="${user.lastName||''}" placeholder="Last name"></div><div><label>Email address</label><input class="field disabled-field" value="${user.email}" disabled></div><div><label>Phone number</label><input class="field" id="accPhone" value="${user.phone||''}" placeholder="Phone number"></div></div><button class="btn" onclick="saveAccountInfo()">SAVE DETAILS</button></section>
     <section class="card account-card"><h2>Saved delivery address</h2>${accountAddressFields('accAddr_',addr)}<button class="btn" onclick="saveAccountAddress()">SAVE ADDRESS</button></section>
     <section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${accountOrdersHtml(ongoing,'No ongoing orders yet.')}</div></section>
     <section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${accountOrdersHtml(previous,'No previous orders yet.')}</div></section>
-    <section class="card danger-zone full-span"><h2>Account control</h2><p class="muted">You can log out or delete the saved account from this browser.</p><button class="btn light" onclick="logoutUser()">LOG OUT</button><button class="btn danger" onclick="deleteAccount()">DELETE ACCOUNT</button></section>
+    <section class="card danger-zone full-span"><h2>Account control</h2><p class="muted">You can log out or delete the saved account from this browser.</p><button class="logout-outline-btn" type="button" onclick="logoutUser()" style="background:#fff!important;color:#111!important;border:2px solid #b00020!important;">LOG OUT</button><button class="btn danger" onclick="deleteAccount()">DELETE ACCOUNT</button></section>
   </div>`;
 }
 function accountOrdersHtml(orders,empty){
@@ -460,7 +460,7 @@ renderAccount=function(){
     <section class="card account-card"><h2>Saved delivery address</h2>${accountAddressFields('accAddr_',addr)}<button class="btn" onclick="saveAccountAddress()">SAVE ADDRESS</button></section>
     <section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${accountOrdersHtml(ongoing,'No ongoing orders yet.')}</div></section>
     <section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${accountOrdersHtml(previous,'No previous orders yet.')}</div></section>
-    <section class="card danger-zone full-span"><h2>Account control</h2><p class="muted">You can log out or delete the saved account from this website.</p><button class="btn light" onclick="logoutUser()">LOG OUT</button><button class="btn danger" onclick="deleteAccount()">DELETE ACCOUNT</button></section>
+    <section class="card danger-zone full-span"><h2>Account control</h2><p class="muted">You can log out or delete the saved account from this website.</p><button class="logout-outline-btn" type="button" onclick="logoutUser()" style="background:#fff!important;color:#111!important;border:2px solid #b00020!important;">LOG OUT</button><button class="btn danger" onclick="deleteAccount()">DELETE ACCOUNT</button></section>
   </div>`;
 }
 
@@ -899,7 +899,7 @@ placeOrder=async function(){
     if(!currentUser?.email){ root.innerHTML = `<div class="card account-auth"><h1>Sign in</h1><p class="muted">Sign in to view your saved details, addresses, and orders.</p><a class="btn" href="login.html">SIGN IN</a></div>`; return; }
     const user = ensureCurrentUserRecord() || currentUser; const addr = user.defaultAddress || {}; const orders = customerOrders(user.email).sort((a,b)=>String(b.id).localeCompare(String(a.id)));
     const ongoing = orders.filter(o=>!['Delivered','Cancelled'].includes(o.status)); const previous = orders.filter(o=>['Delivered','Cancelled'].includes(o.status));
-    root.innerHTML = `<div class="account-hero clean-account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${user.firstName?' '+safe(user.firstName):''}</h1><p class="muted">Manage your profile, saved delivery address, and orders.</p></div></div><div class="account-grid"><section class="card account-card"><h2>Personal information</h2><p class="muted">Your email is your login and cannot be edited.</p><div class="form-grid"><div><label>First name</label><input class="field" id="accFirst" value="${safe(user.firstName||'')}" placeholder="First name"></div><div><label>Last name</label><input class="field" id="accLast" value="${safe(user.lastName||'')}" placeholder="Last name"></div><div><label>Email address</label><input class="field disabled-field" value="${safe(user.email)}" disabled></div><div><label>Phone number</label><input class="field" id="accPhone" value="${safe(user.phone||'')}" placeholder="Phone number"></div></div><button class="btn" onclick="saveAccountInfo()">SAVE DETAILS</button></section><section class="card account-card"><h2>Saved delivery address</h2>${accountAddressFields('accAddr_',addr)}<button class="btn" onclick="saveAccountAddress()">SAVE ADDRESS</button></section><section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${accountOrdersHtml(ongoing,'No ongoing orders yet.')}</div></section><section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${accountOrdersHtml(previous,'No previous orders yet.')}</div></section><section class="card danger-zone full-span"><h2>Account control</h2><button class="btn light" onclick="logoutUser()">LOG OUT</button><button class="btn danger" onclick="deleteAccount()">DELETE ACCOUNT</button></section></div>`;
+    root.innerHTML = `<div class="account-hero clean-account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${user.firstName?' '+safe(user.firstName):''}</h1><p class="muted">Manage your profile, saved delivery address, and orders.</p></div></div><div class="account-grid"><section class="card account-card"><h2>Personal information</h2><p class="muted">Your email is your login and cannot be edited.</p><div class="form-grid"><div><label>First name</label><input class="field" id="accFirst" value="${safe(user.firstName||'')}" placeholder="First name"></div><div><label>Last name</label><input class="field" id="accLast" value="${safe(user.lastName||'')}" placeholder="Last name"></div><div><label>Email address</label><input class="field disabled-field" value="${safe(user.email)}" disabled></div><div><label>Phone number</label><input class="field" id="accPhone" value="${safe(user.phone||'')}" placeholder="Phone number"></div></div><button class="btn" onclick="saveAccountInfo()">SAVE DETAILS</button></section><section class="card account-card"><h2>Saved delivery address</h2>${accountAddressFields('accAddr_',addr)}<button class="btn" onclick="saveAccountAddress()">SAVE ADDRESS</button></section><section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${accountOrdersHtml(ongoing,'No ongoing orders yet.')}</div></section><section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${accountOrdersHtml(previous,'No previous orders yet.')}</div></section><section class="card danger-zone full-span"><h2>Account control</h2><button class="logout-outline-btn" type="button" onclick="logoutUser()" style="background:#fff!important;color:#111!important;border:2px solid #b00020!important;">LOG OUT</button><button class="btn danger" onclick="deleteAccount()">DELETE ACCOUNT</button></section></div>`;
   };
 })();
 // === END NITA STYLE FINAL STABILITY PATCH ===
@@ -1384,7 +1384,7 @@ placeOrder=async function(){
     const orders = (typeof customerOrders==='function'?customerOrders(user.email):JSON.parse(localStorage.getItem('nitaOrders')||'[]').filter(o=>String(o.email||'').toLowerCase()===String(user.email).toLowerCase())).sort((a,b)=>String(b.id).localeCompare(String(a.id)));
     const ongoing = orders.filter(o=>!['Delivered','Cancelled'].includes(o.status));
     const previous = orders.filter(o=>['Delivered','Cancelled'].includes(o.status));
-    root.innerHTML = `<div class="account-hero clean-account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${user.firstName?' '+esc(user.firstName):''}</h1><p class="muted">Manage your profile, saved delivery address, and order tracking.</p></div></div><div class="account-grid"><section class="card account-card"><h2>Personal information</h2><p class="muted">Your email is your login and cannot be edited.</p><div class="form-grid"><div><label>First name</label><input class="field" id="accFirst" value="${esc(user.firstName||'')}" placeholder="First name"></div><div><label>Last name</label><input class="field" id="accLast" value="${esc(user.lastName||'')}" placeholder="Last name"></div><div><label>Email address</label><input class="field disabled-field" value="${esc(user.email)}" disabled></div><div><label>Phone number</label><input class="field" id="accPhone" value="${esc(user.phone||'')}" placeholder="Phone number"></div></div><button class="btn" onclick="saveAccountInfo()">SAVE DETAILS</button></section><section class="card account-card"><h2>Saved delivery address</h2>${typeof accountAddressFields==='function'?accountAddressFields('accAddr_',addr):''}<button class="btn" onclick="saveAccountAddress()">SAVE ADDRESS</button></section><section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${accountOrdersHtml(ongoing,'No ongoing orders yet.')}</div></section><section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${accountOrdersHtml(previous,'No previous orders yet.')}</div></section><section class="card danger-zone full-span"><h2>Account control</h2><p class="muted">Log out safely, or permanently remove your saved customer profile from this website.</p><button class="btn logout-btn" onclick="logoutUser()">LOG OUT</button><button class="btn danger delete-account-btn" onclick="deleteAccount()">DELETE ACCOUNT</button></section></div>`;
+    root.innerHTML = `<div class="account-hero clean-account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${user.firstName?' '+esc(user.firstName):''}</h1><p class="muted">Manage your profile, saved delivery address, and order tracking.</p></div></div><div class="account-grid"><section class="card account-card"><h2>Personal information</h2><p class="muted">Your email is your login and cannot be edited.</p><div class="form-grid"><div><label>First name</label><input class="field" id="accFirst" value="${esc(user.firstName||'')}" placeholder="First name"></div><div><label>Last name</label><input class="field" id="accLast" value="${esc(user.lastName||'')}" placeholder="Last name"></div><div><label>Email address</label><input class="field disabled-field" value="${esc(user.email)}" disabled></div><div><label>Phone number</label><input class="field" id="accPhone" value="${esc(user.phone||'')}" placeholder="Phone number"></div></div><button class="btn" onclick="saveAccountInfo()">SAVE DETAILS</button></section><section class="card account-card"><h2>Saved delivery address</h2>${typeof accountAddressFields==='function'?accountAddressFields('accAddr_',addr):''}<button class="btn" onclick="saveAccountAddress()">SAVE ADDRESS</button></section><section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${accountOrdersHtml(ongoing,'No ongoing orders yet.')}</div></section><section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${accountOrdersHtml(previous,'No previous orders yet.')}</div></section><section class="card danger-zone full-span"><h2>Account control</h2><p class="muted">Log out safely, or permanently remove your saved customer profile from this website.</p><button class="logout-outline-btn" type="button" onclick="logoutUser()" style="background:#fff!important;color:#111!important;border:2px solid #b00020!important;">LOG OUT</button><button class="btn danger delete-account-btn" onclick="deleteAccount()">DELETE ACCOUNT</button></section></div>`;
   };
   // Redirect every successful customer/admin sign-in or sign-up to homepage, as requested.
   const oldSubmitAuth = window.submitAuth;
@@ -1778,7 +1778,7 @@ placeOrder=async function(){
     const orders=read('nitaOrders',[]).filter(o=>String(o.email||'').toLowerCase()===String(saved.email).toLowerCase());
     const previous=orders.filter(o=>String(o.status||'').toLowerCase()==='delivered');
     const ongoing=orders.filter(o=>String(o.status||'').toLowerCase()!=='delivered');
-    root.innerHTML = `<div class="account-hero clean-account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${saved.firstName?' '+safe(saved.firstName):''}</h1><p class="muted">Manage your profile, saved delivery address, and order tracking.</p></div></div><div class="account-grid"><section class="card account-card"><h2>Personal information</h2><p class="muted">Your email is your login and cannot be edited.</p><div class="form-grid"><div><label>First name</label><input class="field" id="accFirst" value="${safe(saved.firstName||'')}" placeholder="First name"></div><div><label>Last name</label><input class="field" id="accLast" value="${safe(saved.lastName||'')}" placeholder="Last name"></div><div><label>Email address</label><input class="field disabled-field" value="${safe(saved.email)}" disabled></div><div><label>Phone number</label><input class="field" id="accPhone" value="${safe(saved.phone||'')}" placeholder="Phone number"></div></div><button class="btn" onclick="saveAccountInfo()">SAVE DETAILS</button></section><section class="card account-card"><h2>Saved delivery address</h2>${typeof accountAddressFields==='function'?accountAddressFields('accAddr_',addr):''}<button class="btn" onclick="saveAccountAddress()">SAVE ADDRESS</button></section><section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${orderList(ongoing,'No ongoing orders yet.')}</div></section><section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${orderList(previous,'No previous orders yet.')}</div></section><section class="card danger-zone full-span"><h2>Account control</h2><p class="muted">Log out safely, or permanently remove your saved customer profile from this website.</p><button class="btn logout-btn" onclick="logoutUser()">LOG OUT</button><button class="btn danger delete-account-btn" onclick="deleteAccount()">DELETE ACCOUNT</button></section></div>`;
+    root.innerHTML = `<div class="account-hero clean-account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${saved.firstName?' '+safe(saved.firstName):''}</h1><p class="muted">Manage your profile, saved delivery address, and order tracking.</p></div></div><div class="account-grid"><section class="card account-card"><h2>Personal information</h2><p class="muted">Your email is your login and cannot be edited.</p><div class="form-grid"><div><label>First name</label><input class="field" id="accFirst" value="${safe(saved.firstName||'')}" placeholder="First name"></div><div><label>Last name</label><input class="field" id="accLast" value="${safe(saved.lastName||'')}" placeholder="Last name"></div><div><label>Email address</label><input class="field disabled-field" value="${safe(saved.email)}" disabled></div><div><label>Phone number</label><input class="field" id="accPhone" value="${safe(saved.phone||'')}" placeholder="Phone number"></div></div><button class="btn" onclick="saveAccountInfo()">SAVE DETAILS</button></section><section class="card account-card"><h2>Saved delivery address</h2>${typeof accountAddressFields==='function'?accountAddressFields('accAddr_',addr):''}<button class="btn" onclick="saveAccountAddress()">SAVE ADDRESS</button></section><section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${orderList(ongoing,'No ongoing orders yet.')}</div></section><section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${orderList(previous,'No previous orders yet.')}</div></section><section class="card danger-zone full-span"><h2>Account control</h2><p class="muted">Log out safely, or permanently remove your saved customer profile from this website.</p><button class="logout-outline-btn" type="button" onclick="logoutUser()" style="background:#fff!important;color:#111!important;border:2px solid #b00020!important;">LOG OUT</button><button class="btn danger delete-account-btn" onclick="deleteAccount()">DELETE ACCOUNT</button></section></div>`;
   };
 })();
 
@@ -3076,7 +3076,7 @@ placeOrder=async function(){
     const orders=read('nitaOrders',[]).filter(o=>normalizeEmail(o.email)===normalizeEmail(user.email));
     const previous=orders.filter(o=>String(o.status||'').toLowerCase()==='delivered');
     const ongoing=orders.filter(o=>String(o.status||'').toLowerCase()!=='delivered');
-    root.innerHTML=`<div class="account-hero clean-account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${user.firstName?' '+esc(user.firstName):''}</h1><p class="muted">Manage your profile, saved delivery addresses, and order tracking.</p></div></div><div class="account-grid"><section class="card account-card"><h2>Personal information</h2><p class="muted">Your email is your login and cannot be edited.</p><div class="form-grid"><div><label>First name</label><input class="field" id="accFirst" value="${esc(user.firstName||'')}" placeholder="First name"></div><div><label>Last name</label><input class="field" id="accLast" value="${esc(user.lastName||'')}" placeholder="Last name"></div><div><label>Email address</label><input class="field disabled-field" value="${esc(user.email)}" disabled></div><div><label>Phone number</label><input class="field" id="accPhone" value="${esc(user.phone||'')}" placeholder="Phone number"></div></div><button class="btn" onclick="saveAccountInfo()">SAVE DETAILS</button></section><section class="card account-card"><div class="checkout-title-row"><h2>Saved delivery addresses</h2><button class="btn light small-btn" type="button" onclick="nitaShowAccountAddressForm()">ADD NEW ADDRESS</button></div><div class="saved-address-list">${addresses.length?addresses.map((a,i)=>`<div class="saved-address-card"><div class="saved-address-head"><button type="button" class="saved-address-title" onclick="nitaToggleAddressDetails('accAddrDetails${i}')"><b>${esc(a.label||'Address '+(i+1))}</b><span>${esc(addressSummary(a)||'View address details')}</span></button><button class="btn light small-btn" type="button" onclick="nitaShowAccountAddressForm(${i})">EDIT</button></div><div id="accAddrDetails${i}" class="saved-address-collapse">${addressDetailsHtml(a)}</div></div>`).join(''):`<p class="muted">No saved delivery address yet.</p><button class="btn" type="button" onclick="nitaShowAccountAddressForm()">ADD NEW ADDRESS</button>`}</div><div id="accountAddressFormBox" class="account-address-form-box"></div></section><section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${ongoing.length?ongoing.map(baseOrderCard).join(''):'<p class="muted">No ongoing orders yet.</p>'}</div></section><section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${previous.length?previous.map(baseOrderCard).join(''):'<p class="muted">No previous orders yet.</p>'}</div></section><section class="card danger-zone full-span"><h2>Account control</h2><p class="muted">Log out safely, or permanently remove your saved customer profile from this website.</p><button class="btn logout-btn" onclick="logoutUser()">LOG OUT</button><button class="btn danger delete-account-btn" onclick="deleteAccount()">DELETE ACCOUNT</button></section></div>`;
+    root.innerHTML=`<div class="account-hero clean-account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${user.firstName?' '+esc(user.firstName):''}</h1><p class="muted">Manage your profile, saved delivery addresses, and order tracking.</p></div></div><div class="account-grid"><section class="card account-card"><h2>Personal information</h2><p class="muted">Your email is your login and cannot be edited.</p><div class="form-grid"><div><label>First name</label><input class="field" id="accFirst" value="${esc(user.firstName||'')}" placeholder="First name"></div><div><label>Last name</label><input class="field" id="accLast" value="${esc(user.lastName||'')}" placeholder="Last name"></div><div><label>Email address</label><input class="field disabled-field" value="${esc(user.email)}" disabled></div><div><label>Phone number</label><input class="field" id="accPhone" value="${esc(user.phone||'')}" placeholder="Phone number"></div></div><button class="btn" onclick="saveAccountInfo()">SAVE DETAILS</button></section><section class="card account-card"><div class="checkout-title-row"><h2>Saved delivery addresses</h2><button class="btn light small-btn" type="button" onclick="nitaShowAccountAddressForm()">ADD NEW ADDRESS</button></div><div class="saved-address-list">${addresses.length?addresses.map((a,i)=>`<div class="saved-address-card"><div class="saved-address-head"><button type="button" class="saved-address-title" onclick="nitaToggleAddressDetails('accAddrDetails${i}')"><b>${esc(a.label||'Address '+(i+1))}</b><span>${esc(addressSummary(a)||'View address details')}</span></button><button class="btn light small-btn" type="button" onclick="nitaShowAccountAddressForm(${i})">EDIT</button></div><div id="accAddrDetails${i}" class="saved-address-collapse">${addressDetailsHtml(a)}</div></div>`).join(''):`<p class="muted">No saved delivery address yet.</p><button class="btn" type="button" onclick="nitaShowAccountAddressForm()">ADD NEW ADDRESS</button>`}</div><div id="accountAddressFormBox" class="account-address-form-box"></div></section><section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${ongoing.length?ongoing.map(baseOrderCard).join(''):'<p class="muted">No ongoing orders yet.</p>'}</div></section><section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${previous.length?previous.map(baseOrderCard).join(''):'<p class="muted">No previous orders yet.</p>'}</div></section><section class="card danger-zone full-span"><h2>Account control</h2><p class="muted">Log out safely, or permanently remove your saved customer profile from this website.</p><button class="logout-outline-btn" type="button" onclick="logoutUser()" style="background:#fff!important;color:#111!important;border:2px solid #b00020!important;">LOG OUT</button><button class="btn danger delete-account-btn" onclick="deleteAccount()">DELETE ACCOUNT</button></section></div>`;
   };
 
   function currentCart(){ return read('nitaCart',[]); }
@@ -3830,4 +3830,133 @@ placeOrder=async function(){
   };
   document.addEventListener('DOMContentLoaded',()=>{try{updateLikedCount(); renderLikedPage();}catch(e){}});
   window.addEventListener('load',()=>{try{updateLikedCount(); renderLikedPage();}catch(e){}});
+})();
+
+/* === NITA STYLE FAVORITES SESSION + LOGOUT STYLE GUARD 2026-06-08 === */
+(function(){
+  function readJSON(k,f){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f));}catch(e){return f;}}
+  function writeJSON(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function norm(v){return String(v||'').trim().toLowerCase();}
+  function sessionEmail(){
+    const direct = readJSON('nitaUser',null);
+    const email = norm(direct && direct.email) || norm(localStorage.getItem('nitaSessionEmail')) || norm((readJSON('nitaCurrentUser',null)||{}).email);
+    if(email){
+      const users = readJSON('nitaUsersByEmail',{});
+      if(users[email]){
+        writeJSON('nitaUser',users[email]);
+        localStorage.setItem('nitaSessionEmail',email);
+        try{window.currentUser=users[email]; currentUser=users[email];}catch(e){}
+      }
+    }
+    return email;
+  }
+  function likesKey(){return 'nitaLikedProducts_'+(sessionEmail()||'guest');}
+  function likedIds(){return readJSON(likesKey(),[]).map(String);}
+  async function saveLikes(ids){
+    ids=[...new Set((ids||[]).map(String))];
+    writeJSON(likesKey(),ids);
+    const email=sessionEmail();
+    if(email){
+      const users=readJSON('nitaUsersByEmail',{});
+      users[email]={...(users[email]||readJSON('nitaUser',{})),email,likedProducts:ids};
+      writeJSON('nitaUsersByEmail',users);
+      writeJSON('nitaUser',users[email]);
+      try{localStorage.setItem('nitaSessionEmail',email);window.currentUser=users[email];currentUser=users[email];}catch(e){}
+      try{if(typeof saveCloudKey==='function') await saveCloudKey('nitaUsersByEmail',users); else if(typeof cloud==='function') await cloud('nitaUsersByEmail',users);}catch(e){}
+    }
+  }
+  window.nitaSessionEmail=sessionEmail;
+  window.nitaLikedIds=likedIds;
+  const oldToggle=window.toggleLike;
+  window.toggleLike=async function(id,ev){
+    if(ev){ev.preventDefault();ev.stopPropagation();}
+    const email=sessionEmail();
+    if(!email){try{toast('Sign in to save liked items.')}catch(e){} location.href='login.html'; return false;}
+    id=String(id);
+    let ids=likedIds();
+    ids=ids.includes(id)?ids.filter(x=>x!==id):ids.concat(id);
+    await saveLikes(ids);
+    const active=ids.includes(id);
+    try{
+      document.querySelectorAll('[data-like-id="'+(window.CSS&&CSS.escape?CSS.escape(id):id.replace(/"/g,'\\"'))+'"]').forEach(btn=>{
+        btn.classList.toggle('active',active);
+        btn.innerHTML=active?'♥':'♡';
+      });
+      if(typeof updateLikedCount==='function') updateLikedCount();
+      if(typeof renderLikedPage==='function') renderLikedPage();
+    }catch(e){}
+    return false;
+  };
+  window.updateLikedCount=function(){
+    const n=likedIds().length;
+    document.querySelectorAll('.liked-count').forEach(el=>el.textContent=n);
+    document.querySelectorAll('.heart-nav').forEach(el=>el.textContent=n?'♥':'♡');
+  };
+  function productsSafe(){try{return (typeof products==='function'?products():readJSON('nitaProducts',[]));}catch(e){return readJSON('nitaProducts',[]);}}
+  function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function money(v){const n=Number(v||0);return '$'+n.toFixed(2);}
+  function mainImg(p){return (p.images&&p.images[0])||p.image||'';}
+  window.renderLikedPage=function(){
+    const root=document.getElementById('likedPageRoot'); if(!root)return;
+    const email=sessionEmail();
+    if(!email){
+      root.innerHTML='<section class="page-hero"><p class="eyebrow">Saved pieces</p><h1>Liked items</h1><p class="muted">Sign in to save and revisit your favorite pieces.</p><a class="btn" href="login.html">SIGN IN</a></section>';
+      return;
+    }
+    const ids=likedIds();
+    const list=productsSafe().filter(p=>ids.includes(String(p.id)));
+    root.innerHTML='<section class="page-hero liked-hero"><p class="eyebrow">Saved pieces</p><h1>Liked items</h1><p class="muted">Your favorite Nita Style pieces, saved for later.</p></section>'+
+      (list.length?'<section class="liked-page-grid">'+list.map(p=>'<article class="product-card liked-page-card"><a href="product.html?id='+encodeURIComponent(p.id)+'"><div class="product-img" style="background-image:url(\''+esc(mainImg(p))+'\')"></div><h3>'+esc(p.name)+'</h3><p>'+money(p.salePrice||p.price)+'</p></a><button class="btn light liked-remove-btn" onclick="toggleLike(\''+String(p.id).replace(/'/g,"\\'")+'\',event)">♥ REMOVE</button></article>').join('')+'</section>':'<section class="empty-state"><h2>No liked items yet</h2><p class="muted">Tap the heart on a product to save it here.</p><a class="btn" href="shop.html">SHOP NOW</a></section>');
+  };
+  function forceLogoutStyle(){
+    document.querySelectorAll('.danger-zone .logout-btn, button.logout-btn, .btn.logout-btn').forEach(btn=>{
+      btn.style.setProperty('background','#fff','important');
+      btn.style.setProperty('background-color','#fff','important');
+      btn.style.setProperty('color','#111','important');
+      btn.style.setProperty('border','2px solid #b00020','important');
+      btn.style.setProperty('box-shadow','none','important');
+    });
+  }
+  document.addEventListener('DOMContentLoaded',()=>{sessionEmail();try{updateLikedCount();renderLikedPage();forceLogoutStyle();}catch(e){}});
+  window.addEventListener('load',()=>{sessionEmail();try{updateLikedCount();renderLikedPage();forceLogoutStyle();}catch(e){}});
+  setTimeout(forceLogoutStyle,300);
+  setTimeout(forceLogoutStyle,1000);
+})();
+/* === END NITA STYLE FAVORITES SESSION + LOGOUT STYLE GUARD === */
+
+
+/* NITA FINAL UI GUARANTEE */
+(function(){
+  function applyFinalButtonFixes(){
+    try{
+      document.querySelectorAll('section.danger-zone button, .danger-zone button, .account-card button').forEach(function(btn){
+        if((btn.textContent||'').trim().toUpperCase()==='LOG OUT'){
+          btn.className='logout-outline-btn';
+          btn.setAttribute('type','button');
+          btn.style.setProperty('background','#fff','important');
+          btn.style.setProperty('background-color','#fff','important');
+          btn.style.setProperty('color','#111','important');
+          btn.style.setProperty('border','2px solid #b00020','important');
+          btn.style.setProperty('box-shadow','none','important');
+        }
+      });
+      document.querySelectorAll('.admin-nav-button').forEach(function(btn){
+        btn.style.setProperty('transition','background .18s ease,color .18s ease,border-color .18s ease','important');
+      });
+      document.querySelectorAll('.favorite-btn,.product-detail-fav,.liked-remove-btn').forEach(function(btn){
+        btn.style.setProperty('transition','background .18s ease,color .18s ease,border-color .18s ease','important');
+      });
+      if(location.pathname.endsWith('/liked.html') || location.pathname.includes('liked.html')){
+        var u=null; try{u=JSON.parse(localStorage.getItem('nitaUser')||'null')}catch(e){}
+        var email=(u&&u.email)||localStorage.getItem('nitaSessionEmail')||'';
+        if(email){ localStorage.setItem('nitaSessionEmail', String(email).toLowerCase()); }
+      }
+    }catch(e){console.warn('Nita final UI guard', e)}
+  }
+  document.addEventListener('DOMContentLoaded', applyFinalButtonFixes);
+  window.addEventListener('load', applyFinalButtonFixes);
+  setTimeout(applyFinalButtonFixes, 50);
+  setTimeout(applyFinalButtonFixes, 350);
+  setTimeout(applyFinalButtonFixes, 1000);
+  try{ new MutationObserver(applyFinalButtonFixes).observe(document.documentElement,{childList:true,subtree:true}); }catch(e){}
 })();

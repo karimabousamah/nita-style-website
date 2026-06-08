@@ -1655,3 +1655,180 @@ button.logout-btn *,
 .actions .liked-nav-link .liked-label{font-size:12px!important;letter-spacing:.06em!important;color:#000!important;display:inline-block!important}
 .actions .liked-nav-link .liked-count{min-width:18px!important;height:18px!important;border:1px solid #111!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;font-size:11px!important;color:#000!important;background:#fff!important}
 @media(max-width:900px){.actions .liked-nav-link{height:auto!important}.actions .liked-nav-link .liked-label{display:none!important}.actions .liked-nav-link .heart-nav{font-size:20px!important}}
+
+/* === NITA STYLE ABSOLUTE BUTTON READABILITY + LOGOUT FIX 2026-06-08 === */
+/* Account Control Log Out: forced exact design requested. */
+.account-card.danger-zone > button.logout-btn,
+section.danger-zone > button.logout-btn,
+.danger-zone button.logout-btn,
+button.btn.logout-btn,
+.btn.logout-btn,
+#accountRoot .logout-btn,
+[id*="account" i] .logout-btn{
+  background:#ffffff!important;
+  background-color:#ffffff!important;
+  color:#111111!important;
+  border:2px solid #b00020!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+}
+.account-card.danger-zone > button.logout-btn:hover,
+.account-card.danger-zone > button.logout-btn:focus,
+.account-card.danger-zone > button.logout-btn:active,
+section.danger-zone > button.logout-btn:hover,
+section.danger-zone > button.logout-btn:focus,
+section.danger-zone > button.logout-btn:active,
+.danger-zone button.logout-btn:hover,
+.danger-zone button.logout-btn:focus,
+.danger-zone button.logout-btn:active,
+button.btn.logout-btn:hover,
+button.btn.logout-btn:focus,
+button.btn.logout-btn:active,
+.btn.logout-btn:hover,
+.btn.logout-btn:focus,
+.btn.logout-btn:active,
+#accountRoot .logout-btn:hover,
+#accountRoot .logout-btn:focus,
+#accountRoot .logout-btn:active,
+[id*="account" i] .logout-btn:hover,
+[id*="account" i] .logout-btn:focus,
+[id*="account" i] .logout-btn:active{
+  background:#ffffff!important;
+  background-color:#ffffff!important;
+  color:#111111!important;
+  border:2px solid #b00020!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+}
+.account-card.danger-zone > button.logout-btn *,
+section.danger-zone > button.logout-btn *,
+.danger-zone button.logout-btn *,
+button.btn.logout-btn *,
+.btn.logout-btn *,
+#accountRoot .logout-btn *,
+[id*="account" i] .logout-btn *{
+  color:#111111!important;
+  fill:#111111!important;
+  stroke:#111111!important;
+}
+
+/* Admin section nav and every black active/hover state: always white readable text. */
+.admin-nav-button,
+.admin-nav-button *{
+  color:#111!important;
+}
+.admin-nav-button:hover,
+.admin-nav-button:focus,
+.admin-nav-button:active,
+.admin-nav-button.active{
+  background:#111!important;
+  background-color:#111!important;
+  color:#fff!important;
+  border-color:#111!important;
+}
+.admin-nav-button:hover *,
+.admin-nav-button:focus *,
+.admin-nav-button:active *,
+.admin-nav-button.active *{
+  color:#fff!important;
+  fill:#fff!important;
+  stroke:#fff!important;
+}
+
+/* Product liked/favorite buttons: normal white/black, hover-click-active black/white. */
+.favorite-btn,
+.product .favorite-btn,
+.product-card .favorite-btn,
+.product-detail-fav,
+.liked-remove-btn{
+  background:#fff!important;
+  background-color:#fff!important;
+  color:#111!important;
+  border:1px solid #111!important;
+  box-shadow:none!important;
+  transition:background .18s ease,color .18s ease,border-color .18s ease!important;
+}
+.favorite-btn:hover,
+.favorite-btn:focus,
+.favorite-btn:active,
+.favorite-btn.active,
+.product .favorite-btn:hover,
+.product .favorite-btn:focus,
+.product .favorite-btn:active,
+.product .favorite-btn.active,
+.product-card .favorite-btn:hover,
+.product-card .favorite-btn:focus,
+.product-card .favorite-btn:active,
+.product-card .favorite-btn.active,
+.product-detail-fav:hover,
+.product-detail-fav:focus,
+.product-detail-fav:active,
+.liked-remove-btn:hover,
+.liked-remove-btn:focus,
+.liked-remove-btn:active{
+  background:#111!important;
+  background-color:#111!important;
+  color:#fff!important;
+  border-color:#111!important;
+}
+.favorite-btn:hover *,
+.favorite-btn:focus *,
+.favorite-btn:active *,
+.favorite-btn.active *,
+.product-detail-fav:hover *,
+.product-detail-fav:focus *,
+.product-detail-fav:active *,
+.liked-remove-btn:hover *,
+.liked-remove-btn:focus *,
+.liked-remove-btn:active *{
+  color:#fff!important;
+  fill:#fff!important;
+  stroke:#fff!important;
+}
+
+/* Top liked nav remains clean and readable. */
+.actions .liked-nav-link:hover .heart-nav,
+.actions .liked-nav-link:focus .heart-nav,
+.actions .liked-nav-link:active .heart-nav{
+  color:#000!important;
+}
+/* === END NITA STYLE ABSOLUTE BUTTON READABILITY + LOGOUT FIX === */
+
+
+/* === NITA STYLE FINAL VISIBLE PATCH 2026-06-08 === */
+.logout-outline-btn,
+button.logout-outline-btn,
+.account-card .logout-outline-btn,
+.danger-zone .logout-outline-btn,
+#accountRoot .logout-outline-btn{
+  background:#fff!important;
+  background-color:#fff!important;
+  color:#111!important;
+  border:2px solid #b00020!important;
+  padding:14px 28px!important;
+  font-weight:900!important;
+  text-transform:uppercase!important;
+  letter-spacing:.04em!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+  cursor:pointer!important;
+}
+.logout-outline-btn:hover,
+.logout-outline-btn:focus,
+.logout-outline-btn:active,
+button.logout-outline-btn:hover,
+button.logout-outline-btn:focus,
+button.logout-outline-btn:active{
+  background:#fff!important;
+  background-color:#fff!important;
+  color:#111!important;
+  border:2px solid #b00020!important;
+}
+.admin-nav-button{background:#fff!important;color:#111!important;border:1px solid #111!important;}
+.admin-nav-button:hover,.admin-nav-button:focus,.admin-nav-button:active,.admin-nav-button.active{background:#111!important;color:#fff!important;border-color:#111!important;}
+.admin-nav-button:hover *,.admin-nav-button:focus *,.admin-nav-button:active *,.admin-nav-button.active *{color:#fff!important;fill:#fff!important;stroke:#fff!important;}
+.favorite-btn,.product-detail-fav,.liked-remove-btn{background:#fff!important;color:#111!important;border:1px solid #111!important;}
+.favorite-btn:hover,.favorite-btn:focus,.favorite-btn:active,.favorite-btn.active,.product-detail-fav:hover,.product-detail-fav:focus,.product-detail-fav:active,.liked-remove-btn:hover,.liked-remove-btn:focus,.liked-remove-btn:active{background:#111!important;color:#fff!important;border-color:#111!important;}
+.favorite-btn:hover *,.favorite-btn:focus *,.favorite-btn:active *,.favorite-btn.active *,.product-detail-fav:hover *,.product-detail-fav:focus *,.product-detail-fav:active *,.liked-remove-btn:hover *,.liked-remove-btn:focus *,.liked-remove-btn:active *{color:#fff!important;fill:#fff!important;stroke:#fff!important;}
+.actions .liked-nav-link{display:inline-flex!important;align-items:center!important;gap:6px!important;opacity:1!important;visibility:visible!important;}
+/* === END NITA STYLE FINAL VISIBLE PATCH 2026-06-08 === */
