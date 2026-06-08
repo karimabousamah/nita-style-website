@@ -1453,3 +1453,90 @@ body.quick-open{overflow:hidden!important;}
 .premium-coupon{grid-template-columns:minmax(0,1fr) 132px!important;align-items:stretch}.premium-coupon .field{margin:0!important}.apply-coupon-btn{min-width:0!important;width:132px!important;padding:12px 18px!important;font-size:13px!important}.checkout-address-form-holder{margin-top:16px}.premium-address-form .field{margin:0!important}.premium-address-form textarea.field{min-height:96px}.saved-address-collapse{display:none}.saved-address-collapse.open{display:block}.checkout-address-card .saved-address-title{cursor:pointer}.complete-order-btn.disabled,.cart-checkout-btn.disabled{opacity:.45!important;pointer-events:none!important;background:#777!important;border-color:#777!important;color:#fff!important}
 @media(max-width:760px){.cart-line{grid-template-columns:78px 1fr;gap:14px}.cart-side{grid-column:2;grid-template-columns:auto auto;align-items:center;justify-content:space-between;width:100%;justify-items:stretch}.cart-info b{font-size:16px}.qty-stepper{grid-template-columns:34px 40px 34px}.premium-coupon{grid-template-columns:1fr!important}.apply-coupon-btn{width:100%!important}.premium-address-form{padding:14px!important}.premium-address-form .form-grid.two{grid-template-columns:1fr!important}}
 /* === END NITA STYLE CART/CHECKOUT VISUAL FIX 2026-06-08 === */
+
+/* === NITA STYLE FINAL BUTTON/CART/CHECKOUT POLISH 2026-06-08 === */
+.btn:not(.light):not(.danger):not(.disabled),
+button.btn:not(.light):not(.danger):not(.disabled),
+a.btn:not(.light):not(.danger):not(.disabled),
+.complete-order-btn,
+.cart-checkout-btn,
+.apply-coupon-btn,
+.auth-submit,
+.footer-newsletter button{
+  background:#000!important;
+  color:#fff!important;
+  border-color:#000!important;
+}
+.btn:not(.light):not(.danger):not(.disabled) *,
+button.btn:not(.light):not(.danger):not(.disabled) *,
+a.btn:not(.light):not(.danger):not(.disabled) *{
+  color:#fff!important;
+}
+.btn:not(.light):not(.danger):not(.disabled):hover,
+button.btn:not(.light):not(.danger):not(.disabled):hover,
+a.btn:not(.light):not(.danger):not(.disabled):hover{
+  background:#111!important;
+  color:#fff!important;
+}
+.qty-stepper button,
+.remove-cart-btn,
+.close{
+  color:#000!important;
+}
+.cart-fee-note{
+  font-size:13px;
+  color:#777;
+  margin:18px 0 4px;
+  letter-spacing:.01em;
+}
+.premium-coupon{
+  grid-template-columns:minmax(0,1fr) 112px!important;
+  gap:10px!important;
+}
+.apply-coupon-btn{
+  width:112px!important;
+  min-width:112px!important;
+  height:54px!important;
+  padding:0 16px!important;
+  font-size:12px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+.payment-box{
+  border:1px solid #ddd!important;
+  border-radius:0!important;
+  overflow:hidden!important;
+  background:#fff!important;
+}
+.payment-row{
+  padding:18px 20px!important;
+  display:flex!important;
+  align-items:flex-start!important;
+  gap:16px!important;
+}
+.payment-row input{
+  margin-top:3px!important;
+  width:18px!important;
+  height:18px!important;
+  accent-color:#111!important;
+}
+.payment-row b{font-size:16px!important;}
+.payment-row small{display:block!important;margin-top:6px!important;color:#666!important;line-height:1.35!important;}
+.disabled-payment{background:#f8f8f8!important;color:#888!important;opacity:.7!important;}
+.active-payment{background:#fff!important;border-top:1px solid #eee!important;}
+.shipping-method-box{margin-top:0!important;}
+.premium-order-summary .delivery-note{display:none!important;}
+.checkout-address-form-holder{margin-top:18px!important;}
+.saved-address-card{cursor:default!important;}
+.saved-address-title{color:#111!important;}
+.saved-address-title:hover b{text-decoration:underline; text-underline-offset:3px;}
+.saved-address-collapse{display:none!important;}
+.saved-address-collapse.open{display:block!important;}
+@media(max-width:760px){
+  .premium-coupon{grid-template-columns:1fr!important;}
+  .apply-coupon-btn{width:100%!important;min-width:0!important;}
+  .payment-row{padding:16px!important;}
+  .cart-fee-note{font-size:12px;}
+}
+/* === END NITA STYLE FINAL BUTTON/CART/CHECKOUT POLISH 2026-06-08 === */
