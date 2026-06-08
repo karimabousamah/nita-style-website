@@ -1047,14 +1047,18 @@ body.quick-open{overflow:hidden!important;}
 .btn.logout-btn,
 .danger-zone .btn.logout-btn{
   background:#fff!important;
-  color:#9b0019!important;
-  border:1px solid #9b0019!important;
+  color:#111!important;
+  border:1px solid #b00020!important;
 }
 .btn.logout-btn:hover,
 .danger-zone .btn.logout-btn:hover{
-  background:#9b0019!important;
+  background:#b00020!important;
   color:#fff!important;
-  border-color:#9b0019!important;
+  border-color:#b00020!important;
+}
+.btn.logout-btn *,
+.danger-zone .btn.logout-btn *{
+  color:inherit!important;
 }
 .btn.danger,
 .delete-account-btn,

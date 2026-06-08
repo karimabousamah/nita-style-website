@@ -3367,3 +3367,130 @@ placeOrder=async function(){
   };
 })();
 /* === END NITA STYLE FINAL SHIPPING DUPLICATE CLEANUP 2026-06-08 === */
+
+/* === NITA STYLE EMAIL AUTOMATION FINAL PATCH 2026-06-08 === */
+(function(){
+  const ADMIN_EMAIL_FALLBACK = 'karim.abousamah1@gmail.com';
+  function esc(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+  function readJSON(k,f){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f));}catch(e){return f;}}
+  function writeJSON(k,v){localStorage.setItem(k,JSON.stringify(v));}
+  function normEmail(v){return String(v||'').trim().toLowerCase();}
+  function validEmail(v){return /^\S+@\S+\.\S+$/.test(normEmail(v));}
+  function notify(msg){try{toast(msg);}catch(e){alert(msg);}}
+  async function cloudSave(k,v){try{ if(typeof saveCloudKey==='function') await saveCloudKey(k,v); else if(typeof saveSharedKeyNow==='function') await saveSharedKeyNow(k,v); }catch(e){console.warn(e);} }
+
+  window.sendStoreEmail = async function(payload){
+    const res = await fetch('/.netlify/functions/send-email', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload || {})
+    });
+    let body = {};
+    try{ body = await res.json(); }catch(e){ body = {error: await res.text()}; }
+    if(!res.ok || body.ok === false) throw new Error(body.error || 'Email could not be sent.');
+    return body;
+  };
+
+  function generateCode(){return String(Math.floor(100000 + Math.random() * 900000));}
+  function pendingSignup(){return readJSON('nitaPendingSignup', null);}
+  function setPendingSignup(obj){writeJSON('nitaPendingSignup', obj);}
+  function clearPendingSignup(){localStorage.removeItem('nitaPendingSignup');}
+
+  window.renderLoginPage = function(){
+    const root=document.getElementById('loginRoot'); if(!root) return;
+    root.innerHTML=`<section class="auth-shell"><div class="auth-brand"><img src="assets/logo-cropped.png" alt="Nita Style"><p>Customer account</p><h1>Sign in or create your account</h1><p class="muted">Save your addresses, follow your orders, and receive your first-order code in a clean boutique account.</p></div><div class="auth-card"><div class="auth-tabs"><button class="active" id="signinTab" onclick="switchAuthMode('signin')">SIGN IN</button><button id="signupTab" onclick="switchAuthMode('signup')">SIGN UP</button></div><div id="authMessage" class="auth-message"></div><label>Email address</label><input id="authEmail" class="field" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" class="field" type="password" autocomplete="current-password" placeholder="Password"><div id="signupFields" style="display:none"><div class="form-grid"><div><label>First name</label><input id="authFirst" class="field" placeholder="First name"></div><div><label>Last name</label><input id="authLast" class="field" placeholder="Last name"></div></div><label>Phone number</label><input id="authPhone" class="field" placeholder="Phone number"><div id="verifyBox" class="verification-box" style="display:none"><label>Email verification code</label><input id="authCode" class="field" inputmode="numeric" maxlength="6" placeholder="Enter the 6-digit code"><p class="muted mini-note">We sent this code to your email. After verification, your 10% first-order code will be emailed automatically.</p></div></div><button class="btn auth-submit" id="authSubmitBtn" onclick="submitAuth()">CONTINUE</button><p class="muted mini-note">Your email is your login and cannot be changed from the account page.</p></div></section>`;
+    window.authMode='signin';
+  };
+
+  window.switchAuthMode=function(mode){
+    window.authMode=mode;
+    document.getElementById('signinTab')?.classList.toggle('active',mode==='signin');
+    document.getElementById('signupTab')?.classList.toggle('active',mode==='signup');
+    const f=document.getElementById('signupFields'); if(f) f.style.display=mode==='signup'?'block':'none';
+    const vb=document.getElementById('verifyBox'); if(vb) vb.style.display='none';
+    const btn=document.getElementById('authSubmitBtn'); if(btn) btn.textContent='CONTINUE';
+    const msg=document.getElementById('authMessage'); if(msg) msg.textContent='';
+    clearPendingSignup();
+  };
+
+  window.submitAuth=async function(){
+    const email=normEmail(document.getElementById('authEmail')?.value);
+    const password=document.getElementById('authPassword')?.value||'';
+    const msg=document.getElementById('authMessage');
+    const mode=window.authMode||'signin';
+    if(!validEmail(email)){ if(msg)msg.textContent='Please enter a valid email address.'; return; }
+    if(password.length<4){ if(msg)msg.textContent='Please enter a password with at least 4 characters.'; return; }
+    try{ if(typeof loadSharedStore==='function') await loadSharedStore(); }catch(e){}
+    const users=(typeof getJSON==='function'?getJSON('nitaUsersByEmail',{}):readJSON('nitaUsersByEmail',{}));
+    const existing=users[email];
+
+    if(mode==='signin'){
+      if(!existing){ if(msg)msg.innerHTML='No account found with this email. Click <b>Sign up</b> to create one.'; return; }
+      if(existing.password && existing.password!==password){ if(msg)msg.textContent='Wrong password for this account.'; return; }
+      localStorage.setItem('nitaUser',JSON.stringify(existing)); localStorage.setItem('nitaSessionEmail',email); window.currentUser=existing;
+      location.href='index.html';
+      return;
+    }
+
+    const firstName=(document.getElementById('authFirst')?.value||'').trim();
+    const lastName=(document.getElementById('authLast')?.value||'').trim();
+    const phone=(document.getElementById('authPhone')?.value||'').trim();
+    const pending=pendingSignup();
+    const enteredCode=(document.getElementById('authCode')?.value||'').trim();
+
+    if(!pending || pending.email!==email){
+      if(existing){ if(msg)msg.textContent='This email already has an account. Please sign in.'; return; }
+      const code=generateCode();
+      setPendingSignup({email,password,firstName,lastName,phone,code,createdAt:Date.now()});
+      if(msg) msg.textContent='Sending verification code...';
+      try{
+        await sendStoreEmail({type:'verification',to:email,code});
+        document.getElementById('verifyBox').style.display='block';
+        document.getElementById('authSubmitBtn').textContent='VERIFY & CREATE ACCOUNT';
+        if(msg) msg.textContent='Verification code sent. Check your email.';
+      }catch(e){
+        clearPendingSignup();
+        if(msg) msg.textContent='Email automation is not configured yet. Add RESEND_API_KEY in Netlify and redeploy.';
+        console.error(e);
+      }
+      return;
+    }
+
+    if(!enteredCode || enteredCode!==pending.code){ if(msg)msg.textContent='Wrong verification code. Please check your email and try again.'; return; }
+    const user={email,password,firstName:firstName||pending.firstName||'',lastName:lastName||pending.lastName||'',phone:phone||pending.phone||'',addresses:[],defaultAddress:null,firstOrderCode:'NITA10',emailVerified:true,createdAt:new Date().toISOString()};
+    users[email]=user;
+    if(typeof setJSON==='function') setJSON('nitaUsersByEmail',users); else writeJSON('nitaUsersByEmail',users);
+    localStorage.setItem('nitaUser',JSON.stringify(user)); localStorage.setItem('nitaSessionEmail',email); window.currentUser=user;
+    try{ if(typeof saveUsers==='function') await saveUsers(users); else await cloudSave('nitaUsersByEmail',users); }catch(e){console.warn(e);}
+    try{ await sendStoreEmail({type:'signup_discount',to:email,code:'NITA10',user}); }catch(e){console.warn(e);}
+    clearPendingSignup();
+    location.href='index.html';
+  };
+  window.login=window.submitAuth;
+
+  const oldPopupSignup = window.popupSignup;
+  window.popupSignup = async function(){
+    const email=normEmail(document.getElementById('popupEmail')?.value);
+    if(!validEmail(email)){notify('Please enter a valid email address.');return;}
+    localStorage.setItem('nitaPopupSeen','1'); localStorage.setItem('nitaDiscountCode','NITA10'); localStorage.setItem('nitaDiscountEmail',email);
+    document.getElementById('signupPopup')?.classList.remove('show');
+    try{ await sendStoreEmail({type:'discount',to:email,code:'NITA10'}); notify('Your 10% first-order code was sent to your email.'); }
+    catch(e){ console.warn(e); notify('Your code is NITA10. Email sending needs RESEND_API_KEY in Netlify.'); }
+  };
+
+  const oldUpdateOrder = window.updateOrder;
+  window.updateOrder = async function(i,v){
+    const orders=(typeof getJSON==='function'?getJSON('nitaOrders',[]):readJSON('nitaOrders',[]));
+    const order=orders[i]; if(!order) return;
+    const oldStatus=order.status||'Order submitted';
+    if(v===oldStatus) return;
+    if(!confirm(`Confirm order status update?\n\nOrder: ${order.id||''}\nFrom: ${oldStatus}\nTo: ${v}`)){ if(typeof renderAdmin==='function') renderAdmin(); return; }
+    order.status=v;
+    if(typeof setJSON==='function') setJSON('nitaOrders',orders); else writeJSON('nitaOrders',orders);
+    try{ await cloudSave('nitaOrders',orders); }catch(e){}
+    if(order.email){ try{ await sendStoreEmail({type:'order_status',to:order.email,order}); }catch(e){ console.warn('Status email failed:',e); } }
+    notify('Order status updated.');
+    if(typeof renderAdmin==='function') renderAdmin();
+  };
+})();
+/* === END NITA STYLE EMAIL AUTOMATION FINAL PATCH 2026-06-08 === */
