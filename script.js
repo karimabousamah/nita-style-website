@@ -1,77 +1,2966 @@
+const ADMIN_EMAIL='karim.abousamah1@gmail.com';
 const ADMIN_EMAILS=['karim.abousamah1@gmail.com','karim.abousamah@gmail.com'];
-const STORE_URL='/.netlify/functions/store';
-let cloud={nitaProducts:[],nitaOrders:[],nitaCoupons:[],nitaUsersByEmail:{},nitaDiscountUses:{}};
-let cart=read('nitaCart',[]), currentUser=read('nitaUser',null), selectedSize=null, appliedCoupon=null;
-function read(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch{return d}}
-function write(k,v){localStorage.setItem(k,JSON.stringify(v))}
-function qs(s){return document.querySelector(s)} function qsa(s){return [...document.querySelectorAll(s)]}
-function money(n){return '$'+Number(n||0).toFixed(2)} function safe(x){return String(x??'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]))}
-async function apiGet(){try{let r=await fetch(STORE_URL,{cache:'no-store'}); if(r.ok)return await r.json()}catch(e){} return null}
-async function apiSave(key,value){cloud[key]=value; write(key,value); try{await fetch(STORE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key,value})})}catch(e){console.warn(e)} }
-async function loadStore(){let remote=await apiGet(); if(remote&&typeof remote==='object'){cloud={...cloud,...remote}; Object.keys(cloud).forEach(k=>write(k,cloud[k]));}else{Object.keys(cloud).forEach(k=>cloud[k]=read(k,cloud[k]));}}
-function products(){let saved=cloud.nitaProducts?.length?cloud.nitaProducts:read('nitaProducts',[]); return saved.length?saved:DEFAULT_PRODUCTS}
-function product(id){return products().find(p=>String(p.id)===String(id))}
-function photo(p,i=0){return p?.photos?.[i]||''}
-function imgHtml(p,cls=''){let src=photo(p,0); return src?`<img class="${cls}" src="${src}" alt="${safe(p.name)}">`:''}
-function productBg(p){return photo(p,0)?`background-image:url('${photo(p,0)}')`:''}
-function effectiveStatus(p){if(p.status==='coming-soon')return 'coming-soon'; if(p.status==='out-of-stock'||Number(p.quantity)<=0)return 'out-of-stock'; if(Number(p.originalQuantity)>0&&Number(p.quantity)<=Number(p.originalQuantity)*0.5)return 'low-stock'; return 'in-stock'}
-function statusLabel(p){let s=effectiveStatus(p); return { 'in-stock':'In stock','low-stock':'Low in stock','coming-soon':'Coming soon','out-of-stock':'Out of stock'}[s]}
-function statusHtml(p){let s=effectiveStatus(p); return `<span class="status ${s}"><span class="dot"></span>${statusLabel(p)}</span>`}
-function priceHtml(p){return p.salePrice?`<div class="price-row"><span class="old">${money(p.price)}</span><span class="sale">${money(p.salePrice)}</span>${statusHtml(p)}</div>`:`<div class="price-row"><span>${money(p.price)}</span>${statusHtml(p)}</div>`}
-function header(){let admin=ADMIN_EMAILS.includes(currentUser?.email)?'<a href="admin.html">ADMIN</a>':'';return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega"><div><h4>Shop by category</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div><h4>Shop by edit</h4><div class="mega-links"><a href="shop.html">All products</a><a href="collections.html">New arrivals</a><a href="shop.html?cat=Sale">Price drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega"><div><h4>Featured</h4><div class="mega-links"><a href="collections.html">Latest edit</a><a href="collections.html">Everyday boutique</a><a href="collections.html">Minimal essentials</a></div></div><div><h4>Occasion</h4><div class="mega-links"><a href="shop.html?cat=Tops">Daywear</a><a href="shop.html?cat=Dresses">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openPanel('searchPanel')">SEARCH</button><a href="${currentUser?'account.html':'login.html'}">${currentUser?'ACCOUNT':'SIGN IN'}</a>${admin}<button class="cart-btn" onclick="openCart()"><span class="cart-icon"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><div class="panel" id="searchPanel"><div class="drawer"><button class="close" onclick="closePanel('searchPanel')">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search products" oninput="renderSearch()"><div id="searchResults"></div></div></div><div class="panel" id="cartPanel"><div class="drawer"><button class="close" onclick="closePanel('cartPanel')">×</button><h2>Your cart</h2><div id="cartItems"></div><a id="drawerCheckout" class="btn" href="checkout.html" style="width:100%;margin-top:20px">CHECKOUT</a></div></div><div class="panel" id="quickPanel"><div class="modal-card"><button class="close" onclick="closePanel('quickPanel')" style="position:absolute;right:14px;top:14px;z-index:2">×</button><div class="modal-img" id="quickImg"></div><div class="modal-info" id="quickInfo"></div></div></div>`}
-function footer(){return `<footer class="footer"><div><img class="footer-logo-img" src="assets/logo-cropped.png"><p class="muted">Founded by Nicole and Tania, Nita Style curates Italian-made pieces for women who value clean silhouettes and effortless everyday elegance.</p></div><div><h4>Shop</h4><a href="shop.html">All products</a><a href="collections.html">Collections</a><a href="cart.html">Cart</a><a href="checkout.html">Checkout</a></div><div><h4>Support</h4><a href="contact.html">Contact</a><a href="about.html">About</a><a href="checkout.html">Cash on delivery</a><a href="checkout.html">Online payment coming soon</a></div><div><h4>Join the list</h4><p class="muted">Receive the first-order code and new drop updates.</p><input class="field" placeholder="Email address"><button class="btn" style="margin-top:10px">SIGN UP</button></div></footer><div class="copyright"><span>© 2026 Nita Style. All rights reserved.</span><span>Privacy Policy · Terms · Shipping</span></div>`}
-async function init(){await loadStore(); cart=read('nitaCart',[]); currentUser=read('nitaUser',null); document.body.insertAdjacentHTML('afterbegin',header()); if(!document.querySelector('.no-footer'))document.body.insertAdjacentHTML('beforeend',footer()); updateCartCount(); renderCart(); document.body.classList.add('ready');}
-function openPanel(id){qs('#'+id)?.classList.add('open');document.body.style.overflow='hidden'; if(id==='searchPanel')setTimeout(()=>qs('#searchInput')?.focus(),50)}
-function closePanel(id){qs('#'+id)?.classList.remove('open');document.body.style.overflow=''}
-function openCart(){renderCart();openPanel('cartPanel')}
-function updateCartCount(){qsa('.cart-count').forEach(e=>e.textContent=cart.reduce((s,i)=>s+Number(i.qty||0),0))}
-function saveCart(){write('nitaCart',cart);updateCartCount();renderCart()}
-function renderSearch(){let q=qs('#searchInput')?.value.toLowerCase()||''; let list=products().filter(p=>!q||p.name.toLowerCase().includes(q)||p.category.toLowerCase().includes(q)); qs('#searchResults').innerHTML=list.map(p=>`<a class="cart-item" href="product.html?id=${p.id}"><div class="placeholder" style="${productBg(p)};background-size:cover;background-position:center"></div><div><b>${safe(p.name)}</b><p class="muted">${safe(p.category)} · ${money(p.salePrice||p.price)}</p></div></a>`).join('')}
-function productCard(p){let badge=p.salePrice?'<span class="badge">PRICE DROP</span>':'';return `<div class="product-card"><div class="product-media placeholder" style="${productBg(p)};background-size:cover;background-position:center"><button class="btn light quick-btn" onclick="event.preventDefault();event.stopPropagation();quickView('${p.id}')">QUICK VIEW</button>${badge}</div><a href="product.html?id=${p.id}"><h3>${safe(p.name)}</h3>${priceHtml(p)}</a></div>`}
-function renderMarquee(id,list){let el=qs('#'+id); if(!el)return; let items=list.length?list:products().slice(0,4); let html=[...items,...items].map(productCard).join(''); el.innerHTML=`<div class="marquee-viewport"><div class="marquee-track">${html}</div></div>`}
-function homePage(){let ps=products(); renderMarquee('trending',ps.filter(p=>(p.homeSection||'trending')==='trending')); renderMarquee('newArrivals',ps.filter(p=>p.homeSection==='new'));}
-function renderGrid(el,list){qs(el).innerHTML=list.map(productCard).join('')}
-function shopPage(){let url=new URL(location.href);let cat=url.searchParams.get('cat')||'All'; qs('#filter')&&(qs('#filter').value=cat); let list=products().filter(p=>cat==='All'||p.category===cat); renderGrid('#products',list)}
-function selectSize(s){selectedSize=s;qsa('.size-btn').forEach(b=>b.classList.toggle('active',b.dataset.size===s))}
-function addToCart(id,size){let p=product(id); if(!p)return; if(effectiveStatus(p)!=='in-stock'&&effectiveStatus(p)!=='low-stock'){toast('This item is not available yet.');return} size=size||selectedSize||p.sizes?.[0]||'One size'; if((p.outOfStockSizes||[]).includes(size)){toast('This size is out of stock.');return} let item=cart.find(i=>String(i.id)===String(id)&&i.size===size); if(item)item.qty++; else cart.push({id:String(id),size,qty:1}); saveCart(); toast('Added to cart')}
-function renderCart(){let box=qs('#cartItems'); if(!box)return; if(!cart.length){box.innerHTML='<p class="muted">Your cart is empty.</p>'; qs('#drawerCheckout')?.classList.add('disabled'); qs('#drawerCheckout')?.setAttribute('onclick','return false'); return} qs('#drawerCheckout')?.classList.remove('disabled'); qs('#drawerCheckout')?.removeAttribute('onclick'); let total=0; box.innerHTML=cart.map((i,idx)=>{let p=product(i.id); if(!p)return''; let unit=p.salePrice||p.price; total+=unit*i.qty; return `<div class="cart-item"><div class="placeholder" style="${productBg(p)};background-size:cover;background-position:center"></div><div><b>${safe(p.name)}</b><p class="muted">${safe(i.size)}</p><div class="qty"><button onclick="changeQty(${idx},-1)">−</button><span>${i.qty}</span><button onclick="changeQty(${idx},1)">+</button></div></div><div><b>${money(unit*i.qty)}</b><br><button onclick="cart.splice(${idx},1);saveCart()">×</button></div></div>`}).join('')+`<h3>Total ${money(total)}</h3>`}
-function changeQty(i,d){cart[i].qty+=d;if(cart[i].qty<=0)cart.splice(i,1);saveCart()}
-function quickView(id){let p=product(id); if(!p)return; qs('#quickImg').innerHTML=imgHtml(p)||'<div class="placeholder" style="width:100%;height:100%"></div>'; qs('#quickInfo').innerHTML=`<p class="muted">${safe(p.category)}</p><h2>${safe(p.name)}</h2>${priceHtml(p)}<p>${safe(p.description||'A carefully selected Italian-made piece.')}</p>${sizePicker(p)}<button class="btn ${['coming-soon','out-of-stock'].includes(effectiveStatus(p))?'disabled':''}" onclick="addToCart('${p.id}')">${['coming-soon','out-of-stock'].includes(effectiveStatus(p))?'NOTIFY ME':'ADD TO CART'}</button><p><a href="product.html?id=${p.id}">View full product</a></p>`;openPanel('quickPanel')}
-function sizePicker(p){return `<div class="size-grid">${(p.sizes||['One size']).map(s=>`<button class="size-btn ${(p.outOfStockSizes||[]).includes(s)?'oos':''}" data-size="${safe(s)}" ${(p.outOfStockSizes||[]).includes(s)?'disabled':''} onclick="selectSize('${safe(s)}')">${safe(s)}</button>`).join('')}</div>`}
-function productPage(){let p=product(new URL(location.href).searchParams.get('id')); if(!p){qs('#detail').innerHTML='<h1>Product not found</h1>';return} selectedSize=(p.sizes||[]).find(s=>!(p.outOfStockSizes||[]).includes(s))||null; qs('#detail').innerHTML=`<div><div class="gallery-main">${imgHtml(p)||'<div class="placeholder" style="width:100%;height:100%"></div>'}</div><div class="thumbs">${(p.photos||[]).map(src=>`<img src="${src}" onclick="qs('.gallery-main').innerHTML='<img src=&quot;${src}&quot;>'">`).join('')}</div></div><div class="detail"><p class="muted">${safe(p.category)}</p><h1>${safe(p.name)}</h1>${priceHtml(p)}<p>${safe(p.description)}</p>${sizePicker(p)}<button class="btn ${['coming-soon','out-of-stock'].includes(effectiveStatus(p))?'disabled':''}" onclick="addToCart('${p.id}')">${['coming-soon','out-of-stock'].includes(effectiveStatus(p))?'NOTIFY ME':'ADD TO CART'}</button><p class="muted">Cash on delivery available. Online payment coming soon.</p></div>`}
-function fullCart(){let el=qs('#fullCart'); renderCart(); el.innerHTML=qs('#cartItems').innerHTML+`<a class="btn ${cart.length?'':'disabled'}" ${cart.length?'href="checkout.html"':'onclick="return false"'}>CHECKOUT</a>`}
-function subtotal(){return cart.reduce((s,i)=>{let p=product(i.id);return s+(Number(p?.salePrice||p?.price||0)*Number(i.qty||0))},0)}
-function shipping(){return cart.length?7:0}
-function validCoupon(code){let c=(cloud.nitaCoupons||[]).find(x=>String(x.code).toUpperCase()===String(code).toUpperCase()); if(!c)return null; let now=new Date(); if(c.start&&new Date(c.start)>now)return null; if(c.end&&new Date(c.end)<now)return null; return c}
-function applyCoupon(){let code=qs('#coupon')?.value.trim(); let c=validCoupon(code); if(!c){appliedCoupon=null;qs('#couponMsg').textContent='Coupon code is expired or not applicable.';summary();return} appliedCoupon=c; qs('#couponMsg').textContent='Coupon applied.'; summary()}
-function savedAddresses(){let u=cloud.nitaUsersByEmail?.[currentUser?.email]||read('nitaUsersByEmail',{})[currentUser?.email]||{}; return u.addresses||[]}
-function checkoutPage(){if(!cart.length){qs('#checkoutRoot').innerHTML='<main class="page"><h1>Your cart is empty</h1><a class="btn" href="shop.html">SHOP NOW</a></main>';return} let addresses=savedAddresses(); qs('#checkoutRoot').innerHTML=`<div class="checkout-layout"><div class="checkout-left"><h2>Contact</h2><input class="field" id="coEmail" placeholder="Email or mobile phone number" value="${safe(currentUser?.email||'')}"><label><input type="checkbox" checked> Email me with news and offers</label><h2>Delivery</h2><div id="savedAddressArea">${addresses.length?renderSavedAddresses(addresses):''}</div><button class="btn light" type="button" onclick="showAddressForm()">ADD NEW LOCATION</button><form id="checkoutForm" class="${addresses.length?'hide':''}" onsubmit="event.preventDefault();placeOrder()">${addressForm()}<label><input id="saveAddr" type="checkbox"> Save this information for next time</label></form><h2>Shipping method</h2><div class="shipping-box selected"><b>Aramex delivery across Lebanon</b><span style="float:right">$7.00</span><p class="muted">2–3 business days · Orders under $150</p></div><h2>Payment</h2><div class="payment-box"><b>Credit card</b><span class="muted" style="float:right">Coming soon</span></div><div class="payment-box active"><b>Cash on Delivery (COD)</b><p class="muted">Cash on delivery is currently active in Lebanon.</p></div><button class="btn" onclick="placeOrder()" style="width:100%;margin-top:22px">COMPLETE ORDER</button></div><div class="checkout-right"><h2>Order summary</h2><div id="summary"></div><div class="coupon-apply"><input class="field" id="coupon" placeholder="Discount code or gift card"><button class="btn light" onclick="applyCoupon()">Apply</button></div><p id="couponMsg" class="muted"></p></div></div>`; summary()}
-function renderSavedAddresses(arr){return `<div class="address-list">${arr.map((a,i)=>`<div class="address-card ${i===0?'selected':''}" data-idx="${i}"><label><input type="radio" name="addr" value="${i}" ${i===0?'checked':''}> <b onclick="toggleAddr(${i});return false">${safe(a.label||'Saved address')}</b></label><div class="addr-details ${i===0?'':'hide'}"><p>${safe(a.address||a.street||'')} ${safe(a.building||'')}, ${safe(a.city||'')}</p><p class="muted">${safe(a.phone||'')}</p></div></div>`).join('')}</div>`}
-function toggleAddr(i){qsa('.addr-details').forEach((e,n)=>{if(n===i)e.classList.toggle('hide')})}
-function showAddressForm(){qs('#checkoutForm')?.classList.remove('hide')}
-function addressForm(){return `<div class="form-grid" style="margin:14px 0"><input class="field full" name="label" placeholder="Address name, e.g. Home or Office"><input class="field" name="first" placeholder="First name" required><input class="field" name="last" placeholder="Last name" required><input class="field full" name="address" placeholder="Address" required><input class="field full" name="apartment" placeholder="Apartment, suite, etc. (optional)"><input class="field" name="city" placeholder="City" required><input class="field" name="postal" placeholder="Postal code (optional)"><input class="field full" name="phone" placeholder="Phone" required></div>`}
-function summary(){let sub=subtotal(), ship=shipping(), disc=appliedCoupon?sub*(Number(appliedCoupon.percent||0)/100):0; qs('#summary')&&(qs('#summary').innerHTML=cart.map(i=>{let p=product(i.id);return `<div class="summary-line"><span>${safe(p?.name)} × ${i.qty}</span><b>${money((p?.salePrice||p?.price||0)*i.qty)}</b></div>`}).join('')+`<hr><div class="summary-line"><span>Subtotal</span><b>${money(sub)}</b></div><div class="summary-line"><span>Shipping</span><b>${money(ship)}</b></div>${disc?`<div class="summary-line"><span>Discount</span><b>-${money(disc)}</b></div>`:''}<h2 class="summary-line"><span>Total</span><b>${money(sub+ship-disc)}</b></h2>`)}
-async function placeOrder(){if(!cart.length){toast('Your cart is empty.');return} let f=qs('#checkoutForm'); let address={}; if(f&&!f.classList.contains('hide')){if(!f.reportValidity())return; address=Object.fromEntries(new FormData(f).entries()); if(qs('#saveAddr')?.checked&&currentUser?.email){let users=cloud.nitaUsersByEmail||{}; let u=users[currentUser.email]||{email:currentUser.email,addresses:[]}; u.addresses=u.addresses||[]; u.addresses.push(address); users[currentUser.email]=u; await apiSave('nitaUsersByEmail',users)}} else {let arr=savedAddresses(); let idx=Number(qs('input[name="addr"]:checked')?.value||0); address=arr[idx]||{}} let sub=subtotal(), ship=shipping(), disc=appliedCoupon?sub*(Number(appliedCoupon.percent||0)/100):0; let orders=cloud.nitaOrders||[]; let order={id:'NS'+Date.now(),date:new Date().toLocaleString(),email:currentUser?.email||qs('#coEmail')?.value||'',customer:(address.first||'')+' '+(address.last||''),phone:address.phone,address,payment:'Cash on Delivery',status:'Order submitted',items:cart,total:sub+ship-disc}; orders.push(order); await apiSave('nitaOrders',orders); let ps=products(); cart.forEach(i=>{let p=ps.find(x=>String(x.id)===String(i.id)); if(p){p.quantity=Math.max(0,Number(p.quantity||0)-Number(i.qty||0)); if(p.quantity===0)p.status='out-of-stock'}}); await apiSave('nitaProducts',ps); cart=[]; saveCart(); location.href='order-success.html'}
-function loginPage(){qs('#loginRoot').innerHTML=`<img src="assets/logo-cropped.png" style="width:280px"><p class="muted brand-font">Customer account</p><h1>Sign in or create your account</h1><p class="muted">Save your address, track your orders, and receive your first-order code.</p><div class="auth-tabs"><button id="tabIn" class="active" onclick="setAuth('in')">SIGN IN</button><button id="tabUp" onclick="setAuth('up')">SIGN UP</button></div><div class="card"><input id="authEmail" class="field" placeholder="Email address"><input id="authFirst" class="field" placeholder="First name"><input id="authLast" class="field" placeholder="Last name"><input id="authPhone" class="field" placeholder="Phone number"><button class="btn" onclick="submitAuth()">CONTINUE</button></div>`}
-function setAuth(t){qs('#tabIn').classList.toggle('active',t==='in');qs('#tabUp').classList.toggle('active',t==='up')}
-async function submitAuth(){let email=qs('#authEmail').value.trim().toLowerCase(); if(!email)return toast('Enter your email'); let users=cloud.nitaUsersByEmail||{}; users[email]={...(users[email]||{}),email,first:qs('#authFirst').value,last:qs('#authLast').value,phone:qs('#authPhone').value,addresses:(users[email]?.addresses||[])}; await apiSave('nitaUsersByEmail',users); currentUser={email}; write('nitaUser',currentUser); location.href='index.html'}
-function accountPage(){if(!currentUser){location.href='login.html';return} let u=(cloud.nitaUsersByEmail||{})[currentUser.email]||{email:currentUser.email,addresses:[]}; let orders=(cloud.nitaOrders||[]).filter(o=>o.email===currentUser.email); qs('#accountRoot').innerHTML=`<h1>Welcome ${safe(u.first||'')}</h1><p class="muted">Manage your profile, delivery addresses, and orders.</p><div class="grid" style="grid-template-columns:1fr 1fr"><div class="card"><h2>Personal information</h2><input class="field" id="accFirst" value="${safe(u.first||'')}" placeholder="First name"><input class="field" id="accLast" value="${safe(u.last||'')}" placeholder="Last name"><input class="field" disabled value="${safe(u.email)}"><input class="field" id="accPhone" value="${safe(u.phone||'')}" placeholder="Phone"><button class="btn" onclick="saveAccount()">SAVE DETAILS</button></div><div class="card"><h2>Saved delivery addresses</h2>${(u.addresses||[]).map(a=>`<div class="address-card"><b>${safe(a.label||'Saved address')}</b><p>${safe(a.address||'')} ${safe(a.city||'')}</p></div>`).join('')||'<p class="muted">No saved addresses yet.</p>'}</div></div><section class="card" style="margin-top:30px"><h2>Ongoing orders</h2>${orders.length?orders.map(orderCard).join(''):'<p class="muted">No orders yet.</p>'}</section><section class="account-control" style="margin-top:30px"><h2>Account control</h2><button class="btn outline-danger" onclick="localStorage.removeItem('nitaUser');location.href='index.html'">LOG OUT</button> <button class="btn danger" onclick="deleteAccount()">DELETE ACCOUNT</button></section>`}
-function orderCard(o){let steps=['Order submitted','Confirmed','Packing','Out for delivery','Delivered']; let idx=Math.max(0,steps.findIndex(s=>s.toLowerCase()===String(o.status).toLowerCase())); return `<div class="card" style="margin:18px 0"><b>${safe(o.id)}</b><p class="muted">${safe(o.date)} · ${safe(o.payment)}</p><b>${money(o.total)}</b><div class="order-roadmap">${steps.map((s,i)=>`<div class="road-step ${i<=idx?'done':''}">${s}</div>`).join('')}</div><p class="muted">${(o.items||[]).map(i=>safe(i.id)+' × '+i.qty).join(', ')}</p></div>`}
-async function saveAccount(){let users=cloud.nitaUsersByEmail||{}; let u=users[currentUser.email]||{email:currentUser.email,addresses:[]}; u.first=qs('#accFirst').value;u.last=qs('#accLast').value;u.phone=qs('#accPhone').value;users[currentUser.email]=u; await apiSave('nitaUsersByEmail',users);toast('Saved')}
-async function deleteAccount(){if(!confirm('Delete account permanently?'))return; let users=cloud.nitaUsersByEmail||{}; delete users[currentUser.email]; await apiSave('nitaUsersByEmail',users); localStorage.removeItem('nitaUser'); location.href='index.html'}
-function requireAdmin(){if(!ADMIN_EMAILS.includes(currentUser?.email)){qs('main').innerHTML='<h1>Admin access</h1><a class="btn" href="login.html">SIGN IN</a>';return false}return true}
-function adminPage(){if(!requireAdmin())return; let ed=qs('#productEditor'); if(ed)ed.innerHTML=adminForm(); renderAdminProducts(); renderAdminOrders(); renderAdminUsers()}
-function sizeChecks(name,selected=[]){return ['XS','S','M','L','XL','One size'].map(s=>`<label><input type="checkbox" name="${name}" value="${s}" ${selected.includes(s)?'checked':''}> ${s}</label>`).join(' ')}
-function collectChecks(name){return qsa(`input[name="${name}"]:checked`).map(x=>x.value)}
-function adminForm(p={}){return `<div class="form-grid"><input id="pname" class="field" placeholder="Product name" value="${safe(p.name||'')}"><input id="pprice" class="field" type="number" placeholder="Price" value="${safe(p.price||'')}"><input id="psale" class="field" type="number" placeholder="Sale price" value="${safe(p.salePrice||'')}"><input id="pqty" class="field" type="number" placeholder="Quantity" value="${safe(p.quantity||'')}"><select id="pcat" class="field"><option>Dresses</option><option>Tops</option><option>Pants</option><option>Jackets</option><option>Accessories</option></select><select id="phome" class="field"><option value="trending">Trending Now</option><option value="new">New Arrivals</option></select><select id="pstatus" class="field"><option value="in-stock">In stock</option><option value="coming-soon">Coming soon</option><option value="out-of-stock">Out of stock</option></select><input id="pcolor" class="field" placeholder="Color" value="${safe(p.color||'')}"><textarea id="pdesc" class="field full" placeholder="Description">${safe(p.description||'')}</textarea><div class="full"><label>Photos</label><input id="pphotos" type="file" multiple accept="image/*"></div><div class="full"><label>Available sizes</label><p>${sizeChecks('sizes',p.sizes||['S','M','L'])}</p></div><div class="full"><label>Out-of-stock sizes</label><p>${sizeChecks('oos',p.outOfStockSizes||[])}</p></div></div>`}
-async function fileToData(f){return new Promise(res=>{let r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(f)})}
-async function productFromForm(old={}){let files=[...(qs('#pphotos')?.files||[])]; let photos=files.length?await Promise.all(files.map(fileToData)):(old.photos||[]); let qty=Number(qs('#pqty').value||old.quantity||0); return {...old,id:old.id||('p'+Date.now()),name:qs('#pname').value,price:Number(qs('#pprice').value),salePrice:qs('#psale').value?Number(qs('#psale').value):null,quantity:qty,originalQuantity:old.originalQuantity||qty,category:qs('#pcat').value,homeSection:qs('#phome').value,status:qs('#pstatus').value,color:qs('#pcolor').value,description:qs('#pdesc').value,photos,sizes:collectChecks('sizes'),outOfStockSizes:collectChecks('oos')}}
-function renderAdminProducts(){let box=qs('#adminProducts'); if(!box)return; box.innerHTML=products().map(p=>`<div class="admin-list-item"><div class="placeholder" style="${productBg(p)};height:80px;background-size:cover;background-position:center"></div><div><b>${safe(p.name)}</b><p class="muted">${safe(p.category)} · ${money(p.salePrice||p.price)} · Qty ${p.quantity}</p>${statusHtml(p)}</div><button class="btn light" onclick="editProduct('${p.id}')">EDIT LISTING</button><button class="btn light remove" onclick="removeProduct('${p.id}')">REMOVE</button></div>`).join('')}
-async function addProductAdmin(){let ps=products(); ps.push(await productFromForm()); await apiSave('nitaProducts',ps); renderAdminProducts(); toast('Product saved')}
-function editProduct(id){let p=product(id); qs('#productEditor').innerHTML=adminForm(p)+`<button class="btn" onclick="saveProduct('${id}')">SAVE UPDATE</button>`; qs('#pcat').value=p.category;qs('#phome').value=p.homeSection||'trending';qs('#pstatus').value=p.status||'in-stock'; window.scrollTo(0,0)}
-async function saveProduct(id){let ps=products(); let idx=ps.findIndex(p=>String(p.id)===String(id)); ps[idx]=await productFromForm(ps[idx]); await apiSave('nitaProducts',ps); qs('#productEditor').innerHTML=adminForm()+`<button class="btn" onclick="addProductAdmin()">ADD PRODUCT</button>`; renderAdminProducts(); toast('Updated')}
-async function removeProduct(id){if(!confirm('Remove this product?'))return; await apiSave('nitaProducts',products().filter(p=>String(p.id)!==String(id))); renderAdminProducts(); toast('Removed')}
-function renderAdminOrders(){let box=qs('#adminOrders'); if(!box)return; let orders=cloud.nitaOrders||[]; box.innerHTML=orders.length?orders.map((o,i)=>`<div class="card"><b>${safe(o.id)}</b><p>${safe(o.customer)} · ${money(o.total)}</p><select onchange="updateOrder(${i},this.value)"><option>${safe(o.status)}</option><option>Confirmed</option><option>Packing</option><option>Out for delivery</option><option>Delivered</option><option>Cancelled</option></select></div>`).join(''):'<p class="muted">No orders yet.</p>'}
-async function updateOrder(i,v){if(!confirm('Confirm order status update?'))return; let orders=cloud.nitaOrders||[]; orders[i].status=v; await apiSave('nitaOrders',orders);renderAdminOrders()}
-function renderAdminUsers(){let box=qs('#adminUsers'); if(!box)return; let users=Object.values(cloud.nitaUsersByEmail||{}); box.innerHTML=users.map(u=>`<div class="card"><b>${safe(u.email)}</b><p>${safe(u.first||'')} ${safe(u.last||'')} · ${safe(u.phone||'')}</p></div>`).join('')||'<p class="muted">No customers yet.</p>'}
-function toast(t){let e=qs('#toast')||document.body.appendChild(Object.assign(document.createElement('div'),{id:'toast',className:'toast'}));e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',1900)}
+let cart=JSON.parse(localStorage.getItem('nitaCart')||'[]');
+let currentUser=JSON.parse(localStorage.getItem('nitaUser')||'null');
+function $(q){return document.querySelector(q)} function $all(q){return [...document.querySelectorAll(q)]}
+function money(n){return '$'+Number(n).toFixed(2)}
+function saveCart(){localStorage.setItem('nitaCart',JSON.stringify(cart)); updateCartCount()}
+function updateCartCount(){document.querySelectorAll('.cart-count').forEach(e=>e.textContent=cart.reduce((s,i)=>s+i.qty,0))}
+function header(){
+ const isAdmin = ADMIN_EMAILS.includes(currentUser?.email);
+ const admin = isAdmin ? '<a class="admin-link" href="admin.html">ADMIN</a>' : '';
+ return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a href="${currentUser?'account.html':'login.html'}">${currentUser?'ACCOUNT':'SIGN IN'}</a>${admin}<button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, tops, pants..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`
+}
+
+function siteFooter(){return `<footer class="footer site-footer"><div><img class="footer-logo-img" src="assets/logo-cropped.png" alt="Nita Style"><p class="muted">Founded by Nicole and Tania, Nita Style curates Italian-made pieces for women who value clean silhouettes, refined textures, and effortless everyday elegance.</p></div><div><h4>Shop</h4><a href="shop.html">All products</a><a href="collections.html">Collections</a><a href="cart.html">Cart</a><a href="checkout.html">Checkout</a></div><div><h4>Support</h4><a href="contact.html">Contact</a><a href="about.html">About</a><a href="checkout.html">Cash on delivery</a><a href="checkout.html">Online payment coming soon</a></div><div><h4>Join the list</h4><p class="muted">Receive the first-order code and new drop updates.</p><div class="footer-newsletter"><input placeholder="Email address"><button onclick="toast('Use code NITA10 for 10% off')">SIGN UP</button></div></div></footer><div class="copyright site-footer"><span>© 2026 Nita Style. All rights reserved.</span><span>Privacy Policy · Terms · Shipping</span></div>`}
+
+async function init(){
+ await loadSharedStore();
+ cart=JSON.parse(localStorage.getItem('nitaCart')||'[]');
+ currentUser=JSON.parse(localStorage.getItem('nitaUser')||'null');
+ const showIntro=!sessionStorage.getItem('nitaIntroShown');
+ document.body.insertAdjacentHTML('afterbegin',(showIntro?introLoader():'')+header()+quickViewModal());
+ document.body.classList.add('nita-ready');
+ if(showIntro){sessionStorage.setItem('nitaIntroShown','1');setTimeout(()=>document.getElementById('introLoader')?.classList.add('hide'),1250);setTimeout(()=>document.getElementById('introLoader')?.remove(),1900)}
+ updateCartCount(); renderCartPanel(); if(!document.querySelector('.site-footer') && !location.pathname.endsWith('admin.html')) document.body.insertAdjacentHTML('beforeend',siteFooter()); if(!localStorage.getItem('nitaPopupSeen'))setTimeout(()=>$('#signupPopup')?.classList.add('show'),1600)}
+function introLoader(){return `<div id="introLoader" class="intro-loader"><img src="assets/logo-cropped.png" alt="Nita Style"></div>`}
+function openSearch(){const p=$('#searchPanel'); if(p){p.classList.add('open'); document.body.classList.add('panel-open');} renderSearch();setTimeout(()=>$('#searchInput')?.focus(),100)} function closeSearch(){const p=$('#searchPanel'); if(p){p.classList.remove('open');} document.body.classList.remove('panel-open')}
+function openCart(){renderCartPanel();const p=$('#cartPanel'); if(p){p.classList.add('open'); document.body.classList.add('panel-open');}} function closeCart(){const p=$('#cartPanel'); if(p){p.classList.remove('open');} document.body.classList.remove('panel-open')}
+function renderSearch(){let q=($('#searchInput')?.value||'').toLowerCase();let res=getProducts().filter(p=>!q||p.name.toLowerCase().includes(q)||p.category.toLowerCase().includes(q));$('#searchResults').innerHTML=res.map(p=>`<a href="product.html?id=${p.id}" style="display:grid;grid-template-columns:70px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid #eee"><span style="${productMainImage(p).startsWith('data:')?'background-image:url('+productMainImage(p)+')':'background:'+productMainImage(p)};background-size:cover;background-position:center;height:82px"></span><span><b>${p.name}</b><br><span class="muted">${p.category} · ${money(p.price)}</span></span></a>`).join('')}
+function productCard(p){let price=p.salePrice?`<p><span class="muted" style="text-decoration:line-through;margin-right:8px">${money(p.price)}</span><span class="price-drop">${money(p.salePrice)}</span></p>`:`<p>${money(p.price)}</p>`;return `<a class="product" href="product.html?id=${p.id}"><div class="product-img" style="background:${p.img}"></div><h3>${p.name}</h3>${price}</a>`}
+function renderProducts(el='#products',list=getProducts()){let node=$(el); if(node) node.innerHTML=list.map(productCard).join('')}
+function addToCart(id,size='M'){let p=getProducts().find(x=>x.id===id);let found=cart.find(i=>i.id===id&&i.size===size); if(found)found.qty++; else cart.push({id,size,qty:1}); saveCart(); toast('Added to cart')}
+function renderCartPanel(){let box=$('#cartItems'); if(!box)return; if(!cart.length){box.innerHTML='<p class="muted">Your cart is empty.</p>';return} let products=getProducts(); let total=0; box.innerHTML=cart.map((i,idx)=>{let p=products.find(x=>x.id===i.id); if(!p)return''; let unit=p.salePrice||p.price; total+=unit*i.qty; return `<div style="display:grid;grid-template-columns:70px 1fr auto;gap:12px;padding:15px 0;border-bottom:1px solid #eee"><span style="${productMainImage(p).startsWith('data:')?'background-image:url('+productMainImage(p)+')':'background:'+productMainImage(p)};background-size:cover;background-position:center;height:82px"></span><div><b>${p.name}</b><br><span class="muted">${i.size} · Qty ${i.qty}</span><br>${money((p.salePrice||p.price)*i.qty)}</div><button onclick="cart.splice(${idx},1);saveCart();renderCartPanel()">×</button></div>`}).join('')+`<h3>Total ${money(total)}</h3>`}
+function toast(t){let x=$('#toast')||document.body.appendChild(Object.assign(document.createElement('div'),{id:'toast',className:'toast'}));x.textContent=t;x.style.display='block';setTimeout(()=>x.style.display='none',1800)}
+function popupSignup(){let email=$('#popupEmail').value.trim(); if(!email)return; localStorage.setItem('nitaPopupSeen','1'); localStorage.setItem('nitaDiscountCode','NITA10'); $('#signupPopup').classList.remove('show'); toast('Your one-time code is NITA10. Email automation can be connected when deployed.')} 
+function login(){let email=$('#email').value.trim().toLowerCase(); currentUser={email}; localStorage.setItem('nitaUser',JSON.stringify(currentUser)); location.href=ADMIN_EMAILS.includes(email)?'admin.html':'index.html'}
+function placeOrder(){let form=new FormData($('#checkoutForm')); let code=(form.get('coupon')||'').toUpperCase(); let products=getProducts(); let subtotal=cart.reduce((s,i)=>{let p=products.find(p=>p.id===i.id);return s+((p?.salePrice||p?.price||0)*i.qty)},0); let discount=code==='NITA10'?subtotal*.10:0; let orders=JSON.parse(localStorage.getItem('nitaOrders')||'[]'); orders.push({id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:form.get('name'),phone:form.get('phone'),address:form.get('address'),payment:'Cash on Delivery',status:'New order',items:cart,total:subtotal-discount}); localStorage.setItem('nitaOrders',JSON.stringify(orders)); cart=[]; saveCart(); location.href='order-success.html'}
+function protectAdmin(){if(currentUser?.email!==ADMIN_EMAIL){document.body.innerHTML=header()+`<main class="page"><h1>Admin access</h1><p>This dashboard is only available for ${ADMIN_EMAIL}.</p><a class="btn" href="login.html">SIGN IN</a></main>`;updateCartCount();return false}return true}
+function renderAdmin(){if(!protectAdmin())return; let orders=JSON.parse(localStorage.getItem('nitaOrders')||'[]'); $('#orders').innerHTML=orders.map((o,i)=>`<tr><td>${o.id}</td><td>${o.customer}</td><td>${money(o.total)}</td><td><select onchange="updateOrder(${i},this.value)"><option>${o.status}</option><option>Confirmed</option><option>Out for delivery</option><option>Delivered</option><option>Cancelled</option></select></td></tr>`).join('')||'<tr><td>No orders yet</td></tr>'; $('#adminProducts').innerHTML=getProducts().map(p=>`<tr><td>${p.name}</td><td>${p.category}</td><td>${p.sizes.join(', ')}</td><td><button onclick="removeProduct('${p.id}')">Remove</button></td></tr>`).join('')}
+function updateOrder(i,v){let o=JSON.parse(localStorage.getItem('nitaOrders')||'[]');o[i].status=v;localStorage.setItem('nitaOrders',JSON.stringify(o));toast('Order updated')}
+function addProductAdmin(){let p=getProducts();p.push({id:'p'+Date.now(),name:$('#pname').value,price:+$('#pprice').value,category:$('#pcat').value,collection:'Admin Added',sizes:$('#psizes').value.split(',').map(s=>s.trim()).filter(Boolean),img:'linear-gradient(135deg,#fff,#ddd)',desc:$('#pdesc').value});saveProducts(p);renderAdmin();toast('Product added')}
+function removeProduct(id){saveProducts(getProducts().filter(p=>p.id!==id));renderAdmin()}
+
+
+
+// --- Professional admin product management v3: photos + full editor ---
+let pendingAdminPhotos=[];
+let editingPhotoBuffers={};
+const ADMIN_CATEGORIES=['Dresses','Tops','Pants','Jackets','Accessories','Essentials','Evening','Sale'];
+const ADMIN_COLLECTIONS=['New Arrivals','Everyday Edit','Summer Pieces','Minimal Essentials','Accessories','Sale'];
+const ADMIN_SIZES=['XS','S','M','L','XL','One Size'];
+function renderOptions(list,current){return list.map(x=>`<option ${x===current?'selected':''}>${x}</option>`).join('')}
+function renderSizeButtons(selected=[]){return ADMIN_SIZES.map(x=>`<button type="button" class="pill ${selected.includes(x)?'on':''}" onclick="this.classList.toggle('on')">${x}</button>`).join('')}
+function selectedAdminSizes(root=document){return [...root.querySelectorAll('.size-picker .pill.on,#sizePicker .pill.on')].map(b=>b.textContent.trim())}
+function fileListToDataUrls(files,cb){
+ const arr=[...files]; if(!arr.length){cb([]);return}
+ let done=0, urls=[];
+ arr.forEach((file,i)=>{const r=new FileReader(); r.onload=e=>{urls[i]=e.target.result; done++; if(done===arr.length) cb(urls)}; r.readAsDataURL(file)})
+}
+function previewAdminPhotos(e){
+ fileListToDataUrls(e.target.files,urls=>{pendingAdminPhotos=urls; const box=$('#photoPreview'); if(box) box.innerHTML=urls.map((u,i)=>`<div class="admin-thumb"><img src="${u}"><span>${i===0?'Main photo':'Photo '+(i+1)}</span></div>`).join('')})
+}
+function productMainImage(p){return (p.photos&&p.photos[0]) || p.img || 'linear-gradient(135deg,#fff,#ddd)'}
+function productCard(p){let img=productMainImage(p);let price=p.salePrice?`<p><span class="muted" style="text-decoration:line-through;margin-right:8px">${money(p.price)}</span><span class="price-drop">${money(p.salePrice)}</span></p>`:`<p>${money(p.price)}</p>`;return `<article class="product"><a class="product-hit" href="product.html?id=${p.id}"><div class="product-img" style="${img.startsWith('data:')?'background-image:url('+img+')':'background:'+img};background-size:cover;background-position:center"></div><h3>${p.name}</h3>${price}</a><button class="quick-view-btn" type="button" onclick="event.stopPropagation();event.preventDefault();openQuickView('${p.id}')">QUICK VIEW</button></article>`}
+function quickViewModal(){return `<div class="quick-modal" id="quickModal" aria-hidden="true"><div class="quick-backdrop" onclick="closeQuickView()"></div><div class="quick-dialog"><button class="quick-close" onclick="closeQuickView()">×</button><div id="quickContent"></div></div></div>`}
+function openQuickView(id){let p=getProducts().find(x=>x.id===id); if(!p)return; let img=productMainImage(p); let sizes=(p.sizes||[]).map((s,i)=>`<button class="size ${i===0?'active':''}" onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${s}</button>`).join(''); let price=p.salePrice?`<span class='muted' style='text-decoration:line-through;margin-right:10px'>${money(p.price)}</span><span class='price-drop'>${money(p.salePrice)}</span>`:money(p.price); $('#quickContent').innerHTML=`<div class="quick-grid"><div class="quick-image" style="${img.startsWith('data:')?'background-image:url('+img+')':'background:'+img};background-size:cover;background-position:center"></div><div class="quick-info"><p class="muted">${p.category}</p><h2>${p.name}</h2><h3>${price}</h3><p>${p.desc||''}</p><div class="sizes">${sizes}</div><button class="btn" onclick="addToCart('${p.id}',document.querySelector('#quickContent .size.active')?.textContent||'M');closeQuickView()">ADD TO CART</button><a class="btn light" href="product.html?id=${p.id}">VIEW FULL PRODUCT</a></div></div>`; $('#quickModal').classList.add('open'); $('#quickModal').setAttribute('aria-hidden','false')}
+function closeQuickView(){let m=$('#quickModal'); if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true')}}
+function renderAdmin(){
+ if(!protectAdmin())return;
+ let orders=JSON.parse(localStorage.getItem('nitaOrders')||'[]');
+ const orderBody=$('#orders');
+ if(orderBody) orderBody.innerHTML=orders.map((o,i)=>`<tr><td><b>${o.id}</b><br><span class="muted">${o.date}</span></td><td>${o.customer||'-'}<br><span class="muted">${o.phone||''}</span></td><td>${money(o.total||0)}</td><td><select onchange="updateOrder(${i},this.value)"><option>${o.status}</option><option>Confirmed</option><option>Preparing</option><option>Out for delivery</option><option>Delivered</option><option>Cancelled</option></select></td></tr>`).join('')||'<tr><td colspan="4">No orders yet.</td></tr>';
+ const sizePicker=$('#sizePicker'); if(sizePicker && !sizePicker.dataset.ready){sizePicker.innerHTML=renderSizeButtons(['S','M','L']); sizePicker.dataset.ready='1'}
+ renderAdminProducts();
+}
+function addProductAdmin(){
+ const name=$('#pname').value.trim(); const price=Number($('#pprice').value); if(!name||!price){toast('Add a product name and price');return}
+ let products=getProducts();
+ const sale=$('#psale').value===''?'':Number($('#psale').value);
+ const photos=pendingAdminPhotos.slice();
+ products.push({id:'p'+Date.now(),name,price,salePrice:sale,category:$('#pcat').value,collection:$('#pcollection').value,note:$('#pnote').value.trim(),sizes:selectedAdminSizes(),photos,img:photos[0]||'linear-gradient(135deg,#fff,#ddd)',desc:$('#pdesc').value.trim()||'Selected Italian apparel for a clean boutique wardrobe.'});
+ saveProducts(products); pendingAdminPhotos=[]; renderAdmin(); toast('Product added'); ['pname','pprice','psale','pnote','pdesc'].forEach(id=>{let el=$('#'+id); if(el)el.value=''}); if($('#pphotos'))$('#pphotos').value=''; if($('#photoPreview'))$('#photoPreview').innerHTML='';
+}
+function renderAdminProducts(){
+ const box=$('#adminProducts'); if(!box)return;
+ box.innerHTML=getProducts().map(p=>{
+  const img=productMainImage(p); const bg=img.startsWith('data:')?`background-image:url(${img})`:`background:${img}`;
+  return `<div class="admin-product-card" id="edit-${p.id}"><div class="admin-product-top"><div class="admin-product-photo" style="${bg};background-size:cover;background-position:center"></div><div><div class="admin-product-name">${p.name}</div><span class="muted">${p.category} · ${money(p.price)} ${p.salePrice?`· Sale ${money(p.salePrice)}`:''}</span></div><button onclick="toggleProductEditor('${p.id}')">Edit listing</button><button onclick="removeProduct('${p.id}')">Remove</button></div><div class="product-editor" id="editor-${p.id}">${productEditorHTML(p)}</div></div>`
+ }).join('')
+}
+function productEditorHTML(p){
+ const selected=(p.sizes||[]);
+ return `<div class="admin-form"><div><label>Product name</label><input class="field edit-name" value="${p.name||''}"></div><div><label>Price</label><input class="field edit-price" type="number" step="0.01" value="${p.price||0}"></div><div><label>Sale / price-drop price</label><input class="field edit-sale" type="number" step="0.01" value="${p.salePrice||''}" placeholder="Optional"></div><div><label>Section</label><select class="field edit-category">${renderOptions(ADMIN_CATEGORIES,p.category)}</select></div><div><label>Collection</label><select class="field edit-collection">${renderOptions(ADMIN_COLLECTIONS,p.collection)}</select></div><div><label>Color / style note</label><input class="field edit-note" value="${p.note||''}"></div><div class="full"><label>Photos</label><div class="photo-preview existing-photos">${(p.photos&&p.photos.length?p.photos:[p.img]).filter(Boolean).map((u,i)=>`<div class="admin-thumb"><img src="${u.startsWith('data:')?u:''}" style="${u.startsWith('data:')?'':'display:none'}"><span>${i===0?'Main photo':'Photo '+(i+1)}</span></div>`).join('')}</div><div class="upload-zone"><input type="file" accept="image/*" multiple onchange="previewEditPhotos(event,'${p.id}')"><p><b>Replace / add photos</b><br><span class="muted">Uploading new photos will replace the current product gallery when saved.</span></p></div><div class="photo-preview" id="editPreview-${p.id}"></div></div><div class="full"><label>Available sizes</label><div class="size-picker">${renderSizeButtons(selected)}</div></div><div class="full"><label>Description</label><textarea class="field edit-desc">${p.desc||''}</textarea></div></div><button class="btn" onclick="saveProductEditor('${p.id}')">SAVE PRODUCT CHANGES</button>`
+}
+function toggleProductEditor(id){let el=$('#editor-'+id); if(el)el.classList.toggle('open')}
+function previewEditPhotos(e,id){fileListToDataUrls(e.target.files,urls=>{editingPhotoBuffers[id]=urls; const box=$('#editPreview-'+id); if(box)box.innerHTML=urls.map((u,i)=>`<div class="admin-thumb"><img src="${u}"><span>${i===0?'New main photo':'New photo '+(i+1)}</span></div>`).join('')})}
+function saveProductEditor(id){
+ let products=getProducts(); let p=products.find(x=>x.id===id); let root=$('#editor-'+id); if(!p||!root)return;
+ p.name=root.querySelector('.edit-name').value.trim(); p.price=Number(root.querySelector('.edit-price').value); p.salePrice=root.querySelector('.edit-sale').value===''?'':Number(root.querySelector('.edit-sale').value); p.category=root.querySelector('.edit-category').value; p.collection=root.querySelector('.edit-collection').value; p.note=root.querySelector('.edit-note').value.trim(); p.desc=root.querySelector('.edit-desc').value.trim(); p.sizes=selectedAdminSizes(root); if(editingPhotoBuffers[id]?.length){p.photos=editingPhotoBuffers[id]; p.img=editingPhotoBuffers[id][0]; delete editingPhotoBuffers[id]}
+ saveProducts(products); renderAdmin(); toast('Product updated')
+}
+function quickUpdateProduct(id,field,value){
+ let products=getProducts(); let p=products.find(x=>x.id===id); if(!p)return;
+ if(field==='price'||field==='salePrice') p[field]=value===''?'':Number(value);
+ else if(field==='sizes') p[field]=value.split(',').map(s=>s.trim()).filter(Boolean);
+ else p[field]=value;
+ saveProducts(products); toast('Product updated');
+}
+function removeProduct(id){ if(!confirm('Remove this product?'))return; saveProducts(getProducts().filter(p=>p.id!==id)); renderAdmin(); toast('Product removed')}
+
+
+// --- Checkout, one-time discount, and automatic price-drop logic ---
+function discountUses(){return JSON.parse(localStorage.getItem('nitaDiscountUses')||'{}')}
+function signedDiscountEmail(){return (localStorage.getItem('nitaDiscountEmail')||currentUser?.email||'').toLowerCase()}
+function popupSignup(){let email=$('#popupEmail')?.value.trim().toLowerCase(); if(!email)return; localStorage.setItem('nitaPopupSeen','1'); localStorage.setItem('nitaDiscountCode','NITA10'); localStorage.setItem('nitaDiscountEmail',email); $('#signupPopup')?.classList.remove('show'); toast('Your one-time first-order code is NITA10')}
+function canUseNita10(email){email=(email||signedDiscountEmail()).toLowerCase(); if(!email)return false; return !discountUses()[email]}
+function renderCheckoutSummary(){
+ let ps=getProducts();
+ let form=document.getElementById('checkoutForm');
+ let code=(form?.coupon?.value||'').trim().toUpperCase();
+ let email=(form?.email?.value||signedDiscountEmail()).trim().toLowerCase();
+ let subtotal=cart.reduce((s,i)=>{let p=ps.find(p=>p.id===i.id);return s+((p?.salePrice||p?.price||0)*i.qty)},0);
+ let valid=code==='NITA10' && canUseNita10(email) && subtotal>0;
+ let discount=valid?subtotal*.10:0;
+ let items=cart.length?cart.map(i=>{let p=ps.find(x=>x.id===i.id);return `<div class="summary-line"><span><b>${p?.name||'Product'}</b><br><span class="muted">${i.size||''} × ${i.qty}</span></span><span>${money(((p?.salePrice||p?.price||0)*i.qty))}</span></div>`}).join(''):'<p class="muted">Your cart is empty.</p>';
+ let msg='';
+ if(code==='NITA10') msg= valid?`<p class="discount-good">First-order discount applied: -${money(discount)}</p>`:`<p class="discount-bad">This code is only valid once, on the first order for the signup email.</p>`;
+ checkoutSummary.innerHTML=items+`<hr><div class="summary-line"><span>Subtotal</span><span>${money(subtotal)}</span></div>${msg}<div class="summary-total"><span>Total</span><span>${money(subtotal-discount)}</span></div>`;
+}
+document.addEventListener('input',e=>{if(e.target?.name==='coupon'||e.target?.name==='email') renderCheckoutSummary?.()});
+function placeOrder(){
+ let form=new FormData($('#checkoutForm')); let code=(form.get('coupon')||'').toUpperCase(); let email=(form.get('email')||signedDiscountEmail()).toLowerCase(); let products=getProducts();
+ let subtotal=cart.reduce((s,i)=>{let p=products.find(p=>p.id===i.id);return s+((p?.salePrice||p?.price||0)*i.qty)},0);
+ let uses=discountUses(); let discount=(code==='NITA10' && email && !uses[email])?subtotal*.10:0; if(discount>0){uses[email]=true;localStorage.setItem('nitaDiscountUses',JSON.stringify(uses))}
+ let address={city:form.get('city'),street:form.get('street'),building:form.get('building'),floor:form.get('floor'),apartment:form.get('apartment'),notes:form.get('notes')};
+ if(form.get('saveAddress')) localStorage.setItem('nitaSavedAddress',JSON.stringify(address));
+ let orders=JSON.parse(localStorage.getItem('nitaOrders')||'[]');
+ orders.push({id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:form.get('name'),phone:form.get('phone'),email,address,payment:'Cash on Delivery',status:'New order',items:cart,subtotal,discount,total:subtotal-discount});
+ localStorage.setItem('nitaOrders',JSON.stringify(orders)); cart=[]; saveCart(); location.href='order-success.html'
+}
+// override product card with sale badge animation
+function productCard(p){let img=productMainImage(p);let hasSale=p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price);let price=hasSale?`<p><span class="muted" style="text-decoration:line-through;margin-right:8px">${money(p.price)}</span><span class="price-drop">${money(p.salePrice)}</span></p>`:`<p>${money(p.price)}</p>`;return `<article class="product"><a class="product-hit" href="product.html?id=${p.id}"><div class="product-img" style="${img.startsWith('data:')?'background-image:url('+img+')':'background:'+img};background-size:cover;background-position:center">${hasSale?'<span class="sale-badge">PRICE DROP</span>':''}</div><h3>${p.name}</h3>${price}</a><button class="quick-view-btn" type="button" onclick="event.stopPropagation();event.preventDefault();openQuickView('${p.id}')">QUICK VIEW</button></article>`}
+function saveProductEditor(id){
+ let products=getProducts(); let p=products.find(x=>x.id===id); let root=$('#editor-'+id); if(!p||!root)return;
+ const oldRegular=Number(p.price||0); const enteredPrice=Number(root.querySelector('.edit-price').value); const saleInput=root.querySelector('.edit-sale').value;
+ p.name=root.querySelector('.edit-name').value.trim();
+ if(saleInput===''){
+   if(enteredPrice>0 && enteredPrice<oldRegular){ p.salePrice=enteredPrice; p.price=oldRegular; }
+   else { p.price=enteredPrice; p.salePrice=''; }
+ } else { p.price=enteredPrice; p.salePrice=Number(saleInput); }
+ p.category=root.querySelector('.edit-category').value; p.collection=root.querySelector('.edit-collection').value; p.note=root.querySelector('.edit-note').value.trim(); p.desc=root.querySelector('.edit-desc').value.trim(); p.sizes=selectedAdminSizes(root); if(editingPhotoBuffers[id]?.length){p.photos=editingPhotoBuffers[id]; p.img=editingPhotoBuffers[id][0]; delete editingPhotoBuffers[id]}
+ saveProducts(products); renderAdmin(); toast('Product updated')
+}
+function productEditorHTML(p){
+ const selected=(p.sizes||[]);
+ return `<div class="admin-form"><div><label>Product name</label><input class="field edit-name" value="${p.name||''}"></div><div><label>Regular price</label><input class="field edit-price" type="number" step="0.01" value="${p.price||0}"><p class="first-order-mini">Lower this price and save: the website will automatically show a price drop.</p></div><div><label>Sale / price-drop price</label><input class="field edit-sale" type="number" step="0.01" value="${p.salePrice||''}" placeholder="Optional"></div><div><label>Section</label><select class="field edit-category">${renderOptions(ADMIN_CATEGORIES,p.category)}</select></div><div><label>Collection</label><select class="field edit-collection">${renderOptions(ADMIN_COLLECTIONS,p.collection)}</select></div><div><label>Color / style note</label><input class="field edit-note" value="${p.note||''}"></div><div class="full"><label>Photos</label><div class="photo-preview existing-photos">${(p.photos&&p.photos.length?p.photos:[p.img]).filter(Boolean).map((u,i)=>`<div class="admin-thumb"><img src="${u.startsWith('data:')?u:''}" style="${u.startsWith('data:')?'':'display:none'}"><span>${i===0?'Main photo':'Photo '+(i+1)}</span></div>`).join('')}</div><div class="upload-zone"><input type="file" accept="image/*" multiple onchange="previewEditPhotos(event,'${p.id}')"><p><b>Replace / add photos</b><br><span class="muted">Uploading new photos will replace the current product gallery when saved.</span></p></div><div class="photo-preview" id="editPreview-${p.id}"></div></div><div class="full"><label>Available sizes</label><div class="size-picker">${renderSizeButtons(selected)}</div></div><div class="full"><label>Description</label><textarea class="field edit-desc">${p.desc||''}</textarea></div></div><button class="btn" onclick="saveProductEditor('${p.id}')">SAVE PRODUCT CHANGES</button>`
+}
+
+// --- Required checkout fields + admin coupon manager ---
+function getCoupons(){return JSON.parse(localStorage.getItem('nitaCoupons')||'[]')}
+function saveCoupons(coupons){localStorage.setItem('nitaCoupons',JSON.stringify(coupons))}
+function normalizeCoupon(code){return String(code||'').trim().toUpperCase().replace(/\s+/g,'')}
+function couponIsLive(c){
+ const today=new Date(); today.setHours(0,0,0,0);
+ const start=c.start?new Date(c.start+'T00:00:00'):null;
+ const end=c.end?new Date(c.end+'T23:59:59'):null;
+ return c.active!==false && (!start || today>=start) && (!end || today<=end);
+}
+function couponUsedForEmail(c,email){email=(email||'').toLowerCase(); return !!(c.usedEmails && c.usedEmails[email])}
+function validateCheckoutForm(){
+ const form=document.getElementById('checkoutForm'); if(!form)return true;
+ const required=['name','phone','email','city','street','building','floor','apartment'];
+ let ok=true;
+ required.forEach(name=>{
+   const el=form.elements[name]; if(!el)return;
+   const valid=el.type==='email'?el.checkValidity():!!String(el.value||'').trim();
+   el.classList.toggle('invalid',!valid);
+   if(!valid) ok=false;
+ });
+ if(!ok){toast('Please complete all required delivery details.'); const first=form.querySelector('.field.invalid'); if(first) first.focus();}
+ return ok;
+}
+document.addEventListener('input',e=>{ if(e.target?.closest('#checkoutForm')) e.target.classList.remove('invalid') });
+function calcCouponDiscount(code,email,subtotal){
+ code=normalizeCoupon(code); email=(email||'').toLowerCase();
+ if(!code || subtotal<=0) return {discount:0,message:''};
+ if(code==='NITA10'){
+   const valid=email && canUseNita10(email);
+   return valid?{discount:subtotal*.10,message:`<p class="discount-good">Discount applied: -${money(subtotal*.10)}</p>`,kind:'nita10'}:{discount:0,message:`<p class="discount-bad">This coupon is not available for this email.</p>`};
+ }
+ const c=getCoupons().find(x=>normalizeCoupon(x.code)===code);
+ if(!c) return {discount:0,message:`<p class="discount-bad">Coupon code not found.</p>`};
+ if(!couponIsLive(c)) return {discount:0,message:`<p class="discount-bad">This coupon is not active.</p>`};
+ if(c.oneTime && couponUsedForEmail(c,email)) return {discount:0,message:`<p class="discount-bad">This coupon has already been used by this email.</p>`};
+ const discount=subtotal*(Number(c.percent||0)/100);
+ return {discount,message:`<p class="discount-good">Coupon applied: -${money(discount)}</p>`,kind:'admin',coupon:c};
+}
+// Override checkout summary with admin coupons + one-time logic
+function renderCheckoutSummary(){
+ let ps=getProducts(); let form=document.getElementById('checkoutForm');
+ let code=normalizeCoupon(form?.coupon?.value||''); let email=(form?.email?.value||signedDiscountEmail()).trim().toLowerCase();
+ let subtotal=cart.reduce((s,i)=>{let p=ps.find(p=>p.id===i.id);return s+((p?.salePrice||p?.price||0)*i.qty)},0);
+ let result=calcCouponDiscount(code,email,subtotal);
+ let items=cart.length?cart.map(i=>{let p=ps.find(x=>x.id===i.id);return `<div class="summary-line"><span><b>${p?.name||'Product'}</b><br><span class="muted">${i.size||''} × ${i.qty}</span></span><span>${money(((p?.salePrice||p?.price||0)*i.qty))}</span></div>`}).join(''):'<p class="muted">Your cart is empty.</p>';
+ if(checkoutSummary) checkoutSummary.innerHTML=items+`<hr><div class="summary-line"><span>Subtotal</span><span>${money(subtotal)}</span></div>${result.message}<div class="summary-total"><span>Total</span><span>${money(subtotal-result.discount)}</span></div>`;
+}
+function placeOrder(){
+ if(!validateCheckoutForm())return;
+ let form=new FormData(document.getElementById('checkoutForm')); let code=normalizeCoupon(form.get('coupon')); let email=(form.get('email')||signedDiscountEmail()).toLowerCase(); let products=getProducts();
+ let subtotal=cart.reduce((s,i)=>{let p=products.find(p=>p.id===i.id);return s+((p?.salePrice||p?.price||0)*i.qty)},0);
+ if(!cart.length){toast('Your cart is empty.');return;}
+ let result=calcCouponDiscount(code,email,subtotal); let discount=result.discount||0;
+ if(result.kind==='nita10' && discount>0){let uses=discountUses();uses[email]=true;localStorage.setItem('nitaDiscountUses',JSON.stringify(uses))}
+ if(result.kind==='admin' && discount>0){let coupons=getCoupons();let c=coupons.find(x=>normalizeCoupon(x.code)===code); if(c&&c.oneTime){c.usedEmails=c.usedEmails||{};c.usedEmails[email]=true;saveCoupons(coupons)}}
+ let address={city:form.get('city'),street:form.get('street'),building:form.get('building'),floor:form.get('floor'),apartment:form.get('apartment'),landmark:form.get('landmark'),preferredTime:form.get('preferredTime'),notes:form.get('notes')};
+ if(form.get('saveAddress')) localStorage.setItem('nitaSavedAddress',JSON.stringify(address));
+ let orders=JSON.parse(localStorage.getItem('nitaOrders')||'[]');
+ orders.push({id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:form.get('name'),phone:form.get('phone'),email,address,payment:'Cash on Delivery',status:'New order',items:cart,subtotal,discount,coupon:code,total:subtotal-discount});
+ localStorage.setItem('nitaOrders',JSON.stringify(orders)); cart=[]; saveCart(); location.href='order-success.html';
+}
+function addCouponAdmin(){
+ const code=normalizeCoupon(document.getElementById('couponCode')?.value); const percent=Number(document.getElementById('couponPercent')?.value||0);
+ const start=document.getElementById('couponStart')?.value||''; const end=document.getElementById('couponEnd')?.value||''; const oneTime=!!document.getElementById('couponOneTime')?.checked;
+ if(!code || !percent || percent<1){toast('Enter a coupon code and valid discount percent.');return}
+ let coupons=getCoupons().filter(c=>normalizeCoupon(c.code)!==code);
+ coupons.push({code,percent,start,end,oneTime,active:true,usedEmails:{},created:new Date().toLocaleString()}); saveCoupons(coupons);
+ ['couponCode','couponPercent','couponStart','couponEnd'].forEach(id=>{let el=document.getElementById(id); if(el)el.value=''});
+ renderCouponsAdmin(); toast('Coupon created');
+}
+function deleteCouponAdmin(code){if(!confirm('Delete this coupon code?'))return; saveCoupons(getCoupons().filter(c=>normalizeCoupon(c.code)!==normalizeCoupon(code))); renderCouponsAdmin(); toast('Coupon deleted')}
+function toggleCouponAdmin(code){let coupons=getCoupons(); let c=coupons.find(x=>normalizeCoupon(x.code)===normalizeCoupon(code)); if(c){c.active=c.active===false?true:false; saveCoupons(coupons); renderCouponsAdmin();}}
+function renderCouponsAdmin(){
+ const box=document.getElementById('adminCoupons'); if(!box)return;
+ const coupons=getCoupons();
+ box.innerHTML=coupons.length?coupons.map(c=>{let live=couponIsLive(c); let used=Object.keys(c.usedEmails||{}).length; return `<div class="coupon-row"><div><span class="coupon-code-pill">${c.code}</span><div class="coupon-meta">${c.percent}% off · ${c.oneTime?'One-time per email':'Multi-use'} · ${c.start||'No start'} → ${c.end||'No end'} · Used ${used} time${used===1?'':'s'} · <span class="${live?'status-live':'status-off'}">${live?'Live':'Inactive'}</span></div></div><button class="btn" onclick="toggleCouponAdmin('${c.code}')">${c.active===false?'ACTIVATE':'PAUSE'}</button><button class="btn danger" onclick="deleteCouponAdmin('${c.code}')">DELETE</button></div>`}).join(''):'<p class="muted">No custom coupons created yet.</p>';
+}
+// Extend admin render to include coupons without breaking existing product/order rendering
+const previousRenderAdminForCoupons = renderAdmin;
+renderAdmin=function(){ previousRenderAdminForCoupons(); renderCouponsAdmin(); }
+
+
+// --- Real automated email integration through Netlify Functions + Resend ---
+async function sendStoreEmail(payload){
+  try{
+    const response = await fetch('/.netlify/functions/send-email', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if(!response.ok){
+      const text = await response.text();
+      console.warn('Email not sent:', text);
+      return false;
+    }
+    return true;
+  }catch(error){
+    console.warn('Email service unavailable:', error);
+    return false;
+  }
+}
+
+// Signup popup now sends the NITA10 email automatically when deployed with RESEND_API_KEY.
+popupSignup = async function(){
+  const email = document.getElementById('popupEmail')?.value.trim().toLowerCase();
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    toast('Please enter a valid email address.');
+    return;
+  }
+  localStorage.setItem('nitaPopupSeen','1');
+  localStorage.setItem('nitaDiscountCode','NITA10');
+  localStorage.setItem('nitaDiscountEmail',email);
+  currentUser = currentUser || {email};
+  currentUser.email = email;
+  localStorage.setItem('nitaUser', JSON.stringify(currentUser));
+  document.getElementById('signupPopup')?.classList.remove('show');
+  toast('Your one-time code was sent to your email.');
+  await sendStoreEmail({type:'discount', to:email, code:'NITA10'});
+}
+
+// Checkout now sends an order confirmation email automatically when deployed with RESEND_API_KEY.
+placeOrder = async function(){
+ if(!validateCheckoutForm())return;
+ let form=new FormData(document.getElementById('checkoutForm')); let code=normalizeCoupon(form.get('coupon')); let email=(form.get('email')||signedDiscountEmail()).toLowerCase(); let products=getProducts();
+ let subtotal=cart.reduce((s,i)=>{let p=products.find(p=>p.id===i.id);return s+((p?.salePrice||p?.price||0)*i.qty)},0);
+ if(!cart.length){toast('Your cart is empty.');return;}
+ let result=calcCouponDiscount(code,email,subtotal); let discount=result.discount||0;
+ if(result.kind==='nita10' && discount>0){let uses=discountUses();uses[email]=true;localStorage.setItem('nitaDiscountUses',JSON.stringify(uses))}
+ if(result.kind==='admin' && discount>0){let coupons=getCoupons();let c=coupons.find(x=>normalizeCoupon(x.code)===code); if(c&&c.oneTime){c.usedEmails=c.usedEmails||{};c.usedEmails[email]=true;saveCoupons(coupons)}}
+ let address={city:form.get('city'),street:form.get('street'),building:form.get('building'),floor:form.get('floor'),apartment:form.get('apartment'),landmark:form.get('landmark'),preferredTime:form.get('preferredTime'),notes:form.get('notes')};
+ if(form.get('saveAddress')) localStorage.setItem('nitaSavedAddress',JSON.stringify(address));
+ let orders=JSON.parse(localStorage.getItem('nitaOrders')||'[]');
+ const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:form.get('name'),phone:form.get('phone'),email,address,payment:'Cash on Delivery',status:'New order',items:cart,subtotal,discount,coupon:code,total:subtotal-discount};
+ orders.push(order);
+ localStorage.setItem('nitaOrders',JSON.stringify(orders));
+ await sendStoreEmail({type:'order_confirmation', to:email, order, products});
+ cart=[]; saveCart(); location.href='order-success.html';
+}
+
+
+// --- Persistent customer account system ---
+function normalizeEmail(email){return String(email||'').trim().toLowerCase()}
+function getUsers(){return JSON.parse(localStorage.getItem('nitaUsersByEmail')||'{}')}
+function saveUsers(users){localStorage.setItem('nitaUsersByEmail', JSON.stringify(users))}
+function getCurrentEmail(){return normalizeEmail(currentUser && currentUser.email)}
+function ensureCurrentUserRecord(){
+  if(!currentUser || !currentUser.email) return null;
+  const email=normalizeEmail(currentUser.email);
+  const users=getUsers();
+  if(!users[email]) users[email]={email, firstName:'', lastName:'', phone:'', addresses:[], defaultAddress:null, createdAt:new Date().toISOString()};
+  users[email]={...users[email], ...currentUser, email};
+  saveUsers(users);
+  currentUser=users[email];
+  localStorage.setItem('nitaUser', JSON.stringify(currentUser));
+  return currentUser;
+}
+function setCurrentUser(user){
+  const email=normalizeEmail(user.email);
+  const users=getUsers();
+  const previous=users[email]||{email,addresses:[],defaultAddress:null,createdAt:new Date().toISOString()};
+  users[email]={...previous,...user,email,updatedAt:new Date().toISOString()};
+  saveUsers(users);
+  currentUser=users[email];
+  localStorage.setItem('nitaUser', JSON.stringify(currentUser));
+  return currentUser;
+}
+function customerOrders(email){
+  email=normalizeEmail(email);
+  return JSON.parse(localStorage.getItem('nitaOrders')||'[]').filter(o=>normalizeEmail(o.email)===email);
+}
+// Override login: it now keeps the user signed in and reuses saved details.
+login=function(){
+  const email=normalizeEmail(document.getElementById('email')?.value);
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){toast('Please enter a valid email address.');return;}
+  const firstName=(document.getElementById('firstName')?.value||'').trim();
+  const lastName=(document.getElementById('lastName')?.value||'').trim();
+  const phone=(document.getElementById('phone')?.value||'').trim();
+  const users=getUsers();
+  const existing=users[email]||{};
+  const user=setCurrentUser({
+    ...existing,
+    email,
+    firstName:firstName||existing.firstName||'',
+    lastName:lastName||existing.lastName||'',
+    phone:phone||existing.phone||'',
+    addresses:existing.addresses||[],
+    defaultAddress:existing.defaultAddress||null
+  });
+  location.href=email===ADMIN_EMAIL?'admin.html':'account.html';
+}
+function logoutUser(){localStorage.removeItem('nitaUser'); currentUser=null; toast('Logged out'); setTimeout(()=>location.href='index.html',500)}
+function deleteAccount(){
+  if(!currentUser?.email)return;
+  if(!confirm('Delete this account from this website? Your old orders stay visible for store records, but your saved profile is removed.'))return;
+  const email=normalizeEmail(currentUser.email); const users=getUsers(); delete users[email]; saveUsers(users); localStorage.removeItem('nitaUser'); currentUser=null; location.href='index.html';
+}
+function accountAddressFields(prefix='',addr={}){
+  return `<div class="form-grid checkout-fields"><div><label>City</label><input class="field" id="${prefix}city" value="${addr.city||''}" placeholder="City"></div><div><label>Street name</label><input class="field" id="${prefix}street" value="${addr.street||''}" placeholder="Street name"></div><div><label>Building name / number</label><input class="field" id="${prefix}building" value="${addr.building||''}" placeholder="Building"></div><div><label>Floor</label><input class="field" id="${prefix}floor" value="${addr.floor||''}" placeholder="Floor"></div><div><label>Apartment / door</label><input class="field" id="${prefix}apartment" value="${addr.apartment||''}" placeholder="Apartment"></div><div><label>Nearby landmark</label><input class="field" id="${prefix}landmark" value="${addr.landmark||''}" placeholder="Optional"></div><div><label>Preferred delivery time</label><input class="field" id="${prefix}preferredTime" value="${addr.preferredTime||''}" placeholder="Optional"></div><div class="full"><label>Delivery notes</label><textarea class="field" id="${prefix}notes" placeholder="Optional">${addr.notes||''}</textarea></div></div>`
+}
+function collectAddress(prefix=''){
+  return ['city','street','building','floor','apartment','landmark','preferredTime','notes'].reduce((a,k)=>{a[k]=(document.getElementById(prefix+k)?.value||'').trim();return a},{})
+}
+function renderAccount(){
+  if(!currentUser?.email){
+    document.getElementById('accountRoot').innerHTML=`<div class="card account-auth"><h1>Sign in</h1><p class="muted">Sign in to view saved details, addresses, previous orders, and ongoing orders.</p><a class="btn" href="login.html">SIGN IN</a></div>`; return;
+  }
+  const user=ensureCurrentUserRecord();
+  const orders=customerOrders(user.email).sort((a,b)=>String(b.id).localeCompare(String(a.id)));
+  const ongoing=orders.filter(o=>!['Delivered','Cancelled'].includes(o.status));
+  const previous=orders.filter(o=>['Delivered','Cancelled'].includes(o.status));
+  const addr=user.defaultAddress||{};
+  document.getElementById('accountRoot').innerHTML=`
+  <div class="account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${user.firstName?' '+user.firstName:''}</h1><p class="muted">Manage your profile, saved delivery address, and orders.</p></div><button class="btn light" onclick="logoutUser()">LOG OUT</button></div>
+  <div class="account-grid">
+    <section class="card account-card"><h2>Personal information</h2><p class="muted">Your email is your login and cannot be edited.</p><div class="form-grid"><div><label>First name</label><input class="field" id="accFirst" value="${user.firstName||''}" placeholder="First name"></div><div><label>Last name</label><input class="field" id="accLast" value="${user.lastName||''}" placeholder="Last name"></div><div><label>Email address</label><input class="field disabled-field" value="${user.email}" disabled></div><div><label>Phone number</label><input class="field" id="accPhone" value="${user.phone||''}" placeholder="Phone number"></div></div><button class="btn" onclick="saveAccountInfo()">SAVE DETAILS</button></section>
+    <section class="card account-card"><h2>Saved delivery address</h2>${accountAddressFields('accAddr_',addr)}<button class="btn" onclick="saveAccountAddress()">SAVE ADDRESS</button></section>
+    <section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${accountOrdersHtml(ongoing,'No ongoing orders yet.')}</div></section>
+    <section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${accountOrdersHtml(previous,'No previous orders yet.')}</div></section>
+    <section class="card danger-zone full-span"><h2>Account control</h2><p class="muted">You can log out or delete the saved account from this browser.</p><button class="btn light" onclick="logoutUser()">LOG OUT</button><button class="btn danger" onclick="deleteAccount()">DELETE ACCOUNT</button></section>
+  </div>`;
+}
+function accountOrdersHtml(orders,empty){
+  if(!orders.length) return `<p class="muted">${empty}</p>`;
+  return orders.map(o=>`<div class="account-order"><div><b>${o.id}</b><br><span class="muted">${o.date||''} · ${o.payment||'Cash on Delivery'}</span></div><div><span class="order-status">${o.status||'New order'}</span><br><b>${money(o.total||0)}</b></div></div>`).join('');
+}
+function saveAccountInfo(){
+  if(!currentUser?.email)return;
+  const user=ensureCurrentUserRecord();
+  setCurrentUser({...user,firstName:document.getElementById('accFirst').value.trim(),lastName:document.getElementById('accLast').value.trim(),phone:document.getElementById('accPhone').value.trim()});
+  toast('Account details saved.'); renderAccount();
+}
+function saveAccountAddress(){
+  if(!currentUser?.email)return;
+  const user=ensureCurrentUserRecord(); const address=collectAddress('accAddr_');
+  setCurrentUser({...user,defaultAddress:address,addresses:[address]});
+  localStorage.setItem('nitaSavedAddress',JSON.stringify(address));
+  toast('Address saved.'); renderAccount();
+}
+function prefillCheckoutFromAccount(){
+  if(!currentUser?.email) return;
+  const user=ensureCurrentUserRecord(); const form=document.getElementById('checkoutForm'); if(!form)return;
+  const full=[user.firstName,user.lastName].filter(Boolean).join(' ');
+  if(form.elements.name && !form.elements.name.value) form.elements.name.value=full;
+  if(form.elements.email && !form.elements.email.value) form.elements.email.value=user.email;
+  if(form.elements.phone && !form.elements.phone.value) form.elements.phone.value=user.phone||'';
+  const a=user.defaultAddress||JSON.parse(localStorage.getItem('nitaSavedAddress')||'null')||{};
+  ['city','street','building','floor','apartment','landmark','preferredTime','notes'].forEach(k=>{if(form.elements[k] && !form.elements[k].value) form.elements[k].value=a[k]||''});
+  if(typeof renderCheckoutSummary==='function') renderCheckoutSummary();
+}
+// Patch init so checkout pages can prefill after the shared header loads.
+const previousInitForAccount=init;
+init=function(){previousInitForAccount(); ensureCurrentUserRecord(); setTimeout(prefillCheckoutFromAccount,0)}
+// Patch popup signup so it creates a saved account and sends the email.
+popupSignup=async function(){
+  const email=normalizeEmail(document.getElementById('popupEmail')?.value);
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){toast('Please enter a valid email address.');return;}
+  localStorage.setItem('nitaPopupSeen','1'); localStorage.setItem('nitaDiscountCode','NITA10'); localStorage.setItem('nitaDiscountEmail',email);
+  setCurrentUser({email}); document.getElementById('signupPopup')?.classList.remove('show'); toast('Your one-time code was sent to your email.');
+  await sendStoreEmail({type:'discount', to:email, code:'NITA10'});
+}
+// Patch checkout order placement so it updates the signed-in account, saved address, and customer order history.
+placeOrder=async function(){
+ if(!validateCheckoutForm())return;
+ let formEl=document.getElementById('checkoutForm'); let form=new FormData(formEl); let code=normalizeCoupon(form.get('coupon')); let email=normalizeEmail(form.get('email')||signedDiscountEmail()); let products=getProducts();
+ let subtotal=cart.reduce((s,i)=>{let p=products.find(p=>p.id===i.id);return s+((p?.salePrice||p?.price||0)*i.qty)},0);
+ if(!cart.length){toast('Your cart is empty.');return;}
+ let result=calcCouponDiscount(code,email,subtotal); let discount=result.discount||0;
+ if(result.kind==='nita10' && discount>0){let uses=discountUses();uses[email]=true;localStorage.setItem('nitaDiscountUses',JSON.stringify(uses))}
+ if(result.kind==='admin' && discount>0){let coupons=getCoupons();let c=coupons.find(x=>normalizeCoupon(x.code)===code); if(c&&c.oneTime){c.usedEmails=c.usedEmails||{};c.usedEmails[email]=true;saveCoupons(coupons)}}
+ let address={city:form.get('city'),street:form.get('street'),building:form.get('building'),floor:form.get('floor'),apartment:form.get('apartment'),landmark:form.get('landmark'),preferredTime:form.get('preferredTime'),notes:form.get('notes')};
+ if(form.get('saveAddress') || currentUser?.email){localStorage.setItem('nitaSavedAddress',JSON.stringify(address));}
+ if(currentUser?.email && normalizeEmail(currentUser.email)===email){
+   const full=String(form.get('name')||'').trim().split(/\s+/); const firstName=currentUser.firstName||full[0]||''; const lastName=currentUser.lastName||full.slice(1).join(' ')||'';
+   setCurrentUser({...ensureCurrentUserRecord(),firstName,lastName,phone:String(form.get('phone')||''),defaultAddress:address,addresses:[address]});
+ }
+ let orders=JSON.parse(localStorage.getItem('nitaOrders')||'[]');
+ const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:form.get('name'),phone:form.get('phone'),email,address,payment:'Cash on Delivery',status:'New order',items:cart,subtotal,discount,coupon:code,total:subtotal-discount};
+ orders.push(order); localStorage.setItem('nitaOrders',JSON.stringify(orders));
+ await sendStoreEmail({type:'order_confirmation', to:email, order, products});
+ cart=[]; saveCart(); location.href='order-success.html';
+}
+
+
+// --- Account page cleanup + admin customer list ---
+function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]))}
+
+// Override account page: remove the duplicate top-right logout button. Keep only the Account Control logout/delete buttons.
+renderAccount=function(){
+  if(!currentUser?.email){
+    document.getElementById('accountRoot').innerHTML=`<div class="card account-auth"><h1>Sign in</h1><p class="muted">Sign in to view saved details, addresses, previous orders, and ongoing orders.</p><a class="btn" href="login.html">SIGN IN</a></div>`; return;
+  }
+  const user=ensureCurrentUserRecord();
+  const orders=customerOrders(user.email).sort((a,b)=>String(b.id).localeCompare(String(a.id)));
+  const ongoing=orders.filter(o=>!['Delivered','Cancelled'].includes(o.status));
+  const previous=orders.filter(o=>['Delivered','Cancelled'].includes(o.status));
+  const addr=user.defaultAddress||{};
+  document.getElementById('accountRoot').innerHTML=`
+  <div class="account-hero clean-account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${user.firstName?' '+escapeHtml(user.firstName):''}</h1><p class="muted">Manage your profile, saved delivery address, and orders.</p></div></div>
+  <div class="account-grid">
+    <section class="card account-card"><h2>Personal information</h2><p class="muted">Your email is your login and cannot be edited.</p><div class="form-grid"><div><label>First name</label><input class="field" id="accFirst" value="${escapeHtml(user.firstName||'')}" placeholder="First name"></div><div><label>Last name</label><input class="field" id="accLast" value="${escapeHtml(user.lastName||'')}" placeholder="Last name"></div><div><label>Email address</label><input class="field disabled-field" value="${escapeHtml(user.email)}" disabled></div><div><label>Phone number</label><input class="field" id="accPhone" value="${escapeHtml(user.phone||'')}" placeholder="Phone number"></div></div><button class="btn" onclick="saveAccountInfo()">SAVE DETAILS</button></section>
+    <section class="card account-card"><h2>Saved delivery address</h2>${accountAddressFields('accAddr_',addr)}<button class="btn" onclick="saveAccountAddress()">SAVE ADDRESS</button></section>
+    <section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${accountOrdersHtml(ongoing,'No ongoing orders yet.')}</div></section>
+    <section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${accountOrdersHtml(previous,'No previous orders yet.')}</div></section>
+    <section class="card danger-zone full-span"><h2>Account control</h2><p class="muted">You can log out or delete the saved account from this website.</p><button class="btn light" onclick="logoutUser()">LOG OUT</button><button class="btn danger" onclick="deleteAccount()">DELETE ACCOUNT</button></section>
+  </div>`;
+}
+
+function customerCardHtml(user){
+  const orders=customerOrders(user.email);
+  const addr=user.defaultAddress||{};
+  const fullName=[user.firstName,user.lastName].filter(Boolean).join(' ') || 'No name saved yet';
+  const addressLine=[addr.city,addr.street,addr.building,addr.floor?`Floor ${addr.floor}`:'',addr.apartment?`Apt ${addr.apartment}`:''].filter(Boolean).join(', ') || 'No delivery address saved yet';
+  const lastOrder=orders.length?orders.slice().sort((a,b)=>String(b.id).localeCompare(String(a.id)))[0]:null;
+  return `<div class="customer-card">
+    <div class="customer-main">
+      <h3>${escapeHtml(fullName)}</h3>
+      <p><b>Email:</b> ${escapeHtml(user.email)}</p>
+      <p><b>Phone:</b> ${escapeHtml(user.phone||'Not saved')}</p>
+      <p><b>Address:</b> ${escapeHtml(addressLine)}</p>
+      ${addr.landmark?`<p><b>Landmark:</b> ${escapeHtml(addr.landmark)}</p>`:''}
+      ${addr.preferredTime?`<p><b>Preferred time:</b> ${escapeHtml(addr.preferredTime)}</p>`:''}
+      ${addr.notes?`<p><b>Notes:</b> ${escapeHtml(addr.notes)}</p>`:''}
+    </div>
+    <div class="customer-stats">
+      <span class="pill">${orders.length} order${orders.length===1?'':'s'}</span>
+      <p class="muted">Signed up: ${user.createdAt?new Date(user.createdAt).toLocaleDateString():'Unknown'}</p>
+      ${lastOrder?`<p><b>Last order:</b><br>${escapeHtml(lastOrder.id)} · ${escapeHtml(lastOrder.status||'New order')} · ${money(lastOrder.total||0)}</p>`:'<p class="muted">No orders yet.</p>'}
+    </div>
+  </div>`;
+}
+function renderAdminCustomers(){
+  const box=document.getElementById('adminCustomers'); if(!box)return;
+  const users=Object.values(getUsers()).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+  box.innerHTML=users.length?users.map(customerCardHtml).join(''):'<p class="muted">No signed-up customers yet. When customers create accounts or sign up for the discount popup, they will appear here.</p>';
+}
+
+const previousRenderAdminForCustomers=renderAdmin;
+renderAdmin=function(){ previousRenderAdminForCustomers(); renderAdminCustomers(); }
+
+// --- Sold out admin + customer display override ---
+function soldOutRibbon(){
+  return `<div class="soldout-ribbon"><div class="soldout-track">SOLD OUT · SOLD OUT · SOLD OUT · SOLD OUT · SOLD OUT · SOLD OUT · SOLD OUT · SOLD OUT · SOLD OUT · SOLD OUT · </div></div>`;
+}
+function productCard(p){
+  let img=productMainImage(p);
+  let hasSale=p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price);
+  let price=hasSale?`<p><span class="muted" style="text-decoration:line-through;margin-right:8px">${money(p.price)}</span><span class="price-drop">${money(p.salePrice)}</span></p>`:`<p>${money(p.price)}</p>`;
+  let bg=img.startsWith('data:')?'background-image:url('+img+')':'background:'+img;
+  return `<article class="product ${p.soldOut?'sold-out':''}"><a class="product-hit" href="product.html?id=${p.id}"><div class="product-img" style="${bg};background-size:cover;background-position:center">${hasSale&&!p.soldOut?'<span class="sale-badge">PRICE DROP</span>':''}${p.soldOut?soldOutRibbon():''}</div><h3>${p.name}</h3>${price}</a><button class="quick-view-btn" type="button" onclick="event.stopPropagation();event.preventDefault();openQuickView('${p.id}')">QUICK VIEW</button></article>`;
+}
+function openQuickView(id){
+  let p=getProducts().find(x=>x.id===id); if(!p)return;
+  let img=productMainImage(p); let bg=img.startsWith('data:')?'background-image:url('+img+')':'background:'+img;
+  let sizes=(p.sizes||[]).map((s,i)=>`<button class="size ${i===0?'active':''}" onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${s}</button>`).join('');
+  let price=p.salePrice?`<span class='muted' style='text-decoration:line-through;margin-right:10px'>${money(p.price)}</span><span class='price-drop'>${money(p.salePrice)}</span>`:money(p.price);
+  $('#quickContent').innerHTML=`<div class="quick-grid"><div class="quick-image ${p.soldOut?'sold-out-img':''}" style="${bg};background-size:cover;background-position:center">${p.soldOut?soldOutRibbon():''}</div><div class="quick-info"><p class="muted">${p.category}</p><h2>${p.name}</h2>${p.soldOut?'<div class="soldout-pill">Sold out</div>':''}<h3>${price}</h3><p>${p.desc||''}</p><div class="sizes">${sizes}</div>${p.soldOut?'<button class="btn disabled" disabled>SOLD OUT</button>':`<button class="btn" onclick="addToCart('${p.id}',document.querySelector('#quickContent .size.active')?.textContent||'M');closeQuickView()">ADD TO CART</button>`}<a class="btn light" href="product.html?id=${p.id}">VIEW FULL PRODUCT</a></div></div>`;
+  $('#quickModal').classList.add('open'); $('#quickModal').setAttribute('aria-hidden','false');
+}
+function addToCart(id,size='M'){
+  let p=getProducts().find(x=>x.id===id);
+  if(p?.soldOut){toast('This product is sold out.'); return;}
+  let found=cart.find(i=>i.id===id&&i.size===size); if(found)found.qty++; else cart.push({id,size,qty:1}); saveCart(); toast('Added to cart');
+}
+function addProductAdmin(){
+ const name=$('#pname').value.trim(); const price=Number($('#pprice').value); if(!name||!price){toast('Add a product name and price');return}
+ let products=getProducts();
+ const sale=$('#psale').value===''?'':Number($('#psale').value);
+ const photos=pendingAdminPhotos.slice();
+ products.push({id:'p'+Date.now(),name,price,salePrice:sale,category:$('#pcat').value,collection:$('#pcollection').value,note:$('#pnote').value.trim(),sizes:selectedAdminSizes(),photos,img:photos[0]||'linear-gradient(135deg,#fff,#ddd)',desc:$('#pdesc').value.trim()||'Selected Italian apparel for a clean boutique wardrobe.',soldOut:false});
+ saveProducts(products); pendingAdminPhotos=[]; renderAdmin(); toast('Product added'); ['pname','pprice','psale','pnote','pdesc'].forEach(id=>{let el=$('#'+id); if(el)el.value=''}); if($('#pphotos'))$('#pphotos').value=''; if($('#photoPreview'))$('#photoPreview').innerHTML='';
+}
+function productEditorHTML(p){
+ const selected=(p.sizes||[]);
+ return `<div class="admin-form"><div class="full"><label class="admin-status-row"><input type="checkbox" class="edit-soldout" ${p.soldOut?'checked':''}> Mark this product as sold out</label><p class="muted">When activated, customers will see an animated scrolling SOLD OUT ribbon and cannot add this product to cart.</p></div><div><label>Product name</label><input class="field edit-name" value="${p.name||''}"></div><div><label>Regular price</label><input class="field edit-price" type="number" step="0.01" value="${p.price||0}"><p class="first-order-mini">Lower this price and save: the website will automatically show a price drop.</p></div><div><label>Sale / price-drop price</label><input class="field edit-sale" type="number" step="0.01" value="${p.salePrice||''}" placeholder="Optional"></div><div><label>Section</label><select class="field edit-category">${renderOptions(ADMIN_CATEGORIES,p.category)}</select></div><div><label>Collection</label><select class="field edit-collection">${renderOptions(ADMIN_COLLECTIONS,p.collection)}</select></div><div><label>Color / style note</label><input class="field edit-note" value="${p.note||''}"></div><div class="full"><label>Photos</label><div class="photo-preview existing-photos">${(p.photos&&p.photos.length?p.photos:[p.img]).filter(Boolean).map((u,i)=>`<div class="admin-thumb"><img src="${u.startsWith('data:')?u:''}" style="${u.startsWith('data:')?'':'display:none'}"><span>${i===0?'Main photo':'Photo '+(i+1)}</span></div>`).join('')}</div><div class="upload-zone"><input type="file" accept="image/*" multiple onchange="previewEditPhotos(event,'${p.id}')"><p><b>Replace / add photos</b><br><span class="muted">Uploading new photos will replace the current product gallery when saved.</span></p></div><div class="photo-preview" id="editPreview-${p.id}"></div></div><div class="full"><label>Available sizes</label><div class="size-picker">${renderSizeButtons(selected)}</div></div><div class="full"><label>Description</label><textarea class="field edit-desc">${p.desc||''}</textarea></div></div><button class="btn" onclick="saveProductEditor('${p.id}')">SAVE PRODUCT CHANGES</button>`;
+}
+function saveProductEditor(id){
+ let products=getProducts(); let p=products.find(x=>x.id===id); let root=$('#editor-'+id); if(!p||!root)return;
+ const oldRegular=Number(p.price||0); const enteredPrice=Number(root.querySelector('.edit-price').value); const saleInput=root.querySelector('.edit-sale').value;
+ p.name=root.querySelector('.edit-name').value.trim();
+ if(saleInput===''){
+   if(enteredPrice>0 && enteredPrice<oldRegular){ p.salePrice=enteredPrice; p.price=oldRegular; }
+   else { p.price=enteredPrice; p.salePrice=''; }
+ } else { p.price=enteredPrice; p.salePrice=Number(saleInput); }
+ p.category=root.querySelector('.edit-category').value; p.collection=root.querySelector('.edit-collection').value; p.note=root.querySelector('.edit-note').value.trim(); p.desc=root.querySelector('.edit-desc').value.trim(); p.sizes=selectedAdminSizes(root); p.soldOut=!!root.querySelector('.edit-soldout')?.checked;
+ if(editingPhotoBuffers[id]?.length){p.photos=editingPhotoBuffers[id]; p.img=editingPhotoBuffers[id][0]; delete editingPhotoBuffers[id]}
+ saveProducts(products); renderAdmin(); toast('Product updated');
+}
+
+// --- Final global saving guarantee helpers ---
+function showGlobalSaveStatus(ok){
+  const text = ok ? 'Saved globally. Your phone and other customers will see this update.' : 'Saved only on this device. Check Netlify Functions/deployment.';
+  toast(text);
+}
+
+// Make product/admin/customer saves immediately push to the live backend, not only browser storage.
+const nitaFinalSaveProducts = saveProducts;
+saveProducts = function(products){
+  localStorage.setItem('nitaProducts', JSON.stringify(products));
+  saveSharedKeyNow('nitaProducts', products).then(showGlobalSaveStatus);
+};
+const nitaFinalSaveCoupons = saveCoupons;
+saveCoupons = function(coupons){
+  localStorage.setItem('nitaCoupons', JSON.stringify(coupons));
+  saveSharedKeyNow('nitaCoupons', coupons).then(showGlobalSaveStatus);
+};
+const nitaFinalSaveUsers = saveUsers;
+saveUsers = function(users){
+  localStorage.setItem('nitaUsersByEmail', JSON.stringify(users));
+  saveSharedKeyNow('nitaUsersByEmail', users);
+};
+
+async function forceRefreshFromLiveDatabase(){
+  nitaStoreLoaded=false;
+  await loadSharedStore();
+  if(typeof renderAdmin==='function' && location.pathname.endsWith('admin.html')) renderAdmin();
+  if(typeof shopPage==='function') shopPage();
+  if(typeof renderProducts==='function') renderProducts('#products', getProducts());
+}
+
+// --- Final availability status system: In stock / Coming soon / Out of stock ---
+function productStatusValue(p){
+  if(!p) return 'in-stock';
+  if(p.status) return p.status;
+  if(p.soldOut) return 'out-of-stock';
+  return 'in-stock';
+}
+function stockStatusHtml(status){
+  status = status || 'in-stock';
+  const labels = {'in-stock':'In stock','coming-soon':'Coming soon','out-of-stock':'Out of stock'};
+  return `<div class="stock-status ${status}"><span class="stock-dot"></span><span>${labels[status]||'In stock'}</span></div>`;
+}
+function statusOptionsHtml(current){
+  current = current || 'in-stock';
+  const options = [
+    ['in-stock','In stock'],
+    ['coming-soon','Coming soon'],
+    ['out-of-stock','Out of stock']
+  ];
+  return `<div class="admin-status-grid">${options.map(([value,label])=>`<label class="admin-status-option"><input type="radio" name="status-${Math.random().toString(36).slice(2)}" class="edit-status-radio" value="${value}" ${current===value?'checked':''}> ${label}</label>`).join('')}</div>`;
+}
+function normalizeProductStatus(p){
+  p.status = productStatusValue(p);
+  p.soldOut = p.status === 'out-of-stock';
+  return p;
+}
+function productPriceHtml(p){
+  const hasSale = p.salePrice!=='' && p.salePrice!=null && Number(p.salePrice)<Number(p.price);
+  return hasSale ? `<p><span class="muted" style="text-decoration:line-through;margin-right:8px">${money(p.price)}</span><span class="price-drop">${money(p.salePrice)}</span></p>` : `<p>${money(p.price)}</p>`;
+}
+function productCard(p){
+  p = normalizeProductStatus(p);
+  let img=productMainImage(p);
+  let hasSale=p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price);
+  let bg=img.startsWith('data:')?'background-image:url('+img+')':'background:'+img;
+  return `<article class="product status-${p.status}"><a class="product-hit" href="product.html?id=${p.id}"><div class="product-img" style="${bg};background-size:cover;background-position:center">${hasSale?'<span class="sale-badge">PRICE DROP</span>':''}</div><h3>${p.name}</h3>${productPriceHtml(p)}${stockStatusHtml(p.status)}</a><button class="quick-view-btn" type="button" onclick="event.stopPropagation();event.preventDefault();openQuickView('${p.id}')">QUICK VIEW</button></article>`;
+}
+function openQuickView(id){
+  let p=getProducts().find(x=>x.id===id); if(!p)return; p=normalizeProductStatus(p);
+  let img=productMainImage(p); let bg=img.startsWith('data:')?'background-image:url('+img+')':'background:'+img;
+  let sizes=(p.sizes||[]).map((s,i)=>`<button class="size ${i===0?'active':''}" onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${s}</button>`).join('');
+  let price=p.salePrice?`<span class='muted' style='text-decoration:line-through;margin-right:10px'>${money(p.price)}</span><span class='price-drop'>${money(p.salePrice)}</span>`:money(p.price);
+  const canBuy = p.status === 'in-stock';
+  const button = canBuy ? `<button class="btn" onclick="addToCart('${p.id}',document.querySelector('#quickContent .size.active')?.textContent||'M');closeQuickView()">ADD TO CART</button>` : `<button class="btn disabled" disabled>${p.status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button>`;
+  $('#quickContent').innerHTML=`<div class="quick-grid"><div class="quick-image" style="${bg};background-size:cover;background-position:center"></div><div class="quick-info"><p class="muted">${p.category}</p><h2>${p.name}</h2><h3>${price}</h3>${stockStatusHtml(p.status)}<p>${p.desc||''}</p><div class="sizes">${sizes}</div>${button}<a class="btn light" href="product.html?id=${p.id}">VIEW FULL PRODUCT</a></div></div>`;
+  $('#quickModal').classList.add('open'); $('#quickModal').setAttribute('aria-hidden','false');
+}
+function addToCart(id,size='M'){
+  let p=getProducts().find(x=>x.id===id);
+  const status = productStatusValue(p);
+  if(status==='out-of-stock'){toast('This product is out of stock.'); return;}
+  if(status==='coming-soon'){toast('This product is coming soon.'); return;}
+  let found=cart.find(i=>i.id===id&&i.size===size); if(found)found.qty++; else cart.push({id,size,qty:1}); saveCart(); toast('Added to cart');
+}
+function addProductAdmin(){
+ const name=$('#pname').value.trim(); const price=Number($('#pprice').value); if(!name||!price){toast('Add a product name and price');return}
+ let products=getProducts();
+ const sale=$('#psale').value===''?'':Number($('#psale').value);
+ const photos=pendingAdminPhotos.slice();
+ const status=$('#pstatus')?.value||'in-stock';
+ products.push({id:'p'+Date.now(),name,price,salePrice:sale,category:$('#pcat').value,collection:$('#pcollection').value,note:$('#pnote').value.trim(),sizes:selectedAdminSizes(),photos,img:photos[0]||'linear-gradient(135deg,#fff,#ddd)',desc:$('#pdesc').value.trim()||'Selected Italian apparel for a clean boutique wardrobe.',status,soldOut:status==='out-of-stock'});
+ saveProducts(products); pendingAdminPhotos=[]; renderAdmin(); toast('Product added'); ['pname','pprice','psale','pnote','pdesc'].forEach(id=>{let el=$('#'+id); if(el)el.value=''}); if($('#pstatus'))$('#pstatus').value='in-stock'; if($('#pphotos'))$('#pphotos').value=''; if($('#photoPreview'))$('#photoPreview').innerHTML='';
+}
+function productEditorHTML(p){
+ const selected=(p.sizes||[]); const currentStatus=productStatusValue(p);
+ return `<div class="admin-form"><div class="full"><label>Product availability</label><select class="field edit-status"><option value="in-stock" ${currentStatus==='in-stock'?'selected':''}>In stock</option><option value="coming-soon" ${currentStatus==='coming-soon'?'selected':''}>Coming soon</option><option value="out-of-stock" ${currentStatus==='out-of-stock'?'selected':''}>Out of stock</option></select><p class="muted">Customers will see a clean availability label beside the price. Out of stock and coming soon products cannot be added to cart.</p></div><div><label>Product name</label><input class="field edit-name" value="${p.name||''}"></div><div><label>Regular price</label><input class="field edit-price" type="number" step="0.01" value="${p.price||0}"><p class="first-order-mini">Lower this price and save: the website will automatically show a price drop.</p></div><div><label>Sale / price-drop price</label><input class="field edit-sale" type="number" step="0.01" value="${p.salePrice||''}" placeholder="Optional"></div><div><label>Section</label><select class="field edit-category">${renderOptions(ADMIN_CATEGORIES,p.category)}</select></div><div><label>Collection</label><select class="field edit-collection">${renderOptions(ADMIN_COLLECTIONS,p.collection)}</select></div><div><label>Color / style note</label><input class="field edit-note" value="${p.note||''}"></div><div class="full"><label>Photos</label><div class="photo-preview existing-photos">${(p.photos&&p.photos.length?p.photos:[p.img]).filter(Boolean).map((u,i)=>`<div class="admin-thumb"><img src="${u.startsWith('data:')?u:''}" style="${u.startsWith('data:')?'':'display:none'}"><span>${i===0?'Main photo':'Photo '+(i+1)}</span></div>`).join('')}</div><div class="upload-zone"><input type="file" accept="image/*" multiple onchange="previewEditPhotos(event,'${p.id}')"><p><b>Replace / add photos</b><br><span class="muted">Uploading new photos will replace the current product gallery when saved.</span></p></div><div class="photo-preview" id="editPreview-${p.id}"></div></div><div class="full"><label>Available sizes</label><div class="size-picker">${renderSizeButtons(selected)}</div></div><div class="full"><label>Description</label><textarea class="field edit-desc">${p.desc||''}</textarea></div></div><button class="btn" onclick="saveProductEditor('${p.id}')">SAVE PRODUCT CHANGES</button>`;
+}
+function saveProductEditor(id){
+ let products=getProducts(); let p=products.find(x=>x.id===id); let root=$('#editor-'+id); if(!p||!root)return;
+ const oldRegular=Number(p.price||0); const enteredPrice=Number(root.querySelector('.edit-price').value); const saleInput=root.querySelector('.edit-sale').value;
+ p.name=root.querySelector('.edit-name').value.trim();
+ if(saleInput===''){
+   if(enteredPrice>0 && enteredPrice<oldRegular){ p.salePrice=enteredPrice; p.price=oldRegular; }
+   else { p.price=enteredPrice; p.salePrice=''; }
+ } else { p.price=enteredPrice; p.salePrice=Number(saleInput); }
+ p.category=root.querySelector('.edit-category').value; p.collection=root.querySelector('.edit-collection').value; p.note=root.querySelector('.edit-note').value.trim(); p.desc=root.querySelector('.edit-desc').value.trim(); p.sizes=selectedAdminSizes(root);
+ p.status=root.querySelector('.edit-status')?.value || productStatusValue(p); p.soldOut=p.status==='out-of-stock';
+ if(editingPhotoBuffers[id]?.length){p.photos=editingPhotoBuffers[id]; p.img=editingPhotoBuffers[id][0]; delete editingPhotoBuffers[id]}
+ saveProducts(products); renderAdmin(); toast('Product updated');
+}
+function renderAdminProducts(){
+ const box=$('#adminProducts'); if(!box)return;
+ box.innerHTML=getProducts().map(original=>{ const p=normalizeProductStatus(original);
+  const img=productMainImage(p); const bg=img.startsWith('data:')?`background-image:url(${img})`:`background:${img}`;
+  return `<div class="admin-product-card" id="edit-${p.id}"><div class="admin-product-top"><div class="admin-product-photo" style="${bg};background-size:cover;background-position:center"></div><div><div class="admin-product-name">${p.name}</div><span class="muted">${p.category} · ${money(p.price)} ${p.salePrice?`· Sale ${money(p.salePrice)}`:''}</span>${stockStatusHtml(p.status)}</div><button onclick="toggleProductEditor('${p.id}')">Edit listing</button><button onclick="removeProduct('${p.id}')">Remove</button></div><div class="product-editor" id="editor-${p.id}">${productEditorHTML(p)}</div></div>`;
+ }).join('');
+}
+
+
+// --- Final requested fixes: no intro flash, stock status beside price, quick view centered + second photo hover, checkout format ---
+function productImagesForDisplay(p){
+  const photos=(p.photos&&p.photos.length?p.photos:[p.img]).filter(Boolean);
+  const first=photos[0]||'linear-gradient(135deg,#fff,#ddd)';
+  const second=photos[1]||first;
+  return {first,second};
+}
+function cssBgImage(u){return u&&String(u).startsWith('data:')?`background-image:url(${u})`:`background:${u||'linear-gradient(135deg,#fff,#ddd)'}`}
+function productPriceStatusRow(p, tag='p'){
+  return `<div class="product-price-row"><${tag}>${p.salePrice?`<span class="muted" style="text-decoration:line-through;margin-right:8px">${money(p.price)}</span><span class="price-drop">${money(p.salePrice)}</span>`:money(p.price)}</${tag}>${stockStatusHtml(productStatusValue(p))}</div>`;
+}
+productPriceHtml=function(p){ return productPriceStatusRow(normalizeProductStatus(p),'p'); };
+productCard=function(p){
+  p=normalizeProductStatus(p);
+  const imgs=productImagesForDisplay(p);
+  const hasSale=p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price);
+  return `<article class="product status-${p.status}"><a class="product-hit" href="product.html?id=${p.id}"><div class="product-img">${hasSale?'<span class="sale-badge">PRICE DROP</span>':''}<span class="product-img-layer product-img-primary" style="${cssBgImage(imgs.first)}"></span><span class="product-img-layer product-img-secondary" style="${cssBgImage(imgs.second)}"></span></div><h3>${p.name}</h3>${productPriceStatusRow(p,'p')}</a><button class="quick-view-btn" type="button" onclick="event.stopPropagation();event.preventDefault();openQuickView('${p.id}')">QUICK VIEW</button></article>`;
+};
+openQuickView=function(id){
+  let p=getProducts().find(x=>x.id===id); if(!p)return; p=normalizeProductStatus(p);
+  let img=productMainImage(p); let bg=cssBgImage(img);
+  let sizes=(p.sizes||[]).map((s,i)=>`<button class="size ${i===0?'active':''}" onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${s}</button>`).join('');
+  const canBuy=p.status==='in-stock';
+  const button=canBuy?`<button class="btn" onclick="addToCart('${p.id}',document.querySelector('#quickContent .size.active')?.textContent||'M');closeQuickView()">ADD TO CART</button>`:`<button class="btn disabled" disabled>${p.status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button>`;
+  $('#quickContent').innerHTML=`<div class="quick-grid"><div class="quick-image" style="${bg};background-size:cover;background-position:center"></div><div class="quick-info"><p class="muted">${p.category}</p><h2>${p.name}</h2>${productPriceStatusRow(p,'h3')}<p>${p.desc||''}</p><div class="sizes">${sizes}</div>${button}<a class="btn light" href="product.html?id=${p.id}">VIEW FULL PRODUCT</a></div></div>`;
+  $('#quickModal').classList.add('open'); $('#quickModal').setAttribute('aria-hidden','false');
+};
+function getCheckoutCustomerName(form){
+  const first=String(form.get('firstName')||'').trim();
+  const last=String(form.get('lastName')||'').trim();
+  return [first,last].filter(Boolean).join(' ') || String(form.get('name')||'').trim();
+}
+validateCheckoutForm=function(){
+  const form=document.getElementById('checkoutForm'); if(!form)return true;
+  const required=['firstName','lastName','email','address','city','phone'];
+  let ok=true;
+  required.forEach(name=>{const el=form.elements[name]; if(!el)return; const valid=el.type==='email'?el.checkValidity():!!String(el.value||'').trim(); el.classList.toggle('invalid',!valid); if(!valid)ok=false;});
+  if(!ok){toast('Please complete all required delivery details.'); const first=form.querySelector('.field.invalid'); if(first)first.focus();}
+  return ok;
+};
+placeOrder=async function(){
+ if(!validateCheckoutForm())return;
+ let formEl=document.getElementById('checkoutForm'); let form=new FormData(formEl); let code=normalizeCoupon(form.get('coupon')); let email=normalizeEmail(form.get('email')||signedDiscountEmail()); let products=getProducts();
+ let subtotal=cart.reduce((s,i)=>{let p=products.find(p=>p.id===i.id);return s+((p?.salePrice||p?.price||0)*i.qty)},0);
+ if(!cart.length){toast('Your cart is empty.');return;}
+ let result=calcCouponDiscount(code,email,subtotal); let discount=result.discount||0;
+ if(result.kind==='nita10' && discount>0){let uses=discountUses();uses[email]=true;localStorage.setItem('nitaDiscountUses',JSON.stringify(uses)); await saveSharedKeyNow('nitaDiscountUses', uses);}
+ if(result.kind==='admin' && discount>0){let coupons=getCoupons();let c=coupons.find(x=>normalizeCoupon(x.code)===code); if(c&&c.oneTime){c.usedEmails=c.usedEmails||{};c.usedEmails[email]=true;saveCoupons(coupons)}}
+ let address={country:form.get('country')||'Lebanon',address:form.get('address'),apartment:form.get('apartment'),city:form.get('city'),postal:form.get('postal'),phone:form.get('phone'),street:form.get('street')||'',building:form.get('building')||'',floor:form.get('floor')||'',landmark:form.get('landmark')||'',preferredTime:form.get('preferredTime')||'',notes:form.get('notes')||''};
+ if(form.get('saveAddress') || currentUser?.email){localStorage.setItem('nitaSavedAddress',JSON.stringify(address));}
+ if(currentUser?.email && normalizeEmail(currentUser.email)===email){setCurrentUser({...ensureCurrentUserRecord(),firstName:String(form.get('firstName')||''),lastName:String(form.get('lastName')||''),phone:String(form.get('phone')||''),defaultAddress:address,addresses:[address]});}
+ let orders=JSON.parse(localStorage.getItem('nitaOrders')||'[]');
+ const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:getCheckoutCustomerName(form),phone:form.get('phone'),email,address,payment:'Cash on Delivery',status:'New order',items:cart,subtotal,discount,coupon:code,total:subtotal-discount};
+ orders.push(order); localStorage.setItem('nitaOrders',JSON.stringify(orders)); await saveSharedKeyNow('nitaOrders', orders); await sendStoreEmail({type:'order_confirmation', to:email, order, products});
+ cart=[]; saveCart(); location.href='order-success.html';
+};
+
+
+// === NITA STYLE FINAL STABILITY PATCH ===
+// This patch fixes the blank account/product/admin pages and makes the admin product editor reliable.
+(function(){
+  const safe = (v='') => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  window.escapeHtml = window.escapeHtml || safe;
+
+  const baseInit = window.init;
+  window.init = async function(){
+    try {
+      const maybe = baseInit ? baseInit() : null;
+      if (maybe && typeof maybe.then === 'function') await maybe;
+    } catch (err) {
+      console.error('Nita init recovered:', err);
+      try {
+        await loadSharedStore?.();
+        cart = JSON.parse(localStorage.getItem('nitaCart')||'[]');
+        currentUser = JSON.parse(localStorage.getItem('nitaUser')||'null');
+        if(!document.querySelector('.topbar')) document.body.insertAdjacentHTML('afterbegin', header()+quickViewModal());
+        updateCartCount?.(); renderCartPanel?.();
+      } catch(e){ console.error(e); }
+    }
+    try { ensureCurrentUserRecord?.(); prefillCheckoutFromAccount?.(); } catch(e){ console.warn(e); }
+    return true;
+  };
+
+  window.productMainImage = function(p){
+    if(!p) return 'linear-gradient(135deg,#fff,#ddd)';
+    const photos = Array.isArray(p.photos) ? p.photos.filter(Boolean) : [];
+    const idx = Math.max(0, Math.min(Number(p.mainPhotoIndex || 0), Math.max(photos.length-1,0)));
+    return photos[idx] || p.img || 'linear-gradient(135deg,#fff,#ddd)';
+  };
+  window.productImagesForDisplay = function(p){
+    const photos = Array.isArray(p?.photos) && p.photos.length ? p.photos.filter(Boolean) : [p?.img].filter(Boolean);
+    const main = productMainImage(p);
+    const ordered = [main, ...photos.filter(x => x !== main)];
+    return { first: ordered[0] || 'linear-gradient(135deg,#fff,#ddd)', second: ordered[1] || ordered[0] || 'linear-gradient(135deg,#fff,#ddd)', all: ordered.length ? ordered : ['linear-gradient(135deg,#fff,#ddd)'] };
+  };
+  window.cssBgImage = function(u){ return u && String(u).startsWith('data:') ? `background-image:url(${u})` : `background:${u || 'linear-gradient(135deg,#fff,#ddd)'}`; };
+  window.productStatusValue = function(p){ return p?.status || (p?.soldOut ? 'out-of-stock' : 'in-stock'); };
+  window.normalizeProductStatus = function(p){ if(!p) return p; p.status = productStatusValue(p); p.soldOut = p.status === 'out-of-stock'; if(!Array.isArray(p.sizes) || !p.sizes.length) p.sizes = ['One Size']; if(!Array.isArray(p.photos)) p.photos = p.img && String(p.img).startsWith('data:') ? [p.img] : []; if(typeof p.mainPhotoIndex !== 'number') p.mainPhotoIndex = 0; return p; };
+  window.stockStatusHtml = function(status){
+    status = status || 'in-stock';
+    const labels = {'in-stock':'In stock','coming-soon':'Coming soon','out-of-stock':'Out of stock'};
+    return `<span class="stock-status ${status}"><span class="stock-dot"></span><span>${labels[status] || 'In stock'}</span></span>`;
+  };
+  window.productPriceStatusRow = function(p, tag='p'){
+    p = normalizeProductStatus(p);
+    const hasSale = p.salePrice!=='' && p.salePrice!=null && Number(p.salePrice)<Number(p.price);
+    const priceHtml = hasSale ? `<span class="muted old-price">${money(p.price)}</span><span class="price-drop">${money(p.salePrice)}</span>` : money(p.price||0);
+    return `<div class="product-price-row"><${tag} class="price-line">${priceHtml}</${tag}>${stockStatusHtml(p.status)}</div>`;
+  };
+
+  window.productCard = function(product){
+    const p = normalizeProductStatus(product);
+    const imgs = productImagesForDisplay(p);
+    const hasSale = p.salePrice!=='' && p.salePrice!=null && Number(p.salePrice)<Number(p.price);
+    return `<article class="product status-${p.status}">
+      <a class="product-hit" href="product.html?id=${encodeURIComponent(p.id)}">
+        <div class="product-img">${hasSale?'<span class="sale-badge">PRICE DROP</span>':''}<span class="product-img-layer product-img-primary" style="${cssBgImage(imgs.first)}"></span><span class="product-img-layer product-img-secondary" style="${cssBgImage(imgs.second)}"></span></div>
+        <h3>${safe(p.name)}</h3>${productPriceStatusRow(p,'p')}
+      </a>
+      <button class="quick-view-btn" type="button" onclick="event.stopPropagation();event.preventDefault();openQuickView('${String(p.id).replace(/'/g,'\\\'')}')">QUICK VIEW</button>
+    </article>`;
+  };
+
+  window.openQuickView = function(id){
+    let p = getProducts().find(x=>String(x.id)===String(id)); if(!p) return; p = normalizeProductStatus(p);
+    const imgs = productImagesForDisplay(p);
+    const sizes = (p.sizes||['One Size']).map((s,i)=>`<button class="size ${i===0?'active':''}" onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${safe(s)}</button>`).join('');
+    const canBuy = p.status === 'in-stock';
+    const button = canBuy ? `<button class="btn" onclick="addToCart('${String(p.id).replace(/'/g,'\\\'')}',document.querySelector('#quickContent .size.active')?.textContent||'One Size');closeQuickView()">ADD TO CART</button>` : `<button class="btn disabled" disabled>${p.status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button>`;
+    const q = document.getElementById('quickContent'); if(!q) return;
+    q.innerHTML = `<div class="quick-grid"><div class="quick-image" style="${cssBgImage(imgs.first)};background-size:cover;background-position:center"></div><div class="quick-info"><p class="muted">${safe(p.category||'')}</p><h2>${safe(p.name)}</h2>${productPriceStatusRow(p,'h3')}<p>${safe(p.desc||'')}</p><div class="sizes">${sizes}</div>${button}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div></div>`;
+    document.getElementById('quickModal')?.classList.add('open'); document.getElementById('quickModal')?.setAttribute('aria-hidden','false');
+  };
+
+  // Multiple photo upload with clickable main-photo selection.
+  window.pendingAdminPhotos = window.pendingAdminPhotos || [];
+  window.pendingAdminMainIndex = 0;
+  window.editingPhotoBuffers = window.editingPhotoBuffers || {};
+  window.editingMainPhotoIndex = window.editingMainPhotoIndex || {};
+
+  function renderPhotoChooser(box, urls, mainIndex, onClickName){
+    box.innerHTML = urls.map((u,i)=>`<button type="button" class="admin-thumb selectable-thumb ${i===mainIndex?'selected-main':''}" onclick="${onClickName}(${i})"><img src="${u}"><span>${i===mainIndex?'Main photo':'Photo '+(i+1)}</span></button>`).join('');
+  }
+  window.setPendingMainPhoto = function(i){ pendingAdminMainIndex = i; const box=document.getElementById('photoPreview'); if(box) renderPhotoChooser(box, pendingAdminPhotos, pendingAdminMainIndex, 'setPendingMainPhoto'); };
+  window.previewAdminPhotos = function(e){
+    fileListToDataUrls(e.target.files, urls => {
+      pendingAdminPhotos = urls; pendingAdminMainIndex = 0;
+      const box = document.getElementById('photoPreview'); if(box) renderPhotoChooser(box, urls, 0, 'setPendingMainPhoto');
+    });
+  };
+  window.setEditMainPhoto = function(id,i){ editingMainPhotoIndex[id] = i; const box=document.getElementById('editPreview-'+id); if(box) renderPhotoChooser(box, editingPhotoBuffers[id]||[], i, `setEditMainPhoto.bind(null,'${String(id).replace(/'/g,'\\\'')}')`); };
+  window.previewEditPhotos = function(e,id){
+    fileListToDataUrls(e.target.files, urls => {
+      editingPhotoBuffers[id] = urls; editingMainPhotoIndex[id] = 0;
+      const box = document.getElementById('editPreview-'+id); if(box) renderPhotoChooser(box, urls, 0, `setEditMainPhoto.bind(null,'${String(id).replace(/'/g,'\\\'')}')`);
+    });
+  };
+
+  window.addProductAdmin = function(){
+    const name = document.getElementById('pname')?.value.trim();
+    const price = Number(document.getElementById('pprice')?.value);
+    if(!name || !price){ toast('Add a product name and price'); return; }
+    const products = getProducts().map(normalizeProductStatus);
+    const photos = (pendingAdminPhotos || []).slice();
+    const mainIndex = Math.max(0, Math.min(Number(pendingAdminMainIndex||0), Math.max(photos.length-1,0)));
+    const saleVal = document.getElementById('psale')?.value;
+    const p = normalizeProductStatus({
+      id:'p'+Date.now(), name, price, salePrice:saleVal===''?'':Number(saleVal),
+      category:document.getElementById('pcat')?.value || 'Dresses',
+      collection:document.getElementById('pcollection')?.value || 'New Arrivals',
+      note:document.getElementById('pnote')?.value.trim() || '',
+      sizes:selectedAdminSizes().length ? selectedAdminSizes() : ['One Size'],
+      photos, mainPhotoIndex:mainIndex, img:photos[mainIndex] || 'linear-gradient(135deg,#fff,#ddd)',
+      desc:document.getElementById('pdesc')?.value.trim() || 'A carefully selected Italian-made piece for a clean, feminine wardrobe.',
+      status:document.getElementById('pstatus')?.value || 'in-stock'
+    });
+    products.push(p); saveProducts(products); pendingAdminPhotos=[]; pendingAdminMainIndex=0;
+    ['pname','pprice','psale','pnote','pdesc'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+    const input=document.getElementById('pphotos'); if(input) input.value=''; const preview=document.getElementById('photoPreview'); if(preview) preview.innerHTML='';
+    renderAdmin(); toast('Product added and saved.');
+  };
+
+  window.productEditorHTML = function(raw){
+    const p = normalizeProductStatus(raw); const selected = p.sizes || ['One Size']; const photos = Array.isArray(p.photos)&&p.photos.length?p.photos:[p.img].filter(Boolean);
+    const currentStatus = productStatusValue(p);
+    return `<div class="admin-form">
+      <div class="full"><label>Product availability</label><select class="field edit-status"><option value="in-stock" ${currentStatus==='in-stock'?'selected':''}>In stock</option><option value="coming-soon" ${currentStatus==='coming-soon'?'selected':''}>Coming soon</option><option value="out-of-stock" ${currentStatus==='out-of-stock'?'selected':''}>Out of stock</option></select></div>
+      <div><label>Product name</label><input class="field edit-name" value="${safe(p.name||'')}"></div>
+      <div><label>Regular price</label><input class="field edit-price" type="number" step="0.01" value="${Number(p.price||0)}"></div>
+      <div><label>Sale / price-drop price</label><input class="field edit-sale" type="number" step="0.01" value="${p.salePrice||''}" placeholder="Optional"></div>
+      <div><label>Section</label><select class="field edit-category">${renderOptions(ADMIN_CATEGORIES,p.category)}</select></div>
+      <div><label>Collection</label><select class="field edit-collection">${renderOptions(ADMIN_COLLECTIONS,p.collection)}</select></div>
+      <div class="full"><label>Photos</label><p class="muted">Click a photo to make it the main product photo. Uploading new photos adds/replaces the gallery when saved.</p><div class="photo-preview existing-photos">${photos.map((u,i)=>`<button type="button" class="admin-thumb selectable-thumb existing-main-${p.id} ${i===Number(p.mainPhotoIndex||0)?'selected-main':''}" onclick="document.querySelectorAll('.existing-main-${p.id}').forEach(b=>b.classList.remove('selected-main'));this.classList.add('selected-main');this.closest('.product-editor').dataset.mainIndex='${i}'"><img src="${String(u).startsWith('data:')?u:''}" style="${String(u).startsWith('data:')?'':'display:none'}"><span>${i===Number(p.mainPhotoIndex||0)?'Main photo':'Photo '+(i+1)}</span></button>`).join('')}</div><div class="upload-zone"><input type="file" accept="image/*" multiple onchange="previewEditPhotos(event,'${String(p.id).replace(/'/g,'\\\'')}')"><p><b>Add new photos</b><br><span class="muted">You can select multiple images at once.</span></p></div><div class="photo-preview" id="editPreview-${p.id}"></div></div>
+      <div class="full"><label>Available sizes</label><div class="size-picker">${renderSizeButtons(selected)}</div></div>
+      <div class="full"><label>Description</label><textarea class="field edit-desc">${safe(p.desc||'')}</textarea></div>
+    </div><button class="btn" onclick="saveProductEditor('${String(p.id).replace(/'/g,'\\\'')}')">SAVE PRODUCT CHANGES</button>`;
+  };
+
+  window.saveProductEditor = function(id){
+    const products = getProducts().map(normalizeProductStatus); const p = products.find(x=>String(x.id)===String(id)); const root = document.getElementById('editor-'+id); if(!p||!root) return;
+    const oldRegular = Number(p.price||0); const enteredPrice = Number(root.querySelector('.edit-price')?.value || 0); const saleInput = root.querySelector('.edit-sale')?.value;
+    p.name = root.querySelector('.edit-name')?.value.trim() || p.name;
+    if(saleInput===''){ if(enteredPrice>0 && enteredPrice<oldRegular){ p.salePrice=enteredPrice; p.price=oldRegular; } else { p.price=enteredPrice; p.salePrice=''; } } else { p.price=enteredPrice; p.salePrice=Number(saleInput); }
+    p.category = root.querySelector('.edit-category')?.value || p.category; p.collection = root.querySelector('.edit-collection')?.value || p.collection;
+    p.desc = root.querySelector('.edit-desc')?.value.trim() || ''; p.sizes = selectedAdminSizes(root).length ? selectedAdminSizes(root) : ['One Size'];
+    p.status = root.querySelector('.edit-status')?.value || productStatusValue(p); p.soldOut = p.status === 'out-of-stock';
+    if(editingPhotoBuffers[id]?.length){ p.photos = editingPhotoBuffers[id]; p.mainPhotoIndex = Number(editingMainPhotoIndex[id]||0); p.img = p.photos[p.mainPhotoIndex] || p.photos[0]; delete editingPhotoBuffers[id]; delete editingMainPhotoIndex[id]; }
+    else { const chosen = root.dataset.mainIndex; if(chosen !== undefined){ p.mainPhotoIndex = Number(chosen)||0; const photos = Array.isArray(p.photos)&&p.photos.length?p.photos:[p.img].filter(Boolean); p.img = photos[p.mainPhotoIndex] || photos[0] || p.img; }}
+    saveProducts(products); renderAdmin(); toast('Product updated and saved.');
+  };
+
+  window.renderAdminProducts = function(){
+    const box = document.getElementById('adminProducts'); if(!box) return;
+    const products = getProducts().map(normalizeProductStatus);
+    box.innerHTML = products.length ? products.map(p=>{
+      const img = productMainImage(p);
+      return `<div class="admin-product-card" id="edit-${p.id}"><div class="admin-product-top"><div class="admin-product-photo" style="${cssBgImage(img)};background-size:cover;background-position:center"></div><div><div class="admin-product-name">${safe(p.name)}</div><span class="muted">${safe(p.category||'')} · ${money(p.price||0)} ${p.salePrice?`· Sale ${money(p.salePrice)}`:''}</span><div>${stockStatusHtml(productStatusValue(p))}</div></div><button onclick="toggleProductEditor('${String(p.id).replace(/'/g,'\\\'')}')">Edit listing</button><button onclick="removeProduct('${String(p.id).replace(/'/g,'\\\'')}')">Remove</button></div><div class="product-editor" id="editor-${p.id}">${productEditorHTML(p)}</div></div>`;
+    }).join('') : '<p class="muted">No products listed yet.</p>';
+  };
+
+  window.renderAdmin = function(){
+    if(!protectAdmin()) return;
+    const sizePicker=document.getElementById('sizePicker'); if(sizePicker && !sizePicker.dataset.ready){ sizePicker.innerHTML=renderSizeButtons(['S','M','L']); sizePicker.dataset.ready='1'; }
+    const orders = JSON.parse(localStorage.getItem('nitaOrders')||'[]'); const body=document.getElementById('orders');
+    if(body) body.innerHTML = orders.length ? orders.map((o,i)=>`<tr><td><b>${safe(o.id)}</b><br><span class="muted">${safe(o.date||'')}</span></td><td>${safe(o.customer||'-')}<br><span class="muted">${safe(o.email||'')} · ${safe(o.phone||'')}</span></td><td>${money(o.total||0)}</td><td><select onchange="updateOrder(${i},this.value)"><option>${safe(o.status||'New order')}</option><option>Confirmed</option><option>Preparing</option><option>Out for delivery</option><option>Delivered</option><option>Cancelled</option></select></td></tr>`).join('') : '<tr><td colspan="4">No orders yet.</td></tr>';
+    renderAdminProducts(); renderAdminCustomers?.(); renderCouponsAdmin?.();
+  };
+
+  window.renderAccount = function(){
+    const root = document.getElementById('accountRoot'); if(!root) return;
+    currentUser = JSON.parse(localStorage.getItem('nitaUser')||'null');
+    if(!currentUser?.email){ root.innerHTML = `<div class="card account-auth"><h1>Sign in</h1><p class="muted">Sign in to view your saved details, addresses, and orders.</p><a class="btn" href="login.html">SIGN IN</a></div>`; return; }
+    const user = ensureCurrentUserRecord() || currentUser; const addr = user.defaultAddress || {}; const orders = customerOrders(user.email).sort((a,b)=>String(b.id).localeCompare(String(a.id)));
+    const ongoing = orders.filter(o=>!['Delivered','Cancelled'].includes(o.status)); const previous = orders.filter(o=>['Delivered','Cancelled'].includes(o.status));
+    root.innerHTML = `<div class="account-hero clean-account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${user.firstName?' '+safe(user.firstName):''}</h1><p class="muted">Manage your profile, saved delivery address, and orders.</p></div></div><div class="account-grid"><section class="card account-card"><h2>Personal information</h2><p class="muted">Your email is your login and cannot be edited.</p><div class="form-grid"><div><label>First name</label><input class="field" id="accFirst" value="${safe(user.firstName||'')}" placeholder="First name"></div><div><label>Last name</label><input class="field" id="accLast" value="${safe(user.lastName||'')}" placeholder="Last name"></div><div><label>Email address</label><input class="field disabled-field" value="${safe(user.email)}" disabled></div><div><label>Phone number</label><input class="field" id="accPhone" value="${safe(user.phone||'')}" placeholder="Phone number"></div></div><button class="btn" onclick="saveAccountInfo()">SAVE DETAILS</button></section><section class="card account-card"><h2>Saved delivery address</h2>${accountAddressFields('accAddr_',addr)}<button class="btn" onclick="saveAccountAddress()">SAVE ADDRESS</button></section><section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${accountOrdersHtml(ongoing,'No ongoing orders yet.')}</div></section><section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${accountOrdersHtml(previous,'No previous orders yet.')}</div></section><section class="card danger-zone full-span"><h2>Account control</h2><button class="btn light" onclick="logoutUser()">LOG OUT</button><button class="btn danger" onclick="deleteAccount()">DELETE ACCOUNT</button></section></div>`;
+  };
+})();
+// === END NITA STYLE FINAL STABILITY PATCH ===
+
+// === NITA STYLE CLOUD PERSISTENCE HARD FIX ===
+(function(){
+  const PERSIST_KEYS = ['nitaProducts','nitaOrders','nitaCoupons','nitaUsersByEmail','nitaDiscountUses'];
+  function cloudNotice(message, ok=true){
+    let el = document.getElementById('cloudSaveNotice');
+    if(!el){
+      el = document.createElement('div');
+      el.id = 'cloudSaveNotice';
+      el.style.cssText = 'position:fixed;left:18px;bottom:18px;z-index:99999;padding:12px 14px;border:1px solid #111;background:#fff;color:#111;font:700 12px/1.35 Arial,sans-serif;max-width:340px;box-shadow:0 12px 30px rgba(0,0,0,.12)';
+      document.body.appendChild(el);
+    }
+    el.textContent = message;
+    el.style.borderColor = ok ? '#111' : '#b00020';
+    el.style.color = ok ? '#111' : '#b00020';
+    clearTimeout(el._t);
+    el._t = setTimeout(()=>{ if(el) el.remove(); }, ok ? 2600 : 7000);
+  }
+  async function nitaFetchStore(){
+    const res = await fetch('/.netlify/functions/store?ts=' + Date.now(), { cache:'no-store', headers:{'Cache-Control':'no-cache'} });
+    if(!res.ok) throw new Error('Live database function returned '+res.status);
+    return await res.json();
+  }
+  window.nitaFetchStore = nitaFetchStore;
+  async function nitaSaveKeyStrict(key, value){
+    if(!PERSIST_KEYS.includes(key)) return false;
+    const res = await fetch('/.netlify/functions/store', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Cache-Control':'no-cache'},
+      body: JSON.stringify({ key, value })
+    });
+    if(!res.ok){ throw new Error(await res.text() || ('Live database save failed: '+res.status)); }
+    const remote = await nitaFetchStore();
+    localStorage.setItem(key, JSON.stringify(remote[key] ?? value));
+    return true;
+  }
+  window.nitaSaveKeyStrict = nitaSaveKeyStrict;
+  window.loadSharedStore = async function(){
+    try{
+      const remote = await nitaFetchStore();
+      PERSIST_KEYS.forEach(key=>{
+        if(remote[key] !== undefined) localStorage.setItem(key, JSON.stringify(remote[key]));
+      });
+      window.nitaBackendOnline = true;
+      window.nitaStoreLoaded = true;
+      return remote;
+    }catch(err){
+      window.nitaBackendOnline = false;
+      console.error('Nita live database is not connected:', err);
+      if(location.pathname.endsWith('admin.html')) cloudNotice('Cloud database is not connected. Admin changes will NOT appear on phones. Re-deploy the full folder including netlify/functions/store.js and package.json.', false);
+      return currentSharedStore ? currentSharedStore() : {};
+    }
+  };
+  window.saveProducts = async function(products){
+    localStorage.setItem('nitaProducts', JSON.stringify(products));
+    try{
+      await nitaSaveKeyStrict('nitaProducts', products);
+      cloudNotice('Saved globally. Refresh your phone and it will appear.');
+      return true;
+    }catch(err){
+      console.error(err);
+      cloudNotice('Not saved globally: Netlify backend is not active. Upload the full folder and check Functions.', false);
+      return false;
+    }
+  };
+  window.saveCoupons = async function(coupons){
+    localStorage.setItem('nitaCoupons', JSON.stringify(coupons));
+    try{ await nitaSaveKeyStrict('nitaCoupons', coupons); cloudNotice('Coupon saved globally.'); return true; }
+    catch(err){ console.error(err); cloudNotice('Coupon not saved globally. Check Netlify Functions.', false); return false; }
+  };
+  window.saveUsers = async function(users){
+    localStorage.setItem('nitaUsersByEmail', JSON.stringify(users));
+    try{ await nitaSaveKeyStrict('nitaUsersByEmail', users); return true; }
+    catch(err){ console.error(err); return false; }
+  };
+
+  const oldInit = window.init;
+  window.init = async function(){
+    await loadSharedStore();
+    if(oldInit) await oldInit();
+    await loadSharedStore();
+    try{ renderProducts?.('#products', getProducts()); renderCartPanel?.(); }catch(e){}
+  };
+
+  window.addProductAdmin = async function(){
+    const name=document.getElementById('pname')?.value.trim();
+    const price=Number(document.getElementById('pprice')?.value || 0);
+    if(!name || !price){ toast('Add a product name and price'); return; }
+    const products = getProducts().map(normalizeProductStatus);
+    const photos = Array.isArray(window.pendingAdminPhotos) ? window.pendingAdminPhotos.slice() : [];
+    const mainIndex = Number(window.pendingAdminMainIndex || 0);
+    const saleRaw = document.getElementById('psale')?.value;
+    const product = normalizeProductStatus({
+      id:'p'+Date.now(),
+      name,
+      price,
+      salePrice: saleRaw==='' ? '' : Number(saleRaw),
+      status: document.getElementById('pstatus')?.value || 'in-stock',
+      soldOut: (document.getElementById('pstatus')?.value || 'in-stock') === 'out-of-stock',
+      category: document.getElementById('pcat')?.value || 'Dresses',
+      collection: document.getElementById('pcollection')?.value || 'New Arrivals',
+      note: document.getElementById('pnote')?.value.trim() || '',
+      sizes: selectedAdminSizes?.().length ? selectedAdminSizes() : ['One Size'],
+      photos,
+      mainPhotoIndex: mainIndex,
+      img: photos[mainIndex] || photos[0] || 'linear-gradient(135deg,#fff,#ddd)',
+      desc: document.getElementById('pdesc')?.value.trim() || 'Curated Italian-made apparel selected for a clean boutique wardrobe.'
+    });
+    products.push(product);
+    const ok = await saveProducts(products);
+    if(ok){
+      window.pendingAdminPhotos=[]; window.pendingAdminMainIndex=0;
+      ['pname','pprice','psale','pnote','pdesc'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+      const input=document.getElementById('pphotos'); if(input) input.value='';
+      const preview=document.getElementById('photoPreview'); if(preview) preview.innerHTML='';
+      await loadSharedStore(); renderAdmin(); toast('Product added and saved globally.');
+    }
+  };
+
+  window.saveProductEditor = async function(id){
+    const products = getProducts().map(normalizeProductStatus);
+    const p = products.find(x=>String(x.id)===String(id));
+    const root = document.getElementById('editor-'+id);
+    if(!p || !root) return;
+    const oldRegular = Number(p.price||0);
+    const enteredPrice = Number(root.querySelector('.edit-price')?.value || 0);
+    const saleInput = root.querySelector('.edit-sale')?.value;
+    p.name = root.querySelector('.edit-name')?.value.trim() || p.name;
+    if(saleInput===''){
+      if(enteredPrice>0 && enteredPrice<oldRegular){ p.salePrice=enteredPrice; p.price=oldRegular; }
+      else { p.price=enteredPrice; p.salePrice=''; }
+    } else { p.price=enteredPrice; p.salePrice=Number(saleInput); }
+    p.category = root.querySelector('.edit-category')?.value || p.category;
+    p.collection = root.querySelector('.edit-collection')?.value || p.collection;
+    p.desc = root.querySelector('.edit-desc')?.value.trim() || '';
+    p.sizes = selectedAdminSizes(root).length ? selectedAdminSizes(root) : ['One Size'];
+    p.status = root.querySelector('.edit-status')?.value || productStatusValue(p);
+    p.soldOut = p.status === 'out-of-stock';
+    if(window.editingPhotoBuffers?.[id]?.length){
+      p.photos = window.editingPhotoBuffers[id];
+      p.mainPhotoIndex = Number(window.editingMainPhotoIndex?.[id] || 0);
+      p.img = p.photos[p.mainPhotoIndex] || p.photos[0];
+      delete window.editingPhotoBuffers[id];
+      if(window.editingMainPhotoIndex) delete window.editingMainPhotoIndex[id];
+    } else {
+      const chosen = root.dataset.mainIndex;
+      if(chosen !== undefined){
+        p.mainPhotoIndex = Number(chosen) || 0;
+        const photos = Array.isArray(p.photos)&&p.photos.length ? p.photos : [p.img].filter(Boolean);
+        p.img = photos[p.mainPhotoIndex] || photos[0] || p.img;
+      }
+    }
+    const ok = await saveProducts(products);
+    if(ok){ await loadSharedStore(); renderAdmin(); toast('Product updated globally.'); }
+  };
+
+  window.forceRefreshFromLiveDatabase = async function(){
+    await loadSharedStore();
+    renderAdmin?.(); renderProducts?.('#products', getProducts());
+    cloudNotice('Loaded latest live database.');
+  };
+})();
+// === END NITA STYLE CLOUD PERSISTENCE HARD FIX ===
+
+// === NITA STYLE ABSOLUTE FIX PATCH: cloud-only admin saves, pro login, multi-photo galleries ===
+(function(){
+  const ADMIN_EMAILS_FINAL=['karim.abousamah1@gmail.com','karim.abousamah@gmail.com'];
+  const PERSIST_KEYS_FINAL=['nitaProducts','nitaOrders','nitaCoupons','nitaUsersByEmail','nitaDiscountUses'];
+  const safe=(v='')=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  window.safe=safe;
+  const getJSON=(k,f)=>{try{return JSON.parse(localStorage.getItem(k)||'null')??f}catch{return f}};
+  const setJSON=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+
+  function notify(message, ok=true, sticky=false){
+    let el=document.getElementById('cloudSaveNotice');
+    if(!el){el=document.createElement('div');el.id='cloudSaveNotice';el.style.cssText='position:fixed;left:18px;bottom:18px;z-index:999999;padding:13px 15px;border:1px solid #111;background:#fff;color:#111;font:800 12px/1.4 Arial,sans-serif;max-width:390px;box-shadow:0 16px 44px rgba(0,0,0,.16)';document.body.appendChild(el)}
+    el.textContent=message; el.style.borderColor=ok?'#111':'#b00020'; el.style.color=ok?'#111':'#b00020';
+    clearTimeout(el._t); if(!sticky) el._t=setTimeout(()=>el.remove(), ok?3000:8500);
+  }
+  window.nitaNotify=notify;
+
+  async function fetchCloudState(){
+    const res=await fetch('/.netlify/functions/store?ts='+Date.now(),{cache:'no-store',headers:{'Cache-Control':'no-cache'}});
+    if(!res.ok) throw new Error('Cloud function returned '+res.status+' — deploy the full folder, not only HTML files.');
+    return await res.json();
+  }
+  async function saveCloudKey(key,value){
+    if(!PERSIST_KEYS_FINAL.includes(key)) throw new Error('Invalid store key');
+    const res=await fetch('/.netlify/functions/store',{method:'POST',headers:{'Content-Type':'application/json','Cache-Control':'no-cache'},body:JSON.stringify({key,value})});
+    if(!res.ok){let text=await res.text().catch(()=>''); throw new Error(text||('Cloud save failed '+res.status));}
+    const remote=await fetchCloudState();
+    PERSIST_KEYS_FINAL.forEach(k=>{ if(remote[k]!==undefined) setJSON(k, remote[k]); });
+    window.nitaBackendOnline=true;
+    return remote;
+  }
+  window.nitaFetchStore=fetchCloudState;
+  window.nitaSaveKeyStrict=saveCloudKey;
+
+  window.loadSharedStore=async function(){
+    try{
+      const remote=await fetchCloudState();
+      PERSIST_KEYS_FINAL.forEach(k=>{ if(remote[k]!==undefined) setJSON(k, remote[k]); });
+      window.nitaBackendOnline=true; window.nitaStoreLoaded=true;
+      document.body?.classList.add('cloud-online');
+      document.body?.classList.remove('cloud-offline');
+      return remote;
+    }catch(err){
+      window.nitaBackendOnline=false; window.nitaStoreLoaded=true;
+      document.body?.classList.add('cloud-offline');
+      console.error('Nita cloud database unavailable:', err);
+      if(location.pathname.endsWith('admin.html')) notify('Cloud database is not connected. Products cannot be saved for all devices until Netlify Functions are deployed with netlify/functions/store.js and package.json.', false, true);
+      return currentSharedStore?currentSharedStore():{};
+    }
+  };
+
+  window.getProducts=function(){
+    const saved=getJSON('nitaProducts', null);
+    const base=(Array.isArray(saved)&&saved.length)?saved:(typeof defaultProducts!=='undefined'?defaultProducts:[]);
+    return base.map(p=>normalizeProductStatus({...p}));
+  };
+  window.saveProducts=async function(products){
+    const clean=(Array.isArray(products)?products:[]).map(p=>normalizeProductStatus({...p}));
+    if(!window.nitaBackendOnline){
+      try{await loadSharedStore();}catch(e){}
+    }
+    if(!window.nitaBackendOnline){notify('Not saved: cloud database is offline. Re-deploy the full folder with Netlify Functions so phone and laptop share the same products.', false, true); return false;}
+    try{ await saveCloudKey('nitaProducts', clean); notify('Saved globally. This product update will appear on every device.'); return true; }
+    catch(err){console.error(err); notify('Not saved globally: '+err.message, false, true); return false;}
+  };
+  window.saveUsers=async function(users){ setJSON('nitaUsersByEmail', users||{}); try{ await saveCloudKey('nitaUsersByEmail', users||{}); return true; }catch(err){console.warn(err); return false;} };
+  window.saveCoupons=async function(coupons){ setJSON('nitaCoupons', coupons||[]); try{ await saveCloudKey('nitaCoupons', coupons||[]); notify('Coupon saved globally.'); return true; }catch(err){notify('Coupon not saved globally: '+err.message,false); return false;} };
+
+  function normalizeEmail(v){return String(v||'').trim().toLowerCase()}
+  window.normalizeEmail=window.normalizeEmail||normalizeEmail;
+  window.isAdminEmail=email=>ADMIN_EMAILS_FINAL.includes(normalizeEmail(email));
+
+  window.renderLoginPage=function(){
+    const root=document.getElementById('loginRoot'); if(!root) return;
+    root.innerHTML=`<section class="auth-shell"><div class="auth-brand"><img src="assets/logo-cropped.png" alt="Nita Style"><p>Customer account</p><h1>Sign in or create your account</h1><p class="muted">Save your address, track your orders, and receive your first-order code in a clean boutique account.</p></div><div class="auth-card"><div class="auth-tabs"><button class="active" id="signinTab" onclick="switchAuthMode('signin')">SIGN IN</button><button id="signupTab" onclick="switchAuthMode('signup')">SIGN UP</button></div><div id="authMessage" class="auth-message"></div><label>Email address</label><input id="authEmail" class="field" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" class="field" type="password" autocomplete="current-password" placeholder="Password"><div id="signupFields" style="display:none"><div class="form-grid"><div><label>First name</label><input id="authFirst" class="field" placeholder="First name"></div><div><label>Last name</label><input id="authLast" class="field" placeholder="Last name"></div></div><label>Phone number</label><input id="authPhone" class="field" placeholder="Phone number"></div><button class="btn auth-submit" onclick="submitAuth()">CONTINUE</button><p class="muted mini-note">Your email is your login and cannot be changed from the account page.</p></div></section>`;
+    window.authMode='signin';
+  };
+  window.switchAuthMode=function(mode){window.authMode=mode; document.getElementById('signinTab')?.classList.toggle('active',mode==='signin'); document.getElementById('signupTab')?.classList.toggle('active',mode==='signup'); const f=document.getElementById('signupFields'); if(f) f.style.display=mode==='signup'?'block':'none'; const msg=document.getElementById('authMessage'); if(msg) msg.textContent='';};
+  window.submitAuth=async function(){
+    const email=normalizeEmail(document.getElementById('authEmail')?.value); const password=document.getElementById('authPassword')?.value||'';
+    const msg=document.getElementById('authMessage');
+    if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ if(msg)msg.textContent='Please enter a valid email address.'; return; }
+    if(password.length<4){ if(msg)msg.textContent='Please enter a password.'; return; }
+    await loadSharedStore();
+    const users=getJSON('nitaUsersByEmail',{}); const existing=users[email]; const mode=window.authMode||'signin';
+    if(mode==='signin' && existing && existing.password && existing.password!==password){ if(msg)msg.textContent='Wrong password for this account.'; return; }
+    if(mode==='signin' && !existing){ if(msg)msg.innerHTML='No account found with this email. Click <b>Sign up</b> to create one.'; return; }
+    const user={...(existing||{}),email,password,firstName:existing?.firstName||'',lastName:existing?.lastName||'',phone:existing?.phone||'',addresses:existing?.addresses||[],defaultAddress:existing?.defaultAddress||null,createdAt:existing?.createdAt||new Date().toISOString()};
+    if(mode==='signup'){
+      user.firstName=(document.getElementById('authFirst')?.value||user.firstName||'').trim();
+      user.lastName=(document.getElementById('authLast')?.value||user.lastName||'').trim();
+      user.phone=(document.getElementById('authPhone')?.value||user.phone||'').trim();
+      if(!existing) user.firstOrderCode='NITA10';
+    }
+    users[email]=user; setJSON('nitaUsersByEmail',users); localStorage.setItem('nitaUser',JSON.stringify(user)); currentUser=user;
+    await saveUsers(users);
+    if(mode==='signup' && !existing){ try{ await sendStoreEmail?.({type:'signup_discount',to:email,code:'NITA10',user}); }catch(e){} }
+    location.href=isAdminEmail(email)?'admin.html':'account.html';
+  };
+  window.login=window.submitAuth;
+
+  window.protectAdmin=function(){
+    currentUser=getJSON('nitaUser',null);
+    if(!isAdminEmail(currentUser?.email)){
+      document.body.innerHTML=header()+`<main class="page"><div class="card account-auth"><h1>Admin access</h1><p class="muted">Sign in with the admin email to manage products, orders, customers, and coupons.</p><a class="btn" href="login.html">SIGN IN</a></div></main>`; updateCartCount?.(); return false;
+    }
+    return true;
+  };
+
+  // Compress each uploaded photo so multiple photos can be saved reliably in the cloud database.
+  async function compressImageFile(file){
+    const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader(); r.onload=()=>resolve(r.result); r.onerror=reject; r.readAsDataURL(file);});
+    try{
+      const img=await new Promise((resolve,reject)=>{const im=new Image(); im.onload=()=>resolve(im); im.onerror=reject; im.src=dataUrl;});
+      const max=1200; let w=img.width,h=img.height; if(Math.max(w,h)>max){const ratio=max/Math.max(w,h); w=Math.round(w*ratio); h=Math.round(h*ratio);} 
+      const canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h; const ctx=canvas.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h);
+      return canvas.toDataURL('image/jpeg',0.78);
+    }catch(e){return dataUrl;}
+  }
+  window.fileListToDataUrls=function(files,cb){
+    const arr=[...(files||[])]; if(!arr.length){cb([]);return;}
+    Promise.all(arr.map(compressImageFile)).then(cb).catch(()=>cb([]));
+  };
+  window.pendingAdminPhotos=[]; window.pendingAdminMainIndex=0; window.editingPhotoBuffers={}; window.editingMainPhotoIndex={};
+  function photoThumbHTML(url,i,main,fn){return `<button type="button" class="admin-thumb selectable-thumb ${i===main?'selected-main':''}" onclick="${fn}(${i})"><img src="${safe(url)}" alt="Product photo ${i+1}"><span>${i===main?'Main photo':'Photo '+(i+1)}</span></button>`}
+  window.setPendingMainPhoto=function(i){window.pendingAdminMainIndex=i; const box=document.getElementById('photoPreview'); if(box) box.innerHTML=(window.pendingAdminPhotos||[]).map((u,idx)=>photoThumbHTML(u,idx,i,'setPendingMainPhoto')).join('');};
+  window.previewAdminPhotos=function(e){fileListToDataUrls(e.target.files,urls=>{window.pendingAdminPhotos=urls; window.pendingAdminMainIndex=0; window.setPendingMainPhoto(0);});};
+  window.setEditMainPhoto=function(id,i){window.editingMainPhotoIndex[id]=i; const box=document.getElementById('editPreview-'+id); const urls=window.editingPhotoBuffers[id]||[]; if(box) box.innerHTML=urls.map((u,idx)=>`<button type="button" class="admin-thumb selectable-thumb ${idx===i?'selected-main':''}" onclick="setEditMainPhoto('${String(id).replace(/'/g,"\\'")}',${idx})"><img src="${safe(u)}"><span>${idx===i?'Main photo':'Photo '+(idx+1)}</span></button>`).join('');};
+  window.previewEditPhotos=function(e,id){fileListToDataUrls(e.target.files,urls=>{window.editingPhotoBuffers[id]=urls; window.editingMainPhotoIndex[id]=0; window.setEditMainPhoto(id,0);});};
+
+  window.productMainImage=function(p){
+    if(!p) return 'linear-gradient(135deg,#fff,#ddd)'; const photos=Array.isArray(p.photos)?p.photos.filter(Boolean):[]; const idx=Math.max(0,Math.min(Number(p.mainPhotoIndex||0),Math.max(photos.length-1,0))); return photos[idx]||p.img||'linear-gradient(135deg,#fff,#ddd)';
+  };
+  window.productImagesForDisplay=function(p){const photos=(Array.isArray(p?.photos)&&p.photos.length?p.photos:[p?.img]).filter(Boolean); const main=productMainImage(p); const all=[main,...photos.filter(x=>x!==main)]; return {first:all[0]||'linear-gradient(135deg,#fff,#ddd)',second:all[1]||all[0]||'linear-gradient(135deg,#fff,#ddd)',all:all.length?all:['linear-gradient(135deg,#fff,#ddd)']};};
+  window.cssBgImage=function(u){return String(u||'').startsWith('data:')?`background-image:url(${u})`:`background:${u||'linear-gradient(135deg,#fff,#ddd)'}`};
+  window.productStatusValue=function(p){return p?.status || (p?.soldOut?'out-of-stock':'in-stock')};
+  window.normalizeProductStatus=function(p){p=p||{}; p.status=productStatusValue(p); p.soldOut=p.status==='out-of-stock'; if(!Array.isArray(p.sizes)||!p.sizes.length)p.sizes=['One Size']; if(!Array.isArray(p.photos))p.photos=p.img&&String(p.img).startsWith('data:')?[p.img]:[]; p.mainPhotoIndex=Number(p.mainPhotoIndex||0); return p};
+  window.stockStatusHtml=function(status){status=status||'in-stock'; const labels={'in-stock':'In stock','coming-soon':'Coming soon','out-of-stock':'Out of stock'}; return `<span class="stock-status ${status}"><span class="stock-dot"></span><span>${labels[status]||'In stock'}</span></span>`};
+  window.productPriceStatusRow=function(p,tag='p'){p=normalizeProductStatus(p); const sale=p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price); const price=sale?`<span class="muted old-price">${money(p.price)}</span><span class="price-drop">${money(p.salePrice)}</span>`:money(p.price||0); return `<div class="product-price-row"><${tag} class="price-line">${price}</${tag}>${stockStatusHtml(p.status)}</div>`};
+  window.productCard=function(raw){const p=normalizeProductStatus(raw); const imgs=productImagesForDisplay(p); const sale=p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price); return `<article class="product status-${p.status}"><a class="product-hit" href="product.html?id=${encodeURIComponent(p.id)}"><div class="product-img">${sale?'<span class="sale-badge">PRICE DROP</span>':''}<span class="product-img-layer product-img-primary" style="${cssBgImage(imgs.first)}"></span><span class="product-img-layer product-img-secondary" style="${cssBgImage(imgs.second)}"></span></div><h3>${safe(p.name)}</h3>${productPriceStatusRow(p,'p')}</a><button class="quick-view-btn" type="button" onclick="event.stopPropagation();event.preventDefault();openQuickView('${String(p.id).replace(/'/g,"\\'")}')">QUICK VIEW</button></article>`};
+  window.renderProducts=function(el='#products',list=getProducts()){const node=document.querySelector(el); if(node) node.innerHTML=(list||[]).map(productCard).join('') || '<p class="muted">No products listed yet.</p>';};
+  window.openQuickView=function(id){const p=normalizeProductStatus(getProducts().find(x=>String(x.id)===String(id))); if(!p?.id)return; const imgs=productImagesForDisplay(p); const sizes=(p.sizes||['One Size']).map((s,i)=>`<button class="size ${i===0?'active':''}" onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${safe(s)}</button>`).join(''); const can=p.status==='in-stock'; const btn=can?`<button class="btn" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}',document.querySelector('#quickContent .size.active')?.textContent||'One Size');closeQuickView()">ADD TO CART</button>`:`<button class="btn disabled" disabled>${p.status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button>`; const q=document.getElementById('quickContent'); if(q)q.innerHTML=`<div class="quick-grid"><div class="quick-image" style="${cssBgImage(imgs.first)};background-size:cover;background-position:center"></div><div class="quick-info"><p class="muted">${safe(p.category||'')}</p><h2>${safe(p.name)}</h2>${productPriceStatusRow(p,'h3')}<p>${safe(p.desc||'')}</p><div class="sizes">${sizes}</div>${btn}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div></div>`; document.getElementById('quickModal')?.classList.add('open');};
+
+  window.productEditorHTML=function(raw){
+    const p=normalizeProductStatus(raw); const photos=(Array.isArray(p.photos)&&p.photos.length?p.photos:[p.img]).filter(Boolean); const current=productStatusValue(p); const selected=p.sizes||['One Size'];
+    const currentThumbs=photos.map((u,i)=>`<button type="button" class="admin-thumb selectable-thumb existing-main-${safe(p.id)} ${i===p.mainPhotoIndex?'selected-main':''}" onclick="document.querySelectorAll('.existing-main-${String(p.id).replace(/'/g,"\\'")}').forEach(b=>b.classList.remove('selected-main'));this.classList.add('selected-main');this.closest('.product-editor').dataset.mainIndex='${i}'"><img src="${String(u).startsWith('data:')?safe(u):''}" style="${String(u).startsWith('data:')?'':'display:none'}"><span>${i===p.mainPhotoIndex?'Main photo':'Photo '+(i+1)}</span></button>`).join('');
+    return `<div class="admin-form"><div class="full"><label>Product availability</label><select class="field edit-status"><option value="in-stock" ${current==='in-stock'?'selected':''}>In stock</option><option value="coming-soon" ${current==='coming-soon'?'selected':''}>Coming soon</option><option value="out-of-stock" ${current==='out-of-stock'?'selected':''}>Out of stock</option></select></div><div><label>Product name</label><input class="field edit-name" value="${safe(p.name||'')}"></div><div><label>Regular price</label><input class="field edit-price" type="number" step="0.01" value="${Number(p.price||0)}"></div><div><label>Sale / price-drop price</label><input class="field edit-sale" type="number" step="0.01" value="${p.salePrice||''}" placeholder="Optional"></div><div><label>Section</label><select class="field edit-category">${renderOptions(ADMIN_CATEGORIES,p.category)}</select></div><div><label>Collection</label><select class="field edit-collection">${renderOptions(ADMIN_COLLECTIONS,p.collection)}</select></div><div class="full"><label>Current photos</label><p class="muted">Click one photo to choose the main photo shown first on the website.</p><div class="photo-preview existing-photos">${currentThumbs||'<p class="muted">No photos yet.</p>'}</div><label style="margin-top:18px">Replace / add product gallery</label><div class="upload-zone"><input type="file" accept="image/*" multiple onchange="previewEditPhotos(event,'${String(p.id).replace(/'/g,"\\'")}')"><p><b>Upload multiple photos</b><br><span class="muted">Select several images at once. Then choose the main one.</span></p></div><div class="photo-preview" id="editPreview-${safe(p.id)}"></div></div><div class="full"><label>Available sizes</label><div class="size-picker">${renderSizeButtons(selected)}</div></div><div class="full"><label>Description</label><textarea class="field edit-desc">${safe(p.desc||'')}</textarea></div></div><button class="btn" onclick="saveProductEditor('${String(p.id).replace(/'/g,"\\'")}')">SAVE PRODUCT CHANGES</button>`;
+  };
+  window.renderAdminProducts=function(){const box=document.getElementById('adminProducts'); if(!box)return; const ps=getProducts(); box.innerHTML=ps.length?ps.map(p=>{p=normalizeProductStatus(p); const img=productMainImage(p); return `<div class="admin-product-card" id="edit-${safe(p.id)}"><div class="admin-product-top"><div class="admin-product-photo" style="${cssBgImage(img)};background-size:cover;background-position:center"></div><div><div class="admin-product-name">${safe(p.name)}</div><span class="muted">${safe(p.category||'')} · ${money(p.price||0)} ${p.salePrice?`· Sale ${money(p.salePrice)}`:''} · ${(p.photos||[]).length} photo${(p.photos||[]).length===1?'':'s'}</span><div>${stockStatusHtml(p.status)}</div></div><button onclick="toggleProductEditor('${String(p.id).replace(/'/g,"\\'")}')">Edit listing</button><button onclick="removeProduct('${String(p.id).replace(/'/g,"\\'")}')">Remove</button></div><div class="product-editor" id="editor-${safe(p.id)}">${productEditorHTML(p)}</div></div>`}).join(''):'<p class="muted">No products listed yet. Add a product above, and wait for “Saved globally.”</p>';};
+  window.addProductAdmin=async function(){
+    const name=document.getElementById('pname')?.value.trim(); const price=Number(document.getElementById('pprice')?.value||0); if(!name||!price){toast('Add a product name and price');return;}
+    await loadSharedStore(); if(!window.nitaBackendOnline){notify('Cannot add product: cloud database is offline, so it would only appear on this device. Deploy the full folder with Netlify Functions first.', false, true); return;}
+    const photos=(window.pendingAdminPhotos||[]).slice(); const main=Math.max(0,Math.min(Number(window.pendingAdminMainIndex||0),Math.max(photos.length-1,0))); const sale=document.getElementById('psale')?.value;
+    const product=normalizeProductStatus({id:'p'+Date.now(),name,price,salePrice:sale===''?'':Number(sale),status:document.getElementById('pstatus')?.value||'in-stock',category:document.getElementById('pcat')?.value||'Dresses',collection:document.getElementById('pcollection')?.value||'New Arrivals',note:document.getElementById('pnote')?.value.trim()||'',sizes:selectedAdminSizes?.().length?selectedAdminSizes():['One Size'],photos,mainPhotoIndex:main,img:photos[main]||photos[0]||'linear-gradient(135deg,#fff,#ddd)',desc:document.getElementById('pdesc')?.value.trim()||'A carefully selected Italian-made piece for a clean, feminine wardrobe.'});
+    const products=getProducts(); products.push(product); const ok=await saveProducts(products); if(ok){window.pendingAdminPhotos=[];window.pendingAdminMainIndex=0;['pname','pprice','psale','pnote','pdesc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''}); const input=document.getElementById('pphotos'); if(input)input.value=''; const prev=document.getElementById('photoPreview'); if(prev)prev.innerHTML=''; await loadSharedStore(); renderAdmin(); toast('Product added globally.');}
+  };
+  window.saveProductEditor=async function(id){
+    await loadSharedStore(); if(!window.nitaBackendOnline){notify('Cannot save edit: cloud database is offline. It would not appear on phone.', false, true); return;}
+    const products=getProducts(); const p=products.find(x=>String(x.id)===String(id)); const root=document.getElementById('editor-'+id); if(!p||!root)return;
+    const old=Number(p.price||0); const entered=Number(root.querySelector('.edit-price')?.value||0); const saleInput=root.querySelector('.edit-sale')?.value;
+    p.name=root.querySelector('.edit-name')?.value.trim()||p.name; if(saleInput===''){ if(entered>0&&entered<old){p.salePrice=entered;p.price=old}else{p.price=entered;p.salePrice=''} } else {p.price=entered;p.salePrice=Number(saleInput)}
+    p.category=root.querySelector('.edit-category')?.value||p.category; p.collection=root.querySelector('.edit-collection')?.value||p.collection; p.desc=root.querySelector('.edit-desc')?.value.trim()||''; p.sizes=selectedAdminSizes(root).length?selectedAdminSizes(root):['One Size']; p.status=root.querySelector('.edit-status')?.value||productStatusValue(p); p.soldOut=p.status==='out-of-stock';
+    if(window.editingPhotoBuffers[id]?.length){p.photos=window.editingPhotoBuffers[id];p.mainPhotoIndex=Number(window.editingMainPhotoIndex[id]||0);p.img=p.photos[p.mainPhotoIndex]||p.photos[0];delete window.editingPhotoBuffers[id];delete window.editingMainPhotoIndex[id];}
+    else if(root.dataset.mainIndex!==undefined){p.mainPhotoIndex=Number(root.dataset.mainIndex)||0; const photos=(Array.isArray(p.photos)&&p.photos.length?p.photos:[p.img]).filter(Boolean); p.img=photos[p.mainPhotoIndex]||photos[0]||p.img;}
+    const ok=await saveProducts(products); if(ok){await loadSharedStore();renderAdmin();toast('Product updated globally.');}
+  };
+  window.removeProduct=async function(id){if(!confirm('Remove this product?'))return; await loadSharedStore(); const ok=await saveProducts(getProducts().filter(p=>String(p.id)!==String(id))); if(ok)renderAdmin();};
+  window.renderAdmin=async function(){if(!protectAdmin())return; await loadSharedStore(); const sizePicker=document.getElementById('sizePicker'); if(sizePicker&&!sizePicker.dataset.ready){sizePicker.innerHTML=renderSizeButtons(['S','M','L']);sizePicker.dataset.ready='1'} const body=document.getElementById('orders'); const orders=getJSON('nitaOrders',[]); if(body)body.innerHTML=orders.length?orders.map((o,i)=>`<tr><td><b>${safe(o.id)}</b><br><span class="muted">${safe(o.date||'')}</span></td><td>${safe(o.customer||'-')}<br><span class="muted">${safe(o.email||'')} · ${safe(o.phone||'')}</span></td><td>${money(o.total||0)}</td><td><select onchange="updateOrder(${i},this.value)"><option>${safe(o.status||'New order')}</option><option>Confirmed</option><option>Preparing</option><option>Out for delivery</option><option>Delivered</option><option>Cancelled</option></select></td></tr>`).join(''):'<tr><td colspan="4">No orders yet.</td></tr>'; renderAdminProducts(); renderAdminCustomers?.(); renderCouponsAdmin?.();};
+
+  // Real product page renderer with all photos visible.
+  window.productPage=function(){
+    const detail=document.getElementById('detail'); if(!detail)return; const id=new URL(location.href).searchParams.get('id'); const p=normalizeProductStatus(getProducts().find(x=>String(x.id)===String(id))||getProducts()[0]); if(!p?.id){detail.innerHTML='<div class="card"><h1>Product not found</h1><a class="btn" href="shop.html">BACK TO SHOP</a></div>';return;}
+    const imgs=productImagesForDisplay(p); window.selectedPhoto=Math.min(Number(window.selectedPhoto||0),imgs.all.length-1); window.selectedSize=(window.selectedSize&&p.sizes.includes(window.selectedSize))?window.selectedSize:p.sizes[0]; const can=p.status==='in-stock'; const action=can?`<button class="btn" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}',selectedSize)">ADD TO CART</button><a class="btn light" href="checkout.html" style="margin-left:10px">BUY NOW</a>`:`<button class="btn disabled" disabled>${p.status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button>`;
+    detail.innerHTML=`<div><div class="detail-img" style="${cssBgImage(imgs.all[window.selectedPhoto])};background-size:cover;background-position:center"></div><div class="product-thumbs">${imgs.all.map((ph,i)=>`<button class="${i===window.selectedPhoto?'active':''}" onclick="selectedPhoto=${i};productPage()" style="${cssBgImage(ph)};background-size:cover;background-position:center"></button>`).join('')}</div></div><div><p class="muted">${safe(p.category||'')}</p><h1>${safe(p.name)}</h1>${productPriceStatusRow(p,'h2')}<p>${safe(p.desc||'')}</p><div class="sizes">${p.sizes.map(s=>`<span class="size ${s===window.selectedSize?'active':''}" onclick="selectedSize='${safe(s)}';productPage()">${safe(s)}</span>`).join('')}</div>${action}<hr><p class="muted">Cash on delivery available. Online payment will be available soon.</p></div>`;
+  };
+
+  const previousInit=window.init;
+  window.init=async function(){
+    await loadSharedStore();
+    if(previousInit) { try{await previousInit();}catch(e){console.error(e);} }
+    await loadSharedStore();
+    try{renderProducts('#products', getProducts()); renderCartPanel?.(); updateCartCount?.();}catch(e){console.warn(e)}
+  };
+})();
+// === END NITA STYLE ABSOLUTE FIX PATCH ===
+
+
+// === NITA STYLE SECTION PICKER + ADMIN SELECT POLISH ===
+(function(){
+  const COLOR_OPTIONS=['Black','White','Cream','Beige','Grey','Navy','Brown','Red','Pink','Blue','Green','Multi-color'];
+  const STYLE_OPTIONS=['Clean everyday piece','Elegant evening piece','Minimal essential','Soft feminine silhouette','Relaxed fit','Tailored look','Premium texture','Limited selected piece'];
+  const HOME_OPTIONS=[['trending-now','Trending Now'],['new-arrivals','New Arrivals']];
+  function opts(list,current){return list.map(x=>Array.isArray(x)?`<option value="${x[0]}" ${x[0]===current?'selected':''}>${x[1]}</option>`:`<option ${x===current?'selected':''}>${x}</option>`).join('')}
+  function parseNote(note=''){
+    const parts=String(note||'').split(' · ');
+    return {color: parts[0] || 'Black', style: parts[1] || parts[0] || 'Clean everyday piece'};
+  }
+  function productHomeSection(p){ return p.displaySection || p.homeSection || (p.collection === 'New Arrivals' ? 'new-arrivals' : 'trending-now'); }
+  window.productHomeSection = productHomeSection;
+
+  window.productEditorHTML=function(p){
+    p=normalizeProductStatus(p); const selected=p.sizes||[]; const current=p.status||'in-stock'; const n=parseNote(p.note); const currentThumbs=productImagesForDisplay(p).all.map((u,i)=>`<div class="admin-thumb ${i===(p.mainPhotoIndex||0)?'selected-main':''}" onclick="selectExistingMainPhoto('${String(p.id).replace(/'/g,"\\'")}',${i})"><img src="${String(u).startsWith('data:')?u:''}" style="${String(u).startsWith('data:')?'':'display:none'}"><span>${i===(p.mainPhotoIndex||0)?'Main photo':'Photo '+(i+1)}</span></div>`).join('');
+    return `<div class="admin-form"><div class="full"><label>Product availability</label><select class="field edit-status"><option value="in-stock" ${current==='in-stock'?'selected':''}>In stock</option><option value="coming-soon" ${current==='coming-soon'?'selected':''}>Coming soon</option><option value="out-of-stock" ${current==='out-of-stock'?'selected':''}>Out of stock</option></select></div><div><label>Product name</label><input class="field edit-name" value="${safe(p.name||'')}"></div><div><label>Regular price</label><input class="field edit-price" type="number" step="0.01" value="${Number(p.price||0)}"></div><div><label>Sale / price-drop price</label><input class="field edit-sale" type="number" step="0.01" value="${p.salePrice||''}" placeholder="Optional"></div><div><label>Section</label><select class="field edit-category">${renderOptions(ADMIN_CATEGORIES,p.category)}</select></div><div><label>Collection</label><select class="field edit-collection">${renderOptions(ADMIN_COLLECTIONS,p.collection)}</select></div><div><label>Color</label><select class="field edit-color">${opts(COLOR_OPTIONS,n.color)}</select></div><div><label>Style note</label><select class="field edit-style">${opts(STYLE_OPTIONS,n.style)}</select></div><div><label>Homepage section</label><select class="field edit-home-section">${opts(HOME_OPTIONS,productHomeSection(p))}</select></div><div class="full"><label>Current photos</label><p class="muted">Click one photo to choose the main photo shown first on the website.</p><div class="photo-preview existing-photos">${currentThumbs||'<p class="muted">No photos yet.</p>'}</div><label style="margin-top:18px">Replace / add product gallery</label><div class="upload-zone"><input type="file" accept="image/*" multiple onchange="previewEditPhotos(event,'${String(p.id).replace(/'/g,"\\'")}')"><p><b>Upload multiple photos</b><br><span class="muted">Select several images at once. Then choose the main one.</span></p></div><div class="photo-preview" id="editPreview-${safe(p.id)}"></div></div><div class="full"><label>Available sizes</label><div class="size-picker">${renderSizeButtons(selected)}</div></div><div class="full"><label>Description</label><textarea class="field edit-desc">${safe(p.desc||'')}</textarea></div></div><button class="btn" onclick="saveProductEditor('${String(p.id).replace(/'/g,"\\'")}')">SAVE PRODUCT CHANGES</button>`;
+  };
+
+  window.renderAdminProducts=function(){const box=document.getElementById('adminProducts'); if(!box)return; const ps=getProducts(); box.innerHTML=ps.length?ps.map(p=>{p=normalizeProductStatus(p); const img=productMainImage(p); const hs=productHomeSection(p)==='new-arrivals'?'New Arrivals':'Trending Now'; return `<div class="admin-product-card" id="edit-${safe(p.id)}"><div class="admin-product-top"><div class="admin-product-photo" style="${cssBgImage(img)};background-size:cover;background-position:center"></div><div><div class="admin-product-name">${safe(p.name)}</div><span class="muted">${safe(p.category||'')} · ${money(p.price||0)} ${p.salePrice?`· Sale ${money(p.salePrice)}`:''} · ${hs} · ${(p.photos||[]).length} photo${(p.photos||[]).length===1?'':'s'}</span><div>${stockStatusHtml(p.status)}</div></div><button onclick="toggleProductEditor('${String(p.id).replace(/'/g,"\\'")}')">Edit listing</button><button onclick="removeProduct('${String(p.id).replace(/'/g,"\\'")}')">Remove</button></div><div class="product-editor" id="editor-${safe(p.id)}">${productEditorHTML(p)}</div></div>`}).join(''):'<p class="muted">No products listed yet. Add a product above, and wait for “Saved globally.”</p>';};
+
+  window.addProductAdmin=async function(){
+    const name=document.getElementById('pname')?.value.trim(); const price=Number(document.getElementById('pprice')?.value||0); if(!name||!price){toast('Add a product name and price');return;}
+    await loadSharedStore(); if(!window.nitaBackendOnline){notify('Cannot add product: cloud database is offline, so it would only appear on this device. Deploy the full folder with Netlify Functions first.', false, true); return;}
+    const photos=(window.pendingAdminPhotos||[]).slice(); const main=Math.max(0,Math.min(Number(window.pendingAdminMainIndex||0),Math.max(photos.length-1,0))); const sale=document.getElementById('psale')?.value;
+    const color=document.getElementById('pcolor')?.value||'Black'; const style=document.getElementById('pstyle')?.value||'Clean everyday piece'; const displaySection=document.getElementById('phome')?.value||'trending-now';
+    const product=normalizeProductStatus({id:'p'+Date.now(),name,price,salePrice:sale===''?'':Number(sale),status:document.getElementById('pstatus')?.value||'in-stock',category:document.getElementById('pcat')?.value||'Dresses',collection:document.getElementById('pcollection')?.value||'Everyday Edit',displaySection,homeSection:displaySection,note:`${color} · ${style}`,sizes:selectedAdminSizes?.().length?selectedAdminSizes():['One Size'],photos,mainPhotoIndex:main,img:photos[main]||photos[0]||'linear-gradient(135deg,#fff,#ddd)',desc:document.getElementById('pdesc')?.value.trim()||'A carefully selected Italian-made piece for a clean, feminine wardrobe.'});
+    const products=getProducts(); products.push(product); const ok=await saveProducts(products); if(ok){window.pendingAdminPhotos=[];window.pendingAdminMainIndex=0;['pname','pprice','psale','pdesc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''}); const input=document.getElementById('pphotos'); if(input)input.value=''; const prev=document.getElementById('photoPreview'); if(prev)prev.innerHTML=''; await loadSharedStore(); renderAdmin(); toast('Product added globally.');}
+  };
+
+  window.saveProductEditor=async function(id){
+    await loadSharedStore(); if(!window.nitaBackendOnline){notify('Cannot save edit: cloud database is offline. It would not appear on phone.', false, true); return;}
+    const products=getProducts(); const p=products.find(x=>String(x.id)===String(id)); const root=document.getElementById('editor-'+id); if(!p||!root)return;
+    const old=Number(p.price||0); const entered=Number(root.querySelector('.edit-price')?.value||0); const saleInput=root.querySelector('.edit-sale')?.value;
+    p.name=root.querySelector('.edit-name')?.value.trim()||p.name; if(saleInput===''){ if(entered>0&&entered<old){p.salePrice=entered;p.price=old}else{p.price=entered;p.salePrice=''} } else {p.price=entered;p.salePrice=Number(saleInput)}
+    p.category=root.querySelector('.edit-category')?.value||p.category; p.collection=root.querySelector('.edit-collection')?.value||p.collection; p.displaySection=root.querySelector('.edit-home-section')?.value||productHomeSection(p); p.homeSection=p.displaySection; const color=root.querySelector('.edit-color')?.value||'Black'; const style=root.querySelector('.edit-style')?.value||'Clean everyday piece'; p.note=`${color} · ${style}`; p.desc=root.querySelector('.edit-desc')?.value.trim()||''; p.sizes=selectedAdminSizes(root).length?selectedAdminSizes(root):['One Size']; p.status=root.querySelector('.edit-status')?.value||productStatusValue(p); p.soldOut=p.status==='out-of-stock';
+    if(window.editingPhotoBuffers[id]?.length){p.photos=window.editingPhotoBuffers[id];p.mainPhotoIndex=Number(window.editingMainPhotoIndex[id]||0);p.img=p.photos[p.mainPhotoIndex]||p.photos[0];delete window.editingPhotoBuffers[id];delete window.editingMainPhotoIndex[id];}
+    else if(root.dataset.mainIndex!==undefined){p.mainPhotoIndex=Number(root.dataset.mainIndex)||0; const photos=(Array.isArray(p.photos)&&p.photos.length?p.photos:[p.img]).filter(Boolean); p.img=photos[p.mainPhotoIndex]||photos[0]||p.img;}
+    const ok=await saveProducts(products); if(ok){await loadSharedStore();renderAdmin();toast('Product updated globally.');}
+  };
+
+  window.renderHomeSections=function(){
+    const products=getProducts();
+    const trending=products.filter(p=>productHomeSection(p)==='trending-now');
+    const arrivals=products.filter(p=>productHomeSection(p)==='new-arrivals');
+    const trendBox=document.getElementById('trendingMarquee'); if(trendBox){const list=trending.length?trending:products.slice(0,6); trendBox.innerHTML=[...list,...list,...list,...list].map(p=>productCard(p)).join('')||'<p class="muted">No products listed yet.</p>';}
+    const arrBox=document.getElementById('newArrivalsMarquee'); if(arrBox){const list=arrivals.length?arrivals:products.slice(0,6); arrBox.innerHTML=[...list,...list,...list,...list].map(p=>productCard(p)).join('')||'<p class="muted">No products listed yet.</p>';}
+  };
+  window.addEventListener('nita-store-ready', window.renderHomeSections);
+  window.addEventListener('load',()=>setTimeout(window.renderHomeSections,900));
+})();
+// === END NITA STYLE SECTION PICKER + ADMIN SELECT POLISH ===
+
+
+// === FINAL MOBILE/UX STABILITY PATCH ===
+(function(){
+  function uniq(arr){return [...new Set((arr||[]).filter(Boolean).map(x=>String(x).trim()).filter(Boolean))];}
+  const oldNormalize=window.normalizeProductStatus;
+  window.normalizeProductStatus=function(p){
+    p=oldNormalize?oldNormalize(p||{}):(p||{});
+    p.sizes=uniq(p.sizes&&p.sizes.length?p.sizes:['One Size']);
+    if(!p.sizes.length) p.sizes=['One Size'];
+    return p;
+  };
+  const oldProductPage=window.productPage;
+  window.productPage=function(){
+    const detail=document.getElementById('detail');
+    if(!detail){ if(oldProductPage) return oldProductPage(); return; }
+    const id=new URL(location.href).searchParams.get('id');
+    const p=window.normalizeProductStatus((getProducts().find(x=>String(x.id)===String(id))||getProducts()[0]||{}));
+    if(!p.id){detail.innerHTML='<div class="card"><h1>Product not found</h1><a class="btn" href="shop.html">BACK TO SHOP</a></div>';return;}
+    const imgs=productImagesForDisplay(p);
+    window.selectedPhoto=Math.min(Number(window.selectedPhoto||0),imgs.all.length-1);
+    window.selectedSize=(window.selectedSize&&p.sizes.includes(window.selectedSize))?window.selectedSize:p.sizes[0];
+    const can=p.status==='in-stock';
+    const action=can?`<button class="btn" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}',selectedSize)">ADD TO CART</button><a class="btn light" href="checkout.html">BUY NOW</a>`:`<button class="btn disabled" disabled>${p.status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button>`;
+    detail.innerHTML=`<div class="product-media"><div class="detail-img" style="${cssBgImage(imgs.all[window.selectedPhoto])};background-size:cover;background-position:center"></div><div class="product-thumbs">${imgs.all.map((ph,i)=>`<button class="${i===window.selectedPhoto?'active':''}" onclick="selectedPhoto=${i};productPage()" style="${cssBgImage(ph)};background-size:cover;background-position:center"></button>`).join('')}</div></div><div class="product-info"><p class="muted">${safe(p.category||'')}</p><h1>${safe(p.name)}</h1>${productPriceStatusRow(p,'h2')}<p>${safe(p.desc||'')}</p><div class="sizes">${p.sizes.map(s=>`<span class="size ${s===window.selectedSize?'active':''}" onclick="selectedSize='${safe(s)}';productPage()">${safe(s)}</span>`).join('')}</div><div class="product-actions">${action}</div><hr><p class="muted">Cash on delivery available. Online payment will be available soon.</p></div>`;
+  };
+  const oldOpenQuick=window.openQuickView;
+  window.openQuickView=function(id){
+    const p=window.normalizeProductStatus(getProducts().find(x=>String(x.id)===String(id))||{});
+    if(!p.id){ if(oldOpenQuick) return oldOpenQuick(id); return; }
+    const imgs=productImagesForDisplay(p);
+    const sizes=(p.sizes||['One Size']).map((s,i)=>`<button class="size ${i===0?'active':''}" onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${safe(s)}</button>`).join('');
+    const can=p.status==='in-stock';
+    const btn=can?`<button class="btn" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}',document.querySelector('#quickContent .size.active')?.textContent||'One Size');closeQuickView()">ADD TO CART</button>`:`<button class="btn disabled" disabled>${p.status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button>`;
+    const q=document.getElementById('quickContent');
+    if(q) q.innerHTML=`<div class="quick-grid"><div class="quick-image" style="${cssBgImage(imgs.first)};background-size:cover;background-position:center"></div><div class="quick-info"><p class="muted">${safe(p.category||'')}</p><h2>${safe(p.name)}</h2>${productPriceStatusRow(p,'h3')}<p>${safe(p.desc||'')}</p><div class="sizes">${sizes}</div>${btn}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div></div>`;
+    document.getElementById('quickModal')?.classList.add('open');
+  };
+})();
+// === END FINAL MOBILE/UX STABILITY PATCH ===
+
+// === FINAL ACCOUNT / ADMIN / SIGN-IN REDIRECT POLISH ===
+(function(){
+  const ORDER_STEPS = ['New order','Confirmed','Packing','Out for delivery','Delivered'];
+  function esc(v){ return typeof safe==='function'?safe(v):String(v||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+  function orderStepIndex(status){
+    status = String(status||'New order');
+    if(status==='Preparing') status='Packing';
+    if(status==='Cancelled') return -1;
+    const i = ORDER_STEPS.indexOf(status);
+    return i>=0?i:0;
+  }
+  window.orderRoadmapHtml = function(status){
+    const idx = orderStepIndex(status);
+    if(String(status)==='Cancelled') return `<div class="order-roadmap"><div class="road-step cancelled">Cancelled</div></div>`;
+    return `<div class="order-roadmap">${ORDER_STEPS.map((s,i)=>`<div class="road-step ${i<idx?'done':i===idx?'active':''}">${s==='New order'?'Order submitted':s}</div>`).join('')}</div>`;
+  };
+  window.accountOrdersHtml = function(orders, empty){
+    if(!orders || !orders.length) return `<p class="muted">${empty}</p>`;
+    const allProducts = (typeof getProducts==='function'?getProducts():[]);
+    return orders.map(o=>{
+      const items = (o.items||[]).map(it=>{
+        const p = allProducts.find(x=>String(x.id)===String(it.id));
+        const name = p?.name || it.name || 'Product';
+        const qty = it.qty || 1;
+        const size = it.size ? ` · ${esc(it.size)}` : '';
+        return `<div class="order-item-line"><span>${esc(name)}${size} × ${qty}</span><span>${typeof money==='function'?money((p?.salePrice||p?.price||0)*qty):''}</span></div>`;
+      }).join('') || '<p class="muted">No item details available.</p>';
+      return `<article class="order-card-pro"><div class="order-card-head"><div><h3>${esc(o.id||'Order')}</h3><div class="order-meta"><span>${esc(o.date||'')}</span><span>${esc(o.payment||'Cash on delivery')}</span><span>${esc(o.status||'New order')}</span></div></div><div class="order-total">${typeof money==='function'?money(o.total||0):''}</div></div>${orderRoadmapHtml(o.status)}<div class="order-items">${items}</div>${o.address?`<p class="muted"><b>Delivery:</b> ${esc(typeof o.address==='string'?o.address:[o.address.city,o.address.street,o.address.building,o.address.floor,o.address.apartment].filter(Boolean).join(', '))}</p>`:''}</article>`;
+    }).join('');
+  };
+  window.renderAccount = function(){
+    const root = document.getElementById('accountRoot'); if(!root) return;
+    if(!window.currentUser?.email){ root.innerHTML = `<div class="card account-auth"><h1>Sign in</h1><p class="muted">Sign in to view your saved details, addresses, and orders.</p><a class="btn" href="login.html">SIGN IN</a></div>`; return; }
+    const user = (typeof ensureCurrentUserRecord==='function' ? ensureCurrentUserRecord() : currentUser) || currentUser;
+    const addr = user.defaultAddress || {};
+    const orders = (typeof customerOrders==='function'?customerOrders(user.email):JSON.parse(localStorage.getItem('nitaOrders')||'[]').filter(o=>String(o.email||'').toLowerCase()===String(user.email).toLowerCase())).sort((a,b)=>String(b.id).localeCompare(String(a.id)));
+    const ongoing = orders.filter(o=>!['Delivered','Cancelled'].includes(o.status));
+    const previous = orders.filter(o=>['Delivered','Cancelled'].includes(o.status));
+    root.innerHTML = `<div class="account-hero clean-account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${user.firstName?' '+esc(user.firstName):''}</h1><p class="muted">Manage your profile, saved delivery address, and order tracking.</p></div></div><div class="account-grid"><section class="card account-card"><h2>Personal information</h2><p class="muted">Your email is your login and cannot be edited.</p><div class="form-grid"><div><label>First name</label><input class="field" id="accFirst" value="${esc(user.firstName||'')}" placeholder="First name"></div><div><label>Last name</label><input class="field" id="accLast" value="${esc(user.lastName||'')}" placeholder="Last name"></div><div><label>Email address</label><input class="field disabled-field" value="${esc(user.email)}" disabled></div><div><label>Phone number</label><input class="field" id="accPhone" value="${esc(user.phone||'')}" placeholder="Phone number"></div></div><button class="btn" onclick="saveAccountInfo()">SAVE DETAILS</button></section><section class="card account-card"><h2>Saved delivery address</h2>${typeof accountAddressFields==='function'?accountAddressFields('accAddr_',addr):''}<button class="btn" onclick="saveAccountAddress()">SAVE ADDRESS</button></section><section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${accountOrdersHtml(ongoing,'No ongoing orders yet.')}</div></section><section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${accountOrdersHtml(previous,'No previous orders yet.')}</div></section><section class="card danger-zone full-span"><h2>Account control</h2><p class="muted">Log out safely, or permanently remove your saved customer profile from this website.</p><button class="btn logout-btn" onclick="logoutUser()">LOG OUT</button><button class="btn danger delete-account-btn" onclick="deleteAccount()">DELETE ACCOUNT</button></section></div>`;
+  };
+  // Redirect every successful customer/admin sign-in or sign-up to homepage, as requested.
+  const oldSubmitAuth = window.submitAuth;
+  window.submitAuth = async function(){
+    const beforeHref = location.href;
+    const oldAssign = location.assign;
+    try{
+      if(typeof oldSubmitAuth==='function'){
+        // Reimplement the existing flow because location.href inside old function cannot be intercepted reliably.
+        const email=(window.normalizeEmail?normalizeEmail(document.getElementById('authEmail')?.value):String(document.getElementById('authEmail')?.value||'').trim().toLowerCase());
+        const password=document.getElementById('authPassword')?.value||'';
+        const msg=document.getElementById('authMessage');
+        if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ if(msg)msg.textContent='Please enter a valid email address.'; return; }
+        if(password.length<4){ if(msg)msg.textContent='Please enter a password.'; return; }
+        if(typeof loadSharedStore==='function') await loadSharedStore();
+        const users=(typeof getJSON==='function'?getJSON('nitaUsersByEmail',{}):JSON.parse(localStorage.getItem('nitaUsersByEmail')||'{}'));
+        const existing=users[email]; const mode=window.authMode||'signin';
+        if(mode==='signin' && existing && existing.password && existing.password!==password){ if(msg)msg.textContent='Wrong password for this account.'; return; }
+        if(mode==='signin' && !existing){ if(msg)msg.innerHTML='No account found with this email. Click <b>Sign up</b> to create one.'; return; }
+        const user={...(existing||{}),email,password,firstName:existing?.firstName||'',lastName:existing?.lastName||'',phone:existing?.phone||'',addresses:existing?.addresses||[],defaultAddress:existing?.defaultAddress||null,createdAt:existing?.createdAt||new Date().toISOString()};
+        if(mode==='signup'){
+          user.firstName=(document.getElementById('authFirst')?.value||user.firstName||'').trim();
+          user.lastName=(document.getElementById('authLast')?.value||user.lastName||'').trim();
+          user.phone=(document.getElementById('authPhone')?.value||user.phone||'').trim();
+          if(!existing) user.firstOrderCode='NITA10';
+        }
+        users[email]=user;
+        if(typeof setJSON==='function') setJSON('nitaUsersByEmail',users); else localStorage.setItem('nitaUsersByEmail',JSON.stringify(users));
+        localStorage.setItem('nitaUser',JSON.stringify(user)); window.currentUser=user;
+        if(typeof saveUsers==='function') await saveUsers(users);
+        if(mode==='signup' && !existing){ try{ await sendStoreEmail?.({type:'signup_discount',to:email,code:'NITA10',user}); }catch(e){} }
+        location.href='index.html';
+      }
+    }catch(e){ console.error(e); const msg=document.getElementById('authMessage'); if(msg) msg.textContent='Something went wrong. Please try again.'; }
+  };
+  window.login = window.submitAuth;
+  window.renderAdmin = async function(){
+    if(typeof protectAdmin==='function' && !protectAdmin()) return;
+    if(typeof loadSharedStore==='function') await loadSharedStore();
+    const sizePicker=document.getElementById('sizePicker'); if(sizePicker&&!sizePicker.dataset.ready&&typeof renderSizeButtons==='function'){sizePicker.innerHTML=renderSizeButtons(['S','M','L']);sizePicker.dataset.ready='1'}
+    const orders=(typeof getJSON==='function'?getJSON('nitaOrders',[]):JSON.parse(localStorage.getItem('nitaOrders')||'[]'));
+    const body=document.getElementById('orders');
+    if(body) body.innerHTML=orders.length?orders.map((o,i)=>`<tr class="admin-order-row"><td><b>${esc(o.id)}</b><br><span class="muted">${esc(o.date||'')}</span>${orderRoadmapHtml(o.status)}</td><td>${esc(o.customer||'-')}<br><span class="muted">${esc(o.email||'')}<br>${esc(o.phone||'')}</span></td><td>${typeof money==='function'?money(o.total||0):''}</td><td><select class="admin-order-status" onchange="updateOrder(${i},this.value)"><option>${esc(o.status||'New order')}</option><option>Confirmed</option><option>Packing</option><option>Out for delivery</option><option>Delivered</option><option>Cancelled</option></select><span class="admin-status-badge">${esc(o.status||'New order')}</span></td></tr>`).join(''):'<tr><td colspan="4"><div class="admin-empty">No orders yet.</div></td></tr>';
+    if(typeof renderAdminProducts==='function') renderAdminProducts();
+    if(typeof renderAdminCustomers==='function') renderAdminCustomers();
+    if(typeof renderCouponsAdmin==='function') renderCouponsAdmin();
+  };
+})();
+
+// --- Cart panel, Quick View and unavailable product final behavior ---
+(function(){
+  function esc(v){ return String(v ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch])); }
+  function getStatus(p){
+    p = (typeof normalizeProductStatus === 'function') ? normalizeProductStatus(p) : (p || {});
+    return p.status || (p.soldOut ? 'out-of-stock' : 'in-stock');
+  }
+  function getImgs(p){
+    if(typeof productImagesForDisplay === 'function') return productImagesForDisplay(p);
+    const arr = (p.photos && p.photos.length ? p.photos : [p.img]).filter(Boolean);
+    return {first: arr[0] || 'linear-gradient(135deg,#fff,#ddd)', second: arr[1] || arr[0] || 'linear-gradient(135deg,#fff,#ddd)', all: arr.length ? arr : ['linear-gradient(135deg,#fff,#ddd)']};
+  }
+  function bg(v){ return (typeof cssBgImage === 'function') ? cssBgImage(v) : (String(v||'').startsWith('data:') ? `background-image:url(${v})` : `background:${v||'linear-gradient(135deg,#fff,#ddd)'}`); }
+  function priceRow(p, tag='h3'){
+    return (typeof productPriceStatusRow === 'function') ? productPriceStatusRow(p, tag) : `<${tag}>${typeof money==='function'?money(p.price):('$'+p.price)}</${tag}>`;
+  }
+  function selectedSize(){ return document.querySelector('#quickContent .size.active')?.textContent || 'One Size'; }
+  window.notifyMe = function(productId){
+    const p = (typeof getProducts === 'function' ? getProducts() : []).find(x => String(x.id) === String(productId));
+    const userEmail = window.currentUser?.email || JSON.parse(localStorage.getItem('nitaCurrentUser') || 'null')?.email || '';
+    const email = userEmail || prompt('Enter your email and we will notify you when this item is available:');
+    if(!email) return;
+    const list = JSON.parse(localStorage.getItem('nitaNotifyRequests') || '[]');
+    list.push({productId, productName:p?.name || 'Product', email, date:new Date().toISOString()});
+    localStorage.setItem('nitaNotifyRequests', JSON.stringify(list));
+    if(typeof toast === 'function') toast('Thank you. We will notify you when it is available.');
+    else alert('Thank you. We will notify you when it is available.');
+  };
+  window.openCart = function(){
+    if(typeof renderCartPanel === 'function') renderCartPanel();
+    const panel = document.getElementById('cartPanel');
+    if(panel){ panel.classList.add('open'); document.body.classList.add('panel-open'); }
+  };
+  window.closeCart = function(){
+    document.getElementById('cartPanel')?.classList.remove('open');
+    document.body.classList.remove('panel-open');
+  };
+  const oldCloseSearch = window.closeSearch;
+  window.closeSearch = function(){ oldCloseSearch?.(); document.body.classList.remove('panel-open'); };
+  const oldOpenSearch = window.openSearch;
+  window.openSearch = function(){ oldOpenSearch?.(); document.body.classList.add('panel-open'); };
+  window.openQuickView = function(id){
+    const p = getStatus((typeof getProducts === 'function' ? getProducts() : []).find(x => String(x.id) === String(id)));
+    if(!p?.id) return;
+    const imgs = getImgs(p);
+    const sizes = (p.sizes && p.sizes.length ? p.sizes : ['One Size']).map((s,i)=>`<button class="size ${i===0?'active':''}" onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${esc(s)}</button>`).join('');
+    const canBuy = p.status === 'in-stock';
+    const action = canBuy
+      ? `<button class="btn" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}', selectedSize()); closeQuickView();">ADD TO CART</button>`
+      : `<button class="btn disabled" disabled aria-disabled="true">${p.status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button><button class="notify-btn" type="button" onclick="notifyMe('${String(p.id).replace(/'/g,"\\'")}')">NOTIFY ME</button>`;
+    const q = document.getElementById('quickContent');
+    if(!q) return;
+    q.innerHTML = `<div class="quick-grid"><div class="quick-image" style="${bg(imgs.first)}"></div><div class="quick-info"><p class="muted">${esc(p.category||'')}</p><h2>${esc(p.name)}</h2>${priceRow(p,'h3')}<p>${esc(p.desc||'')}</p><div class="sizes">${sizes}</div>${action}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div></div>`;
+    const modal = document.getElementById('quickModal');
+    modal?.classList.add('open');
+    modal?.setAttribute('aria-hidden','false');
+    document.body.classList.add('panel-open');
+  };
+  window.closeQuickView = function(){
+    const m=document.getElementById('quickModal');
+    if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}
+    document.body.classList.remove('panel-open');
+  };
+  const oldProductPage = window.productPage;
+  window.productPage = function(){
+    const detail=document.getElementById('detail');
+    if(!detail){ return oldProductPage?.(); }
+    const id=new URL(location.href).searchParams.get('id');
+    const all = typeof getProducts === 'function' ? getProducts() : [];
+    const p=getStatus(all.find(x=>String(x.id)===String(id)) || all[0]);
+    if(!p?.id){ detail.innerHTML='<div class="card"><h1>Product not found</h1><a class="btn" href="shop.html">BACK TO SHOP</a></div>'; return; }
+    const imgs=getImgs(p); const sizes=(p.sizes&&p.sizes.length?p.sizes:['One Size']);
+    window.selectedPhoto=Math.min(Number(window.selectedPhoto||0),imgs.all.length-1);
+    window.selectedSize=(window.selectedSize&&sizes.includes(window.selectedSize))?window.selectedSize:sizes[0];
+    const canBuy=p.status==='in-stock';
+    const action=canBuy
+      ? `<button class="btn" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}',selectedSize)">ADD TO CART</button><a class="btn light" href="checkout.html">BUY NOW</a>`
+      : `<button class="btn disabled" disabled aria-disabled="true">${p.status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button><button class="notify-btn" type="button" onclick="notifyMe('${String(p.id).replace(/'/g,"\\'")}')">NOTIFY ME</button>`;
+    detail.innerHTML=`<div class="product-media"><div class="detail-img" style="${bg(imgs.all[window.selectedPhoto])};background-size:contain;background-repeat:no-repeat;background-position:center;background-color:#f5f5f5"></div><div class="product-thumbs">${imgs.all.map((ph,i)=>`<button class="${i===window.selectedPhoto?'active':''}" onclick="selectedPhoto=${i};productPage()" style="${bg(ph)};background-size:cover;background-position:center"></button>`).join('')}</div></div><div class="product-info"><p class="muted">${esc(p.category||'')}</p><h1>${esc(p.name)}</h1>${priceRow(p,'h2')}<p>${esc(p.desc||'')}</p><div class="sizes">${sizes.map(s=>`<span class="size ${s===window.selectedSize?'active':''}" onclick="selectedSize='${esc(s)}';productPage()">${esc(s)}</span>`).join('')}</div><div class="product-actions">${action}</div><hr><p class="muted">Cash on delivery available. Online payment will be available soon.</p></div>`;
+  };
+  document.addEventListener('keydown', e => { if(e.key === 'Escape'){ closeCart(); closeQuickView(); document.getElementById('searchPanel')?.classList.remove('open'); document.body.classList.remove('panel-open'); } });
+})();
+
+
+// --- Final coupon apply button behavior + footer payment wording ---
+(function(){
+  function esc(v){ return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+  function getCheckoutSubtotal(){
+    const products = typeof getProducts === 'function' ? getProducts() : [];
+    return (window.cart || []).reduce((sum,item)=>{
+      const p = products.find(x=>String(x.id)===String(item.id));
+      const price = Number(p?.salePrice || p?.price || item.price || 0);
+      return sum + price * Number(item.qty || 1);
+    },0);
+  }
+  function appliedCode(){ return sessionStorage.getItem('nitaAppliedCoupon') || ''; }
+  function setAppliedCode(code){ if(code) sessionStorage.setItem('nitaAppliedCoupon', code); else sessionStorage.removeItem('nitaAppliedCoupon'); }
+  function feedback(msg, ok){ const el=document.getElementById('couponFeedback'); if(el){ el.className = ok ? 'coupon-feedback discount-good' : 'coupon-feedback discount-bad'; el.innerHTML = msg; } }
+  window.applyCouponCode = function(){
+    const form = document.getElementById('checkoutForm'); if(!form) return;
+    const code = normalizeCoupon(form.coupon?.value || '');
+    const email = String(form.email?.value || (typeof signedDiscountEmail==='function'?signedDiscountEmail():'')).trim().toLowerCase();
+    const subtotal = getCheckoutSubtotal();
+    if(!code){ setAppliedCode(''); feedback('Enter a coupon code first.', false); renderCheckoutSummary?.(); return; }
+    if(!subtotal){ setAppliedCode(''); feedback('No discount is applicable because your cart is empty.', false); renderCheckoutSummary?.(); return; }
+    const result = typeof calcCouponDiscount === 'function' ? calcCouponDiscount(code, email, subtotal) : {discount:0};
+    if(result && Number(result.discount) > 0){
+      setAppliedCode(code);
+      feedback(`Coupon applied successfully. You saved ${typeof money==='function'?money(result.discount):('$'+result.discount.toFixed(2))}.`, true);
+    } else {
+      setAppliedCode('');
+      feedback('Coupon code is expired, invalid, already used, or no discount is applicable.', false);
+    }
+    renderCheckoutSummary?.();
+  };
+  window.renderCheckoutSummary = function(){
+    const form = document.getElementById('checkoutForm');
+    const box = document.getElementById('checkoutSummary'); if(!box) return;
+    const subtotal = getCheckoutSubtotal();
+    const typed = normalizeCoupon(form?.coupon?.value || '');
+    const email = String(form?.email?.value || (typeof signedDiscountEmail==='function'?signedDiscountEmail():'')).trim().toLowerCase();
+    let code = appliedCode();
+    let discount = 0;
+    let couponLine = '';
+    if(code && typed && code === typed){
+      const result = typeof calcCouponDiscount === 'function' ? calcCouponDiscount(code, email, subtotal) : {discount:0};
+      discount = Number(result.discount || 0);
+      if(discount > 0) couponLine = `<p class="discount-good">Coupon applied: -${typeof money==='function'?money(discount):('$'+discount.toFixed(2))}</p>`;
+      else { setAppliedCode(''); couponLine = `<p class="discount-bad">Coupon code is expired, invalid, already used, or no discount is applicable.</p>`; }
+    } else if(typed && code !== typed){
+      couponLine = `<p class="muted">Click Apply Coupon Code to validate this code.</p>`;
+    }
+    const total = Math.max(0, subtotal - discount);
+    box.innerHTML = `<div class="summary-line"><span>Subtotal</span><b>${typeof money==='function'?money(subtotal):('$'+subtotal.toFixed(2))}</b></div>${discount>0?`<div class="summary-line discount-line"><span>Discount</span><b>-${typeof money==='function'?money(discount):('$'+discount.toFixed(2))}</b></div>`:''}<div class="summary-line total-line"><span>Total</span><b>${typeof money==='function'?money(total):('$'+total.toFixed(2))}</b></div>${couponLine}`;
+  };
+  const oldMarkCouponUse = window.markCouponUse;
+  window.placeOrder = async function(){
+    const formEl = document.getElementById('checkoutForm'); if(!formEl) return;
+    if(typeof validateCheckoutForm === 'function' && !validateCheckoutForm()) return;
+    const form = new FormData(formEl);
+    const typed = normalizeCoupon(form.get('coupon'));
+    const applied = appliedCode();
+    const code = typed && typed === applied ? applied : '';
+    const email = String(form.get('email') || (typeof signedDiscountEmail==='function'?signedDiscountEmail():'')).trim().toLowerCase();
+    const subtotal = getCheckoutSubtotal();
+    let result = code && typeof calcCouponDiscount === 'function' ? calcCouponDiscount(code,email,subtotal) : {discount:0};
+    let discount = Number(result.discount || 0);
+    if(typed && !code){ feedback('Please click Apply Coupon Code before placing the order, or remove the coupon code.', false); return; }
+    if(result.kind==='admin' && discount>0){
+      let coupons = typeof getCoupons==='function' ? getCoupons() : [];
+      let c = coupons.find(x=>normalizeCoupon(x.code)===code);
+      if(c && c.oneTime){ c.usedEmails = c.usedEmails || {}; c.usedEmails[email] = true; if(typeof saveCoupons==='function') await saveCoupons(coupons); }
+    }
+    if(result.kind==='nita10' && discount>0){
+      let uses = JSON.parse(localStorage.getItem('nitaDiscountUses')||'{}'); uses[email]=true; localStorage.setItem('nitaDiscountUses',JSON.stringify(uses));
+      try{ await saveCloudKey?.('nitaDiscountUses', uses); }catch(e){}
+    }
+    const address={city:form.get('city'),street:form.get('street'),building:form.get('building'),floor:form.get('floor'),apartment:form.get('apartment'),landmark:form.get('landmark'),preferredTime:form.get('preferredTime'),notes:form.get('notes')};
+    const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:(form.get('name')||'').trim(),phone:form.get('phone'),email,address,payment:'Cash on Delivery',status:'New order',items:window.cart||[],subtotal,discount,coupon:code,total:Math.max(0,subtotal-discount)};
+    let orders = JSON.parse(localStorage.getItem('nitaOrders')||'[]'); orders.push(order); localStorage.setItem('nitaOrders',JSON.stringify(orders));
+    try{ await saveCloudKey?.('nitaOrders', orders); }catch(e){}
+    if(form.get('saveAddress') && email){
+      try{ const users=JSON.parse(localStorage.getItem('nitaUsersByEmail')||'{}'); if(users[email]){users[email].defaultAddress=address; users[email].phone=form.get('phone')||users[email].phone; localStorage.setItem('nitaUsersByEmail',JSON.stringify(users)); await saveCloudKey?.('nitaUsersByEmail',users);} }catch(e){}
+    }
+    try{ await sendStoreEmail?.({type:'order_confirmation',to:email,order}); await sendStoreEmail?.({type:'admin_order',order}); }catch(e){}
+    window.cart=[]; if(typeof saveCart==='function') saveCart(); setAppliedCode(''); location.href='order-success.html';
+  };
+  document.addEventListener('input', e=>{ if(e.target?.name==='coupon'){ setAppliedCode(''); feedback('', true); renderCheckoutSummary?.(); } });
+})();
+
+// === NITA STYLE ACCOUNT SESSION + ORDER CONFIRM + ADMIN CATEGORY FINAL FIX ===
+(function(){
+  function esc(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+  function readJSON(key, fallback){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch(e){return fallback;}}
+  function writeJSON(key, value){localStorage.setItem(key, JSON.stringify(value));}
+  function emailOf(user){return String(user?.email||'').trim().toLowerCase();}
+  function restoreSessionUser(){
+    const saved=readJSON('nitaUser',null);
+    const sessionEmail=String(localStorage.getItem('nitaSessionEmail')||saved?.email||'').trim().toLowerCase();
+    if(saved?.email){
+      try{ currentUser=saved; }catch(e){}
+      window.currentUser=saved;
+      localStorage.setItem('nitaSessionEmail', emailOf(saved));
+      return saved;
+    }
+    if(sessionEmail){
+      const users=readJSON('nitaUsersByEmail',{});
+      if(users[sessionEmail]){
+        localStorage.setItem('nitaUser', JSON.stringify(users[sessionEmail]));
+        try{ currentUser=users[sessionEmail]; }catch(e){}
+        window.currentUser=users[sessionEmail];
+        return users[sessionEmail];
+      }
+    }
+    return null;
+  }
+  window.restoreSessionUser = restoreSessionUser;
+
+  const oldInit = window.init;
+  window.init = async function(){
+    restoreSessionUser();
+    const result = oldInit ? await oldInit.apply(this, arguments) : undefined;
+    restoreSessionUser();
+    return result;
+  };
+
+  const oldSubmitAuth = window.submitAuth;
+  window.submitAuth = async function(){
+    const email=(window.normalizeEmail?normalizeEmail(document.getElementById('authEmail')?.value):String(document.getElementById('authEmail')?.value||'').trim().toLowerCase());
+    const password=document.getElementById('authPassword')?.value||'';
+    const msg=document.getElementById('authMessage');
+    if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ if(msg)msg.textContent='Please enter a valid email address.'; return; }
+    if(password.length<4){ if(msg)msg.textContent='Please enter a password.'; return; }
+    try{
+      if(typeof loadSharedStore==='function') await loadSharedStore();
+      const users=(typeof getJSON==='function'?getJSON('nitaUsersByEmail',{}):readJSON('nitaUsersByEmail',{}));
+      const existing=users[email]; const mode=window.authMode||'signin';
+      if(mode==='signin' && existing && existing.password && existing.password!==password){ if(msg)msg.textContent='Wrong password for this account.'; return; }
+      if(mode==='signin' && !existing){ if(msg)msg.innerHTML='No account found with this email. Click <b>Sign up</b> to create one.'; return; }
+      const user={...(existing||{}), email, password, firstName:existing?.firstName||'', lastName:existing?.lastName||'', phone:existing?.phone||'', addresses:existing?.addresses||[], defaultAddress:existing?.defaultAddress||null, createdAt:existing?.createdAt||new Date().toISOString()};
+      if(mode==='signup'){
+        user.firstName=(document.getElementById('authFirst')?.value||user.firstName||'').trim();
+        user.lastName=(document.getElementById('authLast')?.value||user.lastName||'').trim();
+        user.phone=(document.getElementById('authPhone')?.value||user.phone||'').trim();
+        if(!existing) user.firstOrderCode='NITA10';
+      }
+      users[email]=user;
+      if(typeof setJSON==='function') setJSON('nitaUsersByEmail',users); else writeJSON('nitaUsersByEmail',users);
+      localStorage.setItem('nitaUser', JSON.stringify(user));
+      localStorage.setItem('nitaSessionEmail', email);
+      try{ currentUser=user; }catch(e){}
+      window.currentUser=user;
+      if(typeof saveUsers==='function') await saveUsers(users); else if(typeof saveCloudKey==='function') await saveCloudKey('nitaUsersByEmail', users);
+      if(mode==='signup' && !existing){ try{ await sendStoreEmail?.({type:'signup_discount',to:email,code:'NITA10',user}); }catch(e){} }
+      location.href='index.html';
+    }catch(e){ console.error(e); if(msg) msg.textContent='Something went wrong. Please try again.'; }
+  };
+  window.login = window.submitAuth;
+
+  const oldRenderAccount = window.renderAccount;
+  window.renderAccount = async function(){
+    restoreSessionUser();
+    if(!readJSON('nitaUser',null)?.email){
+      const root=document.getElementById('accountRoot');
+      if(root) root.innerHTML='<div class="card account-auth"><h1>Sign in</h1><p class="muted">Sign in to view your saved details, addresses, and order tracking.</p><a class="btn" href="login.html">SIGN IN</a></div>';
+      return;
+    }
+    return oldRenderAccount ? oldRenderAccount.apply(this, arguments) : undefined;
+  };
+
+  const oldLogout = window.logoutUser;
+  window.logoutUser = function(){ localStorage.removeItem('nitaUser'); localStorage.removeItem('nitaSessionEmail'); try{currentUser=null;}catch(e){} window.currentUser=null; if(oldLogout) oldLogout(); else location.href='index.html'; };
+
+  const oldDelete = window.deleteAccount;
+  window.deleteAccount = function(){
+    if(!confirm('Delete this account from this website?')) return;
+    const u=readJSON('nitaUser',null); const email=emailOf(u);
+    if(email){ const users=readJSON('nitaUsersByEmail',{}); delete users[email]; writeJSON('nitaUsersByEmail',users); try{saveCloudKey?.('nitaUsersByEmail',users);}catch(e){} }
+    localStorage.removeItem('nitaUser'); localStorage.removeItem('nitaSessionEmail'); try{currentUser=null;}catch(e){} window.currentUser=null; location.href='index.html';
+  };
+
+  // Confirm before admin order status changes and save globally.
+  window.updateOrder = async function(i, v){
+    const orders=(typeof getJSON==='function'?getJSON('nitaOrders',[]):readJSON('nitaOrders',[]));
+    const order=orders[i];
+    if(!order) return;
+    const oldStatus=order.status||'New order';
+    if(v===oldStatus) return;
+    const ok=confirm(`Confirm order status update?\n\nOrder: ${order.id||''}\nFrom: ${oldStatus}\nTo: ${v}`);
+    if(!ok){ if(typeof renderAdmin==='function') renderAdmin(); return; }
+    order.status=v;
+    if(typeof setJSON==='function') setJSON('nitaOrders',orders); else writeJSON('nitaOrders',orders);
+    try{ if(typeof saveCloudKey==='function') await saveCloudKey('nitaOrders', orders); }catch(e){ console.warn(e); }
+    if(typeof toast==='function') toast('Order status updated.');
+    if(typeof renderAdmin==='function') renderAdmin();
+  };
+
+  // Make sure admin forms always have dropdown category / color / style / homepage section controls.
+  window.NITA_ADMIN_CATEGORY_OPTIONS = ['Dresses','Tops','Pants','Jackets','Accessories'];
+  window.NITA_ADMIN_COLLECTION_OPTIONS = ['Everyday Edit','Minimal Essentials','Evening Pieces','Accessories','Price Drops'];
+  window.NITA_COLOR_OPTIONS = ['Black','White','Beige','Cream','Grey','Brown','Navy','Blue','Red','Pink','Green','Yellow','Print / Pattern','Multi-color'];
+  window.NITA_STYLE_OPTIONS = ['Clean everyday piece','Elegant evening piece','Minimal essential','Soft feminine silhouette','Relaxed boutique fit','Premium casual look','Statement piece','Light summer piece','Structured tailored style'];
+})();
+// === END NITA STYLE ACCOUNT SESSION + ORDER CONFIRM + ADMIN CATEGORY FINAL FIX ===
+
+// === NITA STYLE ACCOUNT ACCESS FINAL FIX ===
+// Fixes the issue where a signed-in customer clicks Account and is sent back to Sign In.
+(function(){
+  function safe(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+  function read(key,fallback){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch(e){return fallback;}}
+  function activeUser(){
+    let u = read('nitaUser', null);
+    const users = read('nitaUsersByEmail', {});
+    const email = String(u?.email || localStorage.getItem('nitaSessionEmail') || '').trim().toLowerCase();
+    if(email && users[email]) u = {...users[email], email};
+    if(u?.email){
+      localStorage.setItem('nitaUser', JSON.stringify(u));
+      localStorage.setItem('nitaSessionEmail', String(u.email).toLowerCase());
+      try{ currentUser = u; }catch(e){}
+      window.currentUser = u;
+      return u;
+    }
+    return null;
+  }
+  window.nitaActiveUser = activeUser;
+
+  // Rebuild the header so the Account link always goes to account.html.
+  // If the customer is not signed in, account.html shows the sign-in card.
+  header = function(){
+    const user = activeUser();
+    const isAdmin = ADMIN_EMAILS.includes(String(user?.email||'').toLowerCase());
+    const admin = isAdmin ? '<a class="admin-link" href="admin.html">ADMIN</a>' : '';
+    return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a class="account-nav-link" href="account.html">${user?'ACCOUNT':'SIGN IN'}</a>${admin}<button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, tops, pants..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`;
+  };
+
+  function statusStepClass(orderStatus, step){
+    const order = ['New order','Order submitted','Confirmed','Packing','Out for delivery','Delivered'];
+    const normalized = orderStatus === 'New order' ? 'Order submitted' : orderStatus;
+    return order.indexOf(normalized) >= order.indexOf(step) ? 'done' : '';
+  }
+  function orderCard(order){
+    const steps=['Order submitted','Confirmed','Packing','Out for delivery','Delivered'];
+    const items=(order.items||[]).map(i=>`<span>${safe(i.name||i.id||'Product')} × ${i.qty||1}</span>`).join('');
+    return `<div class="account-order detailed-order"><div class="order-top"><div><b>${safe(order.id||'Order')}</b><br><span class="muted">${safe(order.date||'')} · ${safe(order.payment||'Cash on Delivery')}</span></div><div><b>${typeof money==='function'?money(order.total||0):('$'+Number(order.total||0).toFixed(2))}</b><br><span class="order-status">${safe(order.status||'Order submitted')}</span></div></div><div class="order-roadmap-wrap"><div class="order-roadmap">${steps.map(s=>`<span class="${statusStepClass(order.status||'Order submitted',s)}">${s}</span>`).join('')}</div></div><p class="muted order-items">${items||'Order details saved.'}</p></div>`;
+  }
+  function orderList(orders, empty){return orders.length ? orders.map(orderCard).join('') : `<p class="muted">${empty}</p>`;}
+
+  // Final account renderer: does not send a signed-in user back to login.
+  window.renderAccount = async function(){
+    if(typeof loadSharedStore === 'function'){
+      try{ await loadSharedStore(); }catch(e){ console.warn('Account cloud refresh skipped', e); }
+    }
+    const user = activeUser();
+    const root=document.getElementById('accountRoot');
+    if(!root) return;
+    if(!user?.email){
+      root.innerHTML = `<div class="card account-auth"><h1>Sign in</h1><p class="muted">Sign in to view your saved details, addresses, previous orders, and ongoing orders.</p><a class="btn" href="login.html">SIGN IN / CREATE ACCOUNT</a></div>`;
+      return;
+    }
+    const users=read('nitaUsersByEmail',{}); const saved={...user,...(users[String(user.email).toLowerCase()]||{})};
+    const addr=saved.defaultAddress||{};
+    const orders=read('nitaOrders',[]).filter(o=>String(o.email||'').toLowerCase()===String(saved.email).toLowerCase());
+    const previous=orders.filter(o=>String(o.status||'').toLowerCase()==='delivered');
+    const ongoing=orders.filter(o=>String(o.status||'').toLowerCase()!=='delivered');
+    root.innerHTML = `<div class="account-hero clean-account-hero"><div><p class="eyebrow">My account</p><h1>Welcome${saved.firstName?' '+safe(saved.firstName):''}</h1><p class="muted">Manage your profile, saved delivery address, and order tracking.</p></div></div><div class="account-grid"><section class="card account-card"><h2>Personal information</h2><p class="muted">Your email is your login and cannot be edited.</p><div class="form-grid"><div><label>First name</label><input class="field" id="accFirst" value="${safe(saved.firstName||'')}" placeholder="First name"></div><div><label>Last name</label><input class="field" id="accLast" value="${safe(saved.lastName||'')}" placeholder="Last name"></div><div><label>Email address</label><input class="field disabled-field" value="${safe(saved.email)}" disabled></div><div><label>Phone number</label><input class="field" id="accPhone" value="${safe(saved.phone||'')}" placeholder="Phone number"></div></div><button class="btn" onclick="saveAccountInfo()">SAVE DETAILS</button></section><section class="card account-card"><h2>Saved delivery address</h2>${typeof accountAddressFields==='function'?accountAddressFields('accAddr_',addr):''}<button class="btn" onclick="saveAccountAddress()">SAVE ADDRESS</button></section><section class="card account-card full-span"><h2>Ongoing orders</h2><div class="orders-list">${orderList(ongoing,'No ongoing orders yet.')}</div></section><section class="card account-card full-span"><h2>Previous orders</h2><div class="orders-list">${orderList(previous,'No previous orders yet.')}</div></section><section class="card danger-zone full-span"><h2>Account control</h2><p class="muted">Log out safely, or permanently remove your saved customer profile from this website.</p><button class="btn logout-btn" onclick="logoutUser()">LOG OUT</button><button class="btn danger delete-account-btn" onclick="deleteAccount()">DELETE ACCOUNT</button></section></div>`;
+  };
+})();
+
+
+// === Nita Style finger-scroll + auto-scroll resume for homepage rows ===
+(function(){
+  function setupAutoRows(){
+    document.querySelectorAll('.trending-scroll,.new-arrivals-scroll').forEach(section=>{
+      if(section.dataset.nitaAutoReady==='1') return;
+      section.dataset.nitaAutoReady='1';
+      let resumeTimer=null;
+      const track=()=>section.querySelector('.product-marquee');
+      const pause=()=>{const t=track(); if(t) t.style.animationPlayState='paused'; clearTimeout(resumeTimer);};
+      const resume=()=>{clearTimeout(resumeTimer); resumeTimer=setTimeout(()=>{const t=track(); if(t) t.style.animationPlayState='running';},650);};
+      section.addEventListener('pointerdown',pause,{passive:true});
+      section.addEventListener('pointerup',resume,{passive:true});
+      section.addEventListener('pointercancel',resume,{passive:true});
+      section.addEventListener('touchstart',pause,{passive:true});
+      section.addEventListener('touchend',resume,{passive:true});
+      section.addEventListener('touchcancel',resume,{passive:true});
+      section.addEventListener('scroll',()=>{pause();resume();},{passive:true});
+    });
+  }
+  window.addEventListener('load',()=>setTimeout(setupAutoRows,900));
+  window.addEventListener('nita-store-ready',()=>setTimeout(setupAutoRows,150));
+  const oldRender=window.renderHomeSections;
+  if(typeof oldRender==='function'){
+    window.renderHomeSections=function(){oldRender.apply(this,arguments);setTimeout(setupAutoRows,80);};
+  }
+})();
+
+// --- FINAL QUICK VIEW RELIABILITY FIX (desktop/tablet/phone) ---
+(function(){
+  function esc(v){return String(v ?? '').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+  function products(){try{return typeof getProducts==='function'?getProducts():[]}catch(e){return []}}
+  function normalize(p){try{return typeof normalizeProductStatus==='function'?normalizeProductStatus(p):(p||{})}catch(e){return p||{}}}
+  function imgs(p){try{return typeof productImagesForDisplay==='function'?productImagesForDisplay(p):{first:p?.img||'linear-gradient(135deg,#fff,#ddd)',second:p?.img||'linear-gradient(135deg,#fff,#ddd)',all:[p?.img||'linear-gradient(135deg,#fff,#ddd)']}}catch(e){return {first:'linear-gradient(135deg,#fff,#ddd)',second:'linear-gradient(135deg,#fff,#ddd)',all:['linear-gradient(135deg,#fff,#ddd)']}}}
+  function bg(u){try{return typeof cssBgImage==='function'?cssBgImage(u):(String(u||'').startsWith('data:')?`background-image:url(${u})`:`background:${u||'linear-gradient(135deg,#fff,#ddd)'}`)}catch(e){return 'background:linear-gradient(135deg,#fff,#ddd)'}}
+  function moneySafe(v){try{return typeof money==='function'?money(v):('$'+Number(v||0).toFixed(2))}catch(e){return '$'+Number(v||0).toFixed(2)}}
+  function priceRow(p){try{return typeof productPriceStatusRow==='function'?productPriceStatusRow(p,'h3'):`<h3>${moneySafe(p.salePrice||p.price)}</h3>`}catch(e){return `<h3>${moneySafe(p.salePrice||p.price)}</h3>`}}
+  function statusHtml(status){try{return typeof stockStatusHtml==='function'?stockStatusHtml(status):''}catch(e){return ''}}
+  function modal(){
+    let m=document.getElementById('quickModal');
+    if(!m){
+      document.body.insertAdjacentHTML('beforeend',`<div class="quick-modal" id="quickModal" aria-hidden="true"><div class="quick-backdrop" data-quick-close="true"></div><div class="quick-dialog" role="dialog" aria-modal="true"><button class="quick-close" type="button" data-quick-close="true">×</button><div id="quickContent"></div></div></div>`);
+      m=document.getElementById('quickModal');
+    }
+    return m;
+  }
+  function getQuickIdFromTarget(t){
+    const btn=t.closest?.('.quick-view-btn,[data-quick-id]');
+    if(btn?.dataset?.quickId) return btn.dataset.quickId;
+    const onclick=btn?.getAttribute?.('onclick')||'';
+    let m=onclick.match(/openQuickView\(['"]([^'"]+)['"]\)/); if(m) return m[1];
+    const card=t.closest?.('.product');
+    const href=card?.querySelector?.('a[href*="product.html"]')?.getAttribute('href')||'';
+    try{const u=new URL(href,location.href); return u.searchParams.get('id')||'';}catch(e){return ''}
+  }
+  window.selectedQuickSize=function(){return document.querySelector('#quickContent .size.active')?.textContent || 'One Size'};
+  window.openQuickView=function(id){
+    const p=normalize(products().find(x=>String(x.id)===String(id)));
+    if(!p?.id){return false;}
+    const im=imgs(p); const status=p.status || (p.soldOut?'out-of-stock':'in-stock');
+    const sizes=(Array.isArray(p.sizes)&&p.sizes.length?p.sizes:['One Size']).map((s,i)=>`<button type="button" class="size ${i===0?'active':''}" onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${esc(s)}</button>`).join('');
+    const canBuy=status==='in-stock';
+    const action=canBuy
+      ? `<button class="btn quick-add" type="button" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}', selectedQuickSize()); closeQuickView();">ADD TO CART</button>`
+      : `<button class="btn disabled quick-disabled" type="button" disabled aria-disabled="true">${status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button><button class="notify-btn" type="button" onclick="notifyMe && notifyMe('${String(p.id).replace(/'/g,"\\'")}')">NOTIFY ME</button>`;
+    modal().querySelector('#quickContent').innerHTML=`<div class="quick-grid"><div class="quick-image" style="${bg(im.first)}"></div><div class="quick-info"><p class="muted">${esc(p.category||'')}</p><h2>${esc(p.name||'Product')}</h2>${priceRow(p)}<p>${esc(p.desc||'')}</p><div class="sizes">${sizes}</div>${action}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div></div>`;
+    const m=modal(); m.classList.add('open'); m.setAttribute('aria-hidden','false'); document.body.classList.add('panel-open','quick-open');
+    return false;
+  };
+  window.closeQuickView=function(){const m=document.getElementById('quickModal'); if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true')} document.body.classList.remove('panel-open','quick-open')};
+  document.addEventListener('click',function(e){
+    if(e.target.closest?.('[data-quick-close]')){e.preventDefault();e.stopPropagation();closeQuickView();return;}
+    const btn=e.target.closest?.('.quick-view-btn,[data-quick-id]');
+    if(!btn) return;
+    const id=getQuickIdFromTarget(e.target);
+    if(id){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation?.();openQuickView(id);}
+  },true);
+  document.addEventListener('touchend',function(e){
+    const btn=e.target.closest?.('.quick-view-btn,[data-quick-id]'); if(!btn) return;
+    const id=getQuickIdFromTarget(e.target); if(id){e.preventDefault();e.stopPropagation();openQuickView(id);}
+  },{capture:true,passive:false});
+  const oldProductCard=window.productCard;
+  window.productCard=function(raw){
+    const p=normalize(raw); const im=imgs(p); const sale=p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price);
+    const title=esc(p.name||'Product');
+    const price=(typeof productPriceStatusRow==='function')?productPriceStatusRow(p,'p'):`<p>${moneySafe(p.salePrice||p.price)}</p>${statusHtml(p.status)}`;
+    return `<article class="product status-${esc(p.status||'in-stock')}" data-product-id="${esc(p.id)}"><a class="product-hit" href="product.html?id=${encodeURIComponent(p.id)}"><div class="product-img">${sale?'<span class="sale-badge">PRICE DROP</span>':''}<span class="product-img-layer product-img-primary" style="${bg(im.first)}"></span><span class="product-img-layer product-img-secondary" style="${bg(im.second)}"></span></div><h3>${title}</h3>${price}</a><button class="quick-view-btn" type="button" data-quick-id="${esc(p.id)}" aria-label="Quick view ${title}">QUICK VIEW</button></article>`;
+  };
+  window.renderProducts=function(el='#products',list=products()){const node=document.querySelector(el); if(node) node.innerHTML=(list||[]).map(window.productCard).join('') || '<p class="muted">No products listed yet.</p>';};
+})();
+
+
+// === NITA STYLE PRODUCT IMAGE + OUT-OF-STOCK SIZE FINAL POLISH ===
+(function(){
+  const SIZE_OPTIONS=['XS','S','M','L','XL','One Size'];
+  function esc(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+  function uniq(arr){return [...new Set((arr||[]).map(x=>String(x||'').trim()).filter(Boolean))];}
+  function bg(u){try{return typeof cssBgImage==='function'?cssBgImage(u):(String(u||'').startsWith('data:')?`background-image:url(${u})`:`background:${u||'linear-gradient(135deg,#fff,#ddd)'}`)}catch(e){return 'background:linear-gradient(135deg,#fff,#ddd)';}}
+  function moneySafe(v){try{return typeof money==='function'?money(v):('$'+Number(v||0).toFixed(2));}catch(e){return '$'+Number(v||0).toFixed(2);}}
+  function products(){try{return typeof getProducts==='function'?getProducts():[]}catch(e){return []}}
+  function normalize(p){try{p=typeof normalizeProductStatus==='function'?normalizeProductStatus(p||{}):(p||{});}catch(e){p=p||{}}; p.outOfStockSizes=uniq(p.outOfStockSizes||[]); return p;}
+  function sizesOf(p){return uniq(p.sizes&&p.sizes.length?p.sizes:['One Size']);}
+  function isSizeOOS(p,s){return (p.outOfStockSizes||[]).map(x=>x.toLowerCase()).includes(String(s).toLowerCase());}
+  function sizeButtonsHTML(selected=[], unavailable=[], editable=false){
+    const sel=new Set(uniq(selected)); const off=new Set(uniq(unavailable));
+    return SIZE_OPTIONS.map(s=>`<button type="button" class="pill ${sel.has(s)?'on':''} ${off.has(s)?'oos-on':''}" data-size="${esc(s)}" onclick="this.classList.toggle('on')">${esc(s)}</button>`).join('');
+  }
+  function selectedSizesFrom(root,selector){return [...root.querySelectorAll(selector||'.size-picker .pill.on')].map(b=>b.dataset.size||b.textContent.trim()).filter(Boolean);}
+  window.nitaSelectedSizesFrom=selectedSizesFrom;
+
+  // Upgrade existing add-product form with an out-of-stock size picker below available sizes.
+  function ensureAdminOosPicker(){
+    const sp=document.getElementById('sizePicker');
+    if(sp && !document.getElementById('sizeOutPicker')){
+      const wrap=document.createElement('div');
+      wrap.className='full admin-size-oos-wrap';
+      wrap.innerHTML=`<label>Out-of-stock sizes</label><p class="field-help">Choose sizes that exist for this product but are currently unavailable.</p><div id="sizeOutPicker" class="size-picker oos-picker">${SIZE_OPTIONS.map(s=>`<button type="button" class="pill" data-size="${s}" onclick="this.classList.toggle('on')">${s}</button>`).join('')}</div>`;
+      sp.closest('.full')?.insertAdjacentElement('afterend',wrap);
+    }
+  }
+  window.addEventListener('load',()=>setTimeout(ensureAdminOosPicker,500));
+  const oldRenderAdmin=window.renderAdmin;
+  if(typeof oldRenderAdmin==='function') window.renderAdmin=async function(){const r=await oldRenderAdmin.apply(this,arguments); setTimeout(ensureAdminOosPicker,50); return r;};
+
+  // Save new product with available sizes and unavailable sizes.
+  const oldAdd=window.addProductAdmin;
+  window.addProductAdmin=async function(){
+    const beforeCount=products().length;
+    if(oldAdd) await oldAdd.apply(this,arguments);
+    try{
+      const ps=products();
+      const p=ps[ps.length-1];
+      if(ps.length>beforeCount && p){
+        p.outOfStockSizes=selectedSizesFrom(document,'.oos-picker .pill.on,#sizeOutPicker .pill.on').filter(s=>sizesOf(p).includes(s));
+        if(typeof saveProducts==='function') await saveProducts(ps);
+        if(typeof renderAdmin==='function') renderAdmin();
+      }
+    }catch(e){console.warn('Out-of-stock size save skipped',e)}
+  };
+
+  // Admin editor with available sizes + out-of-stock sizes.
+  const prevEditor=window.productEditorHTML;
+  window.productEditorHTML=function(raw){
+    const p=normalize(raw); const selected=sizesOf(p); const unavailable=uniq(p.outOfStockSizes||[]);
+    let html = prevEditor ? prevEditor(raw) : '';
+    if(!html) return html;
+    // Replace the available-size block with two separate controlled blocks.
+    html = html.replace(/<div class="full"><label>Available sizes<\/label><div class="size-picker">[\s\S]*?<\/div><\/div>/, `<div class="full"><label>Available sizes</label><p class="field-help">Choose every size this product can exist in.</p><div class="size-picker available-size-picker">${sizeButtonsHTML(selected,[],true)}</div></div><div class="full admin-size-oos-wrap"><label>Out-of-stock sizes</label><p class="field-help">These sizes will be visible but disabled with a diagonal line for customers.</p><div class="size-picker oos-picker edit-oos-picker">${SIZE_OPTIONS.map(s=>`<button type="button" class="pill ${unavailable.includes(s)?'on':''}" data-size="${esc(s)}" onclick="this.classList.toggle('on')">${esc(s)}</button>`).join('')}</div></div>`);
+    return html;
+  };
+
+  const oldSaveEditor=window.saveProductEditor;
+  window.saveProductEditor=async function(id){
+    await (oldSaveEditor ? oldSaveEditor.apply(this,arguments) : Promise.resolve());
+    try{
+      const ps=products(); const p=ps.find(x=>String(x.id)===String(id)); const root=document.getElementById('editor-'+id); if(!p||!root)return;
+      p.sizes=selectedSizesFrom(root,'.available-size-picker .pill.on,.size-picker:not(.oos-picker) .pill.on');
+      if(!p.sizes.length) p.sizes=['One Size'];
+      p.outOfStockSizes=selectedSizesFrom(root,'.oos-picker .pill.on').filter(s=>p.sizes.includes(s));
+      if(typeof saveProducts==='function') await saveProducts(ps);
+      if(typeof renderAdmin==='function') renderAdmin();
+    }catch(e){console.warn('Out-of-stock size editor save skipped',e)}
+  };
+
+  // Product page renderer: contained image, clean gallery, unavailable sizes disabled.
+  window.productPage=function(){
+    const detail=document.getElementById('detail'); if(!detail) return;
+    let id=new URL(location.href).searchParams.get('id')||'';
+    let p=normalize(products().find(x=>String(x.id)===String(id)) || products()[0]);
+    if(!p?.id){detail.innerHTML='<p class="muted">Product not found.</p>'; return;}
+    const imgs=(typeof productImagesForDisplay==='function'?productImagesForDisplay(p):{all:[p.img||'linear-gradient(135deg,#fff,#ddd)']});
+    window.selectedPhoto=Math.min(Number(window.selectedPhoto||0),imgs.all.length-1);
+    const sizes=sizesOf(p);
+    if(!window.selectedSize || !sizes.includes(window.selectedSize) || isSizeOOS(p,window.selectedSize)) window.selectedSize=sizes.find(s=>!isSizeOOS(p,s))||sizes[0];
+    const canBuy=p.status==='in-stock' && !isSizeOOS(p,window.selectedSize);
+    const sizesHtml=sizes.map(s=>`<button type="button" class="size ${s===window.selectedSize?'active':''} ${isSizeOOS(p,s)?'size-disabled':''}" ${isSizeOOS(p,s)?'disabled aria-disabled="true" title="Out of stock"':`onclick="selectedSize='${esc(s)}';productPage()"`}>${esc(s)}</button>`).join('');
+    const action=canBuy?`<button class="btn" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}',selectedSize)">ADD TO CART</button><a class="btn light" href="checkout.html">BUY NOW</a>`:`<button class="btn disabled" disabled aria-disabled="true">${p.status==='coming-soon'?'COMING SOON':(p.status==='out-of-stock'?'OUT OF STOCK':'SIZE OUT OF STOCK')}</button><button class="notify-btn" type="button" onclick="notifyMe&&notifyMe('${String(p.id).replace(/'/g,"\\'")}')">NOTIFY ME</button>`;
+    const price=typeof productPriceStatusRow==='function'?productPriceStatusRow(p,'h2'):`<h2>${moneySafe(p.salePrice||p.price)}</h2>`;
+    detail.innerHTML=`<div class="product-media"><div class="detail-img" style="${bg(imgs.all[window.selectedPhoto])}"></div><div class="product-thumbs">${imgs.all.map((ph,i)=>`<button class="${i===window.selectedPhoto?'active':''}" onclick="selectedPhoto=${i};productPage()" style="${bg(ph)}"></button>`).join('')}</div></div><div class="product-info"><p class="muted">${esc(p.category||'')}</p><h1>${esc(p.name||'Product')}</h1>${price}<p>${esc(p.desc||'')}</p><div class="sizes product-size-list">${sizesHtml}</div><div class="product-actions">${action}</div><hr><p class="muted">Cash on delivery available. Online payment will be available soon.</p></div>`;
+  };
+
+  // Quick view disabled sizes too.
+  const oldQuick=window.openQuickView;
+  window.openQuickView=function(id){
+    const p=normalize(products().find(x=>String(x.id)===String(id))); if(!p?.id) return oldQuick?oldQuick(id):false;
+    const im=typeof productImagesForDisplay==='function'?productImagesForDisplay(p):{first:p.img||'linear-gradient(135deg,#fff,#ddd)'};
+    const sizes=sizesOf(p); const firstAvailable=sizes.find(s=>!isSizeOOS(p,s))||sizes[0];
+    window.selectedQuickSize=()=>document.querySelector('#quickContent .size.active')?.textContent || firstAvailable;
+    let m=document.getElementById('quickModal'); if(!m && oldQuick) return oldQuick(id);
+    const sizesHtml=sizes.map(s=>`<button type="button" class="size ${s===firstAvailable?'active':''} ${isSizeOOS(p,s)?'size-disabled':''}" ${isSizeOOS(p,s)?'disabled aria-disabled="true"':`onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')"`}>${esc(s)}</button>`).join('');
+    const canBuy=p.status==='in-stock' && !isSizeOOS(p,firstAvailable);
+    const action=canBuy?`<button class="btn quick-add" type="button" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}', selectedQuickSize()); closeQuickView();">ADD TO CART</button>`:`<button class="btn disabled quick-disabled" type="button" disabled>${p.status==='coming-soon'?'COMING SOON':(p.status==='out-of-stock'?'OUT OF STOCK':'SIZE OUT OF STOCK')}</button><button class="notify-btn" type="button" onclick="notifyMe&&notifyMe('${String(p.id).replace(/'/g,"\\'")}')">NOTIFY ME</button>`;
+    document.getElementById('quickContent').innerHTML=`<div class="quick-grid"><div class="quick-image" style="${bg(im.first)}"></div><div class="quick-info"><p class="muted">${esc(p.category||'')}</p><h2>${esc(p.name||'Product')}</h2>${typeof productPriceStatusRow==='function'?productPriceStatusRow(p,'h3'):`<h3>${moneySafe(p.salePrice||p.price)}</h3>`}<p>${esc(p.desc||'')}</p><div class="sizes">${sizesHtml}</div>${action}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div></div>`;
+    m.classList.add('open'); m.setAttribute('aria-hidden','false'); document.body.classList.add('panel-open','quick-open'); return false;
+  };
+})();
+// === END NITA STYLE PRODUCT IMAGE + OUT-OF-STOCK SIZE FINAL POLISH ===
+
+// === NITA STYLE FINAL SIZE STOCK + AUTO MARQUEE REVERT PATCH ===
+(function(){
+  const SIZE_OPTIONS = ['XS','S','M','L','XL','One Size'];
+  const esc = (v)=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const uniq = (arr)=>[...new Set((arr||[]).map(x=>String(x||'').trim()).filter(Boolean))];
+  const moneySafe=(v)=>{try{return typeof money==='function'?money(v):'$'+Number(v||0).toFixed(2)}catch(e){return '$'+Number(v||0).toFixed(2)}};
+  const bg=(u)=>{try{return typeof cssBgImage==='function'?cssBgImage(u):(String(u||'').startsWith('data:')?`background-image:url(${u})`:`background:${u||'linear-gradient(135deg,#fff,#ddd)'}`)}catch(e){return 'background:linear-gradient(135deg,#fff,#ddd)'}};
+  const products=()=>{try{return typeof getProducts==='function'?getProducts():[]}catch(e){return []}};
+  const norm=(p)=>{p=(p||{}); try{p=typeof normalizeProductStatus==='function'?normalizeProductStatus(p):p}catch(e){}; p.sizes=uniq(p.sizes&&p.sizes.length?p.sizes:['One Size']); p.outOfStockSizes=uniq(p.outOfStockSizes||[]).filter(s=>p.sizes.includes(s)); p.status=p.status||(p.soldOut?'out-of-stock':'in-stock'); return p;};
+  const isOOS=(p,s)=>uniq(p.outOfStockSizes||[]).map(x=>x.toLowerCase()).includes(String(s).toLowerCase());
+  const selectedFrom=(root,selector)=>uniq([...(root||document).querySelectorAll(selector)].map(b=>b.dataset.size||b.textContent.trim()));
+  const safeId=(id)=>String(id||'').replace(/'/g,"\\'");
+
+  window.selectedAdminSizes=function(root=document){
+    return selectedFrom(root, root===document ? '#sizePicker .pill.on' : '.available-size-picker .pill.on');
+  };
+  function sizePills(selected=[], cls='available-size-picker'){
+    const set=new Set(uniq(selected));
+    return `<div class="size-picker ${cls}">${SIZE_OPTIONS.map(s=>`<button type="button" class="pill ${set.has(s)?'on':''}" data-size="${esc(s)}" onclick="this.classList.toggle('on')">${esc(s)}</button>`).join('')}</div>`;
+  }
+  function ensureAddOosPicker(){
+    const sp=document.getElementById('sizePicker');
+    if(sp && !sp.classList.contains('available-size-picker')) sp.classList.add('available-size-picker');
+    if(sp && !document.getElementById('sizeOutPicker')){
+      const wrap=document.createElement('div');
+      wrap.className='full admin-size-oos-wrap';
+      wrap.innerHTML=`<label>Out-of-stock sizes</label><p class="field-help">Select sizes that exist for this product but cannot be purchased now.</p>${sizePills([], 'oos-picker')}`;
+      wrap.querySelector('.oos-picker').id='sizeOutPicker';
+      sp.closest('.full')?.insertAdjacentElement('afterend',wrap);
+    }
+  }
+  window.addEventListener('load',()=>setTimeout(ensureAddOosPicker,300));
+  const previousRenderAdmin=window.renderAdmin;
+  if(typeof previousRenderAdmin==='function'){
+    window.renderAdmin=async function(){const r=await previousRenderAdmin.apply(this,arguments); setTimeout(ensureAddOosPicker,80); return r;};
+  }
+
+  function parseNote(note=''){
+    const parts=String(note||'').split(' · ');
+    return {color:parts[0]||'Black',style:parts[1]||parts[0]||'Clean everyday piece'};
+  }
+  const COLORS=window.COLOR_OPTIONS||['Black','White','Beige','Cream','Grey','Brown','Navy','Blue','Red','Pink','Green','Yellow','Print / Pattern','Multi-color'];
+  const STYLES=window.STYLE_OPTIONS||['Clean everyday piece','Elegant evening piece','Minimal essential','Soft feminine silhouette','Relaxed boutique fit','Premium casual look','Statement piece','Light summer piece','Structured tailored style'];
+  const HOME=[['trending-now','Trending Now'],['new-arrivals','New Arrivals']];
+  const opts=(list,current)=>list.map(x=>Array.isArray(x)?`<option value="${esc(x[0])}" ${x[0]===current?'selected':''}>${esc(x[1])}</option>`:`<option ${x===current?'selected':''}>${esc(x)}</option>`).join('');
+  const homeSection=(p)=>p.displaySection||p.homeSection||(p.collection==='New Arrivals'?'new-arrivals':'trending-now');
+  window.productHomeSection=homeSection;
+
+  window.productEditorHTML=function(raw){
+    const p=norm(raw); const photos=(typeof productImagesForDisplay==='function'?productImagesForDisplay(p).all:(p.photos||[p.img])).filter(Boolean); const note=parseNote(p.note); const main=Number(p.mainPhotoIndex||0);
+    const thumbs=photos.map((u,i)=>`<button type="button" class="admin-thumb selectable-thumb existing-main-${esc(p.id)} ${i===main?'selected-main':''}" onclick="document.querySelectorAll('.existing-main-${safeId(p.id)}').forEach(b=>b.classList.remove('selected-main'));this.classList.add('selected-main');this.closest('.product-editor').dataset.mainIndex='${i}'"><img src="${String(u).startsWith('data:')?esc(u):''}" style="${String(u).startsWith('data:')?'':'display:none'}"><span>${i===main?'Main photo':'Photo '+(i+1)}</span></button>`).join('');
+    return `<div class="admin-form">
+      <div class="full"><label>Product availability</label><select class="field edit-status"><option value="in-stock" ${p.status==='in-stock'?'selected':''}>In stock</option><option value="coming-soon" ${p.status==='coming-soon'?'selected':''}>Coming soon</option><option value="out-of-stock" ${p.status==='out-of-stock'?'selected':''}>Out of stock</option></select></div>
+      <div><label>Product name</label><input class="field edit-name" value="${esc(p.name||'')}"></div>
+      <div><label>Regular price</label><input class="field edit-price" type="number" step="0.01" value="${Number(p.price||0)}"></div>
+      <div><label>Sale / price-drop price</label><input class="field edit-sale" type="number" step="0.01" value="${p.salePrice||''}" placeholder="Optional"></div>
+      <div><label>Product category</label><select class="field edit-category">${opts(window.ADMIN_CATEGORIES||['Dresses','Tops','Pants','Jackets','Accessories'],p.category)}</select></div>
+      <div><label>Collection</label><select class="field edit-collection">${opts(window.ADMIN_COLLECTIONS||['Everyday Edit','Minimal Essentials','Evening Pieces','Accessories','Price Drops'],p.collection)}</select></div>
+      <div><label>Color</label><select class="field edit-color">${opts(COLORS,note.color)}</select></div>
+      <div><label>Style note</label><select class="field edit-style">${opts(STYLES,note.style)}</select></div>
+      <div><label>Homepage display section</label><select class="field edit-home-section">${opts(HOME,homeSection(p))}</select></div>
+      <div class="full"><label>Current photos</label><p class="muted">Click one photo to choose the main photo.</p><div class="photo-preview existing-photos">${thumbs||'<p class="muted">No photos yet.</p>'}</div><label style="margin-top:18px">Replace / add product gallery</label><div class="upload-zone"><input type="file" accept="image/*" multiple onchange="previewEditPhotos(event,'${safeId(p.id)}')"><p><b>Upload multiple photos</b><br><span class="muted">Select several images at once. Then choose the main one.</span></p></div><div class="photo-preview" id="editPreview-${esc(p.id)}"></div></div>
+      <div class="full"><label>Available sizes</label><p class="field-help">Choose every size this product exists in.</p>${sizePills(p.sizes,'available-size-picker')}</div>
+      <div class="full admin-size-oos-wrap"><label>Out-of-stock sizes</label><p class="field-help">Only these selected sizes will be grey, crossed, and unclickable for customers.</p>${sizePills(p.outOfStockSizes,'oos-picker edit-oos-picker')}</div>
+      <div class="full"><label>Description</label><textarea class="field edit-desc">${esc(p.desc||'')}</textarea></div>
+    </div><button class="btn" onclick="saveProductEditor('${safeId(p.id)}')">SAVE PRODUCT CHANGES</button>`;
+  };
+
+  window.addProductAdmin=async function(){
+    const name=document.getElementById('pname')?.value.trim(); const price=Number(document.getElementById('pprice')?.value||0);
+    if(!name||!price){toast?.('Add a product name and price');return;}
+    if(typeof loadSharedStore==='function') await loadSharedStore();
+    if(window.nitaBackendOnline===false){notify?.('Cannot add product: cloud database is offline.', false, true); return;}
+    const sizes=selectedFrom(document,'#sizePicker .pill.on');
+    const out=selectedFrom(document,'#sizeOutPicker .pill.on').filter(s=>sizes.includes(s));
+    const photos=(window.pendingAdminPhotos||[]).slice(); const main=Math.max(0,Math.min(Number(window.pendingAdminMainIndex||0),Math.max(photos.length-1,0)));
+    const sale=document.getElementById('psale')?.value; const color=document.getElementById('pcolor')?.value||'Black'; const style=document.getElementById('pstyle')?.value||'Clean everyday piece'; const displaySection=document.getElementById('phome')?.value||'trending-now';
+    const product=norm({id:'p'+Date.now(),name,price,salePrice:sale===''?'':Number(sale),status:document.getElementById('pstatus')?.value||'in-stock',category:document.getElementById('pcat')?.value||'Tops',collection:document.getElementById('pcollection')?.value||'Everyday Edit',displaySection,homeSection:displaySection,note:`${color} · ${style}`,sizes:sizes.length?sizes:['One Size'],outOfStockSizes:out,photos,mainPhotoIndex:main,img:photos[main]||photos[0]||'linear-gradient(135deg,#fff,#ddd)',desc:document.getElementById('pdesc')?.value.trim()||'A carefully selected Italian-made piece for a clean, feminine wardrobe.'});
+    const ps=products(); ps.push(product); const ok=await saveProducts(ps); if(ok){window.pendingAdminPhotos=[];window.pendingAdminMainIndex=0;['pname','pprice','psale','pdesc'].forEach(id=>{const el=document.getElementById(id); if(el)el.value=''}); const inp=document.getElementById('pphotos'); if(inp)inp.value=''; const prev=document.getElementById('photoPreview'); if(prev)prev.innerHTML=''; await loadSharedStore?.(); renderAdmin?.(); toast?.('Product added globally.');}
+  };
+
+  window.saveProductEditor=async function(id){
+    if(typeof loadSharedStore==='function') await loadSharedStore();
+    if(window.nitaBackendOnline===false){notify?.('Cannot save edit: cloud database is offline.', false, true); return;}
+    const ps=products(); const p=ps.find(x=>String(x.id)===String(id)); const root=document.getElementById('editor-'+id); if(!p||!root)return;
+    const old=Number(p.price||0); const entered=Number(root.querySelector('.edit-price')?.value||0); const saleInput=root.querySelector('.edit-sale')?.value;
+    p.name=root.querySelector('.edit-name')?.value.trim()||p.name;
+    if(saleInput===''){ if(entered>0 && entered<old){p.salePrice=entered; p.price=old;} else {p.price=entered; p.salePrice='';} } else {p.price=entered; p.salePrice=Number(saleInput);}
+    p.category=root.querySelector('.edit-category')?.value||p.category; p.collection=root.querySelector('.edit-collection')?.value||p.collection; p.displaySection=root.querySelector('.edit-home-section')?.value||homeSection(p); p.homeSection=p.displaySection;
+    const color=root.querySelector('.edit-color')?.value||'Black'; const style=root.querySelector('.edit-style')?.value||'Clean everyday piece'; p.note=`${color} · ${style}`;
+    p.desc=root.querySelector('.edit-desc')?.value.trim()||''; p.sizes=selectedFrom(root,'.available-size-picker .pill.on'); if(!p.sizes.length)p.sizes=['One Size']; p.outOfStockSizes=selectedFrom(root,'.oos-picker .pill.on').filter(s=>p.sizes.includes(s));
+    p.status=root.querySelector('.edit-status')?.value||p.status||'in-stock'; p.soldOut=p.status==='out-of-stock';
+    if(window.editingPhotoBuffers?.[id]?.length){p.photos=window.editingPhotoBuffers[id]; p.mainPhotoIndex=Number(window.editingMainPhotoIndex?.[id]||0); p.img=p.photos[p.mainPhotoIndex]||p.photos[0]; delete window.editingPhotoBuffers[id]; delete window.editingMainPhotoIndex[id];}
+    else if(root.dataset.mainIndex!==undefined){p.mainPhotoIndex=Number(root.dataset.mainIndex)||0; const ph=(Array.isArray(p.photos)&&p.photos.length?p.photos:[p.img]).filter(Boolean); p.img=ph[p.mainPhotoIndex]||ph[0]||p.img;}
+    const ok=await saveProducts(ps); if(ok){await loadSharedStore?.(); renderAdmin?.(); toast?.('Product updated globally.');}
+  };
+
+  function sizeButtonsForCustomer(p){
+    p=norm(p); const active=p.sizes.find(s=>!isOOS(p,s))||p.sizes[0]; window.selectedSize=window.selectedSize && p.sizes.includes(window.selectedSize) && !isOOS(p,window.selectedSize) ? window.selectedSize : active;
+    return p.sizes.map(s=>`<button type="button" class="size ${s===window.selectedSize?'active':''} ${isOOS(p,s)?'size-disabled':''}" ${isOOS(p,s)?'disabled aria-disabled="true" title="Out of stock"':`onclick="selectedSize='${esc(s)}';productPage()"`}>${esc(s)}</button>`).join('');
+  }
+
+  window.productPage=function(){
+    const detail=document.getElementById('detail'); if(!detail)return; const id=new URL(location.href).searchParams.get('id'); const p=norm(products().find(x=>String(x.id)===String(id))||products()[0]);
+    if(!p?.id){detail.innerHTML='<div class="card"><h1>Product not found</h1><a class="btn" href="shop.html">BACK TO SHOP</a></div>';return;}
+    const im=typeof productImagesForDisplay==='function'?productImagesForDisplay(p):{all:[p.img||'linear-gradient(135deg,#fff,#ddd)']}; window.selectedPhoto=Math.min(Number(window.selectedPhoto||0),im.all.length-1);
+    const currentOos=isOOS(p,window.selectedSize); const canBuy=p.status==='in-stock' && !currentOos;
+    const action=canBuy?`<button class="btn" onclick="addToCart('${safeId(p.id)}',selectedSize||'One Size')">ADD TO CART</button><a class="btn light" href="checkout.html">BUY NOW</a>`:`<button class="btn disabled" disabled aria-disabled="true">${p.status==='coming-soon'?'COMING SOON':(p.status==='out-of-stock'?'OUT OF STOCK':'SIZE OUT OF STOCK')}</button><button class="notify-btn" type="button" onclick="notifyMe&&notifyMe('${safeId(p.id)}')">NOTIFY ME</button>`;
+    detail.innerHTML=`<div class="product-media"><div class="detail-img" style="${bg(im.all[window.selectedPhoto])}"></div><div class="product-thumbs">${im.all.map((ph,i)=>`<button class="${i===window.selectedPhoto?'active':''}" onclick="selectedPhoto=${i};productPage()" style="${bg(ph)}"></button>`).join('')}</div></div><div class="product-info"><p class="muted">${esc(p.category||'')}</p><h1>${esc(p.name||'Product')}</h1>${typeof productPriceStatusRow==='function'?productPriceStatusRow(p,'h2'):`<h2>${moneySafe(p.salePrice||p.price)}</h2>`}<p>${esc(p.desc||'')}</p><div class="sizes product-size-list">${sizeButtonsForCustomer(p)}</div><div class="product-actions">${action}</div><hr><p class="muted">Cash on delivery available. Online payment will be available soon.</p></div>`;
+  };
+
+  window.openQuickView=function(id){
+    const p=norm(products().find(x=>String(x.id)===String(id))); if(!p?.id)return; const im=typeof productImagesForDisplay==='function'?productImagesForDisplay(p):{first:p.img||'linear-gradient(135deg,#fff,#ddd)'}; const modal=document.getElementById('quickModal'); const q=document.getElementById('quickContent'); if(!modal||!q)return;
+    const available=p.sizes.find(s=>!isOOS(p,s))||p.sizes[0]; window.quickSelectedSize=available;
+    const sizes=p.sizes.map(s=>`<button type="button" class="size ${s===available&&!isOOS(p,s)?'active':''} ${isOOS(p,s)?'size-disabled':''}" ${isOOS(p,s)?'disabled aria-disabled="true" title="Out of stock"':`onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active');quickSelectedSize='${esc(s)}'"`}>${esc(s)}</button>`).join('');
+    const can=p.status==='in-stock' && available && !isOOS(p,available);
+    const action=can?`<button class="btn" onclick="addToCart('${safeId(p.id)}',quickSelectedSize||'One Size');closeQuickView()">ADD TO CART</button>`:`<button class="btn disabled" disabled>${p.status==='coming-soon'?'COMING SOON':(p.status==='out-of-stock'?'OUT OF STOCK':'SIZE OUT OF STOCK')}</button><button class="notify-btn" onclick="notifyMe&&notifyMe('${safeId(p.id)}')">NOTIFY ME</button>`;
+    q.innerHTML=`<div class="quick-grid"><div class="quick-image" style="${bg(im.first)}"></div><div class="quick-info"><p class="muted">${esc(p.category||'')}</p><h2>${esc(p.name||'Product')}</h2>${typeof productPriceStatusRow==='function'?productPriceStatusRow(p,'h3'):`<h3>${moneySafe(p.salePrice||p.price)}</h3>`}<p>${esc(p.desc||'')}</p><div class="sizes">${sizes}</div>${action}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div></div>`;
+    modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); document.body.classList.add('quick-open','panel-open');
+  };
+
+  window.renderHomeSections=function(){
+    const ps=products(); const listFor=(section)=>ps.filter(p=>homeSection(p)===section); const fill=(id,list)=>{const box=document.getElementById(id); if(box){const arr=(list.length?list:ps.slice(0,6)); box.innerHTML=[...arr,...arr,...arr,...arr].map(p=>productCard(p)).join('')||'<p class="muted">No products listed yet.</p>';}};
+    fill('trendingMarquee',listFor('trending-now')); fill('newArrivalsMarquee',listFor('new-arrivals'));
+  };
+  window.addEventListener('nita-store-ready',()=>setTimeout(window.renderHomeSections,50));
+  window.addEventListener('load',()=>setTimeout(window.renderHomeSections,800));
+})();
+// === END FINAL SIZE STOCK + AUTO MARQUEE REVERT PATCH ===
+
+/* === NITA STYLE FINAL CRITICAL FIX: OUT-OF-STOCK SIZES + FIRST-LOAD MARQUEE === */
+(function(){
+  const SIZE_ORDER = ['XS','S','M','L','XL','One Size'];
+  const normSize = s => String(s || '').trim();
+  const keySize = s => normSize(s).toLowerCase();
+  const uniqSizes = arr => [...new Set((arr || []).map(normSize).filter(Boolean))]
+    .sort((a,b)=>{ const ia=SIZE_ORDER.findIndex(x=>keySize(x)===keySize(a)); const ib=SIZE_ORDER.findIndex(x=>keySize(x)===keySize(b)); return (ia<0?99:ia)-(ib<0?99:ib); });
+  const safe = v => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const cssBg = u => {
+    try { return typeof cssBgImage === 'function' ? cssBgImage(u) : (String(u || '').startsWith('data:') ? `background-image:url(${u})` : `background:${u || 'linear-gradient(135deg,#fff,#ddd)'}`); }
+    catch(e){ return 'background:linear-gradient(135deg,#fff,#ddd)'; }
+  };
+  const moneySafe = v => { try { return typeof money === 'function' ? money(v) : ('$' + Number(v || 0).toFixed(2)); } catch(e){ return '$' + Number(v || 0).toFixed(2); } };
+  const allProducts = () => { try { return typeof getProducts === 'function' ? getProducts() : []; } catch(e){ return []; } };
+  function normalizeProduct(p){
+    try { if(typeof normalizeProductStatus === 'function') p = normalizeProductStatus(p || {}); } catch(e){ p = p || {}; }
+    p.sizes = uniqSizes((Array.isArray(p.sizes) && p.sizes.length) ? p.sizes : ['One Size']);
+    p.outOfStockSizes = uniqSizes(p.outOfStockSizes || []).filter(s => p.sizes.some(x => keySize(x) === keySize(s)));
+    p.status = p.status || (p.soldOut ? 'out-of-stock' : 'in-stock');
+    return p;
+  }
+  function isSizeOut(p, size){
+    p = normalizeProduct(p);
+    return p.outOfStockSizes.some(s => keySize(s) === keySize(size));
+  }
+  function selectedPills(root, selector){
+    return uniqSizes([...root.querySelectorAll(selector)].map(b => b.dataset.size || b.textContent));
+  }
+  function pillButtons(selected=[], cls='available-size-picker'){
+    const set = new Set(uniqSizes(selected).map(keySize));
+    return `<div class="size-picker ${cls}">` + SIZE_ORDER.map(s => `<button type="button" class="pill ${set.has(keySize(s)) ? 'on' : ''}" data-size="${safe(s)}" onclick="this.classList.toggle('on')">${safe(s)}</button>`).join('') + `</div>`;
+  }
+
+  function upgradeAddProductSizePickers(){
+    const sp = document.getElementById('sizePicker');
+    if(!sp) return;
+    if(!sp.classList.contains('available-size-picker')) sp.classList.add('available-size-picker');
+    if(!sp.dataset.finalSizes){
+      const current = selectedPills(document, '#sizePicker .pill.on');
+      sp.innerHTML = SIZE_ORDER.map(s => `<button type="button" class="pill ${current.some(x=>keySize(x)===keySize(s)) ? 'on' : ''}" data-size="${safe(s)}" onclick="this.classList.toggle('on')">${safe(s)}</button>`).join('');
+      sp.dataset.finalSizes = '1';
+    }
+    if(!document.getElementById('sizeOutPicker')){
+      const wrap = document.createElement('div');
+      wrap.className = 'full admin-size-oos-wrap';
+      wrap.innerHTML = `<label>Out-of-stock sizes</label><p class="field-help">Select sizes that should be visible to customers but disabled with a diagonal line.</p>${pillButtons([], 'oos-picker')}`;
+      const picker = wrap.querySelector('.oos-picker'); if(picker) picker.id = 'sizeOutPicker';
+      (sp.closest('.full') || sp).insertAdjacentElement('afterend', wrap);
+    }
+  }
+
+  const oldRenderAdmin = window.renderAdmin;
+  window.renderAdmin = async function(){
+    let r; if(typeof oldRenderAdmin === 'function') r = await oldRenderAdmin.apply(this, arguments);
+    upgradeAddProductSizePickers();
+    return r;
+  };
+  window.addEventListener('load', () => setTimeout(upgradeAddProductSizePickers, 250));
+
+  window.productEditorHTML = function(raw){
+    const p = normalizeProduct(raw);
+    const photos = (Array.isArray(p.photos) && p.photos.length ? p.photos : [p.img]).filter(Boolean);
+    const main = Math.max(0, Math.min(Number(p.mainPhotoIndex || 0), Math.max(photos.length - 1, 0)));
+    const thumbs = photos.map((u,i)=>`<button type="button" class="admin-thumb ${i===main?'main':''}" onclick="this.closest('.product-editor').dataset.mainIndex='${i}';this.parentElement.querySelectorAll('.admin-thumb').forEach(x=>x.classList.remove('main'));this.classList.add('main')"><img src="${String(u).startsWith('data:') ? u : ''}" style="${String(u).startsWith('data:') ? '' : 'display:none'}"><span>${i===main?'Main photo':'Set as main'}</span></button>`).join('');
+    const opts = (arr,val) => arr.map(x => Array.isArray(x) ? `<option value="${safe(x[0])}" ${x[0]===val?'selected':''}>${safe(x[1])}</option>` : `<option ${x===val?'selected':''}>${safe(x)}</option>`).join('');
+    const home = p.displaySection || p.homeSection || (p.collection === 'New Arrivals' ? 'new-arrivals' : 'trending-now');
+    return `<div class="admin-form">
+      <div><label>Product name</label><input class="field edit-name" value="${safe(p.name || '')}"></div>
+      <div><label>Regular price</label><input class="field edit-price" type="number" step="0.01" value="${Number(p.price || 0)}"></div>
+      <div><label>Sale / price-drop price</label><input class="field edit-sale" type="number" step="0.01" value="${p.salePrice || ''}" placeholder="Optional"></div>
+      <div><label>Availability status</label><select class="field edit-status"><option value="in-stock" ${p.status==='in-stock'?'selected':''}>In stock</option><option value="coming-soon" ${p.status==='coming-soon'?'selected':''}>Coming soon</option><option value="out-of-stock" ${p.status==='out-of-stock'?'selected':''}>Out of stock</option></select></div>
+      <div><label>Product category</label><select class="field edit-category">${opts(['Dresses','Tops','Pants','Jackets','Accessories'], p.category || 'Tops')}</select></div>
+      <div><label>Collection</label><select class="field edit-collection">${opts(['Everyday Edit','Minimal Essentials','Evening Pieces','Accessories','Price Drops','New Arrivals'], p.collection || 'Everyday Edit')}</select></div>
+      <div><label>Homepage display section</label><select class="field edit-home-section">${opts([['trending-now','Trending Now'],['new-arrivals','New Arrivals']], home)}</select></div>
+      <div><label>Color</label><select class="field edit-color">${opts(['Black','White','Beige','Cream','Grey','Brown','Navy','Blue','Red','Pink','Green','Yellow','Print / Pattern','Multi-color'], (p.note||'').split(' · ')[0] || 'Black')}</select></div>
+      <div><label>Style note</label><select class="field edit-style">${opts(['Clean everyday piece','Elegant evening piece','Minimal essential','Soft feminine silhouette','Relaxed boutique fit','Premium casual look','Statement piece','Light summer piece','Structured tailored style'], (p.note||'').split(' · ')[1] || 'Clean everyday piece')}</select></div>
+      <div class="full"><label>Current photos</label><p class="muted">Click a photo to choose the main product image.</p><div class="photo-preview existing-photos">${thumbs || '<p class="muted">No photos yet.</p>'}</div><label style="margin-top:18px">Replace / add product gallery</label><div class="upload-zone"><input type="file" accept="image/*" multiple onchange="previewEditPhotos(event,'${String(p.id).replace(/'/g,"\\'")}')"><p><b>Upload multiple photos</b><br><span class="muted">Select several images at once. Then choose the main one.</span></p></div><div class="photo-preview" id="editPreview-${safe(p.id)}"></div></div>
+      <div class="full"><label>Product sizes</label><p class="field-help">Select every size that exists for this product.</p>${pillButtons(p.sizes, 'available-size-picker')}</div>
+      <div class="full admin-size-oos-wrap"><label>Out-of-stock sizes</label><p class="field-help">Only these sizes become grey, crossed, and unclickable for customers.</p>${pillButtons(p.outOfStockSizes, 'oos-picker edit-oos-picker')}</div>
+      <div class="full"><label>Description</label><textarea class="field edit-desc">${safe(p.desc || '')}</textarea></div>
+    </div><button class="btn" onclick="saveProductEditor('${String(p.id).replace(/'/g,"\\'")}')">SAVE PRODUCT CHANGES</button>`;
+  };
+
+  window.addProductAdmin = async function(){
+    const name = document.getElementById('pname')?.value.trim();
+    const price = Number(document.getElementById('pprice')?.value || 0);
+    if(!name || !price){ toast?.('Add a product name and price'); return; }
+    if(typeof loadSharedStore === 'function') await loadSharedStore();
+    if(window.nitaBackendOnline === false){ notify?.('Cannot add product: cloud database is offline.', false, true); return; }
+    const available = selectedPills(document, '#sizePicker .pill.on');
+    const out = selectedPills(document, '#sizeOutPicker .pill.on');
+    const sizes = uniqSizes([...available, ...out]);
+    const photos = (window.pendingAdminPhotos || []).slice();
+    const main = Math.max(0, Math.min(Number(window.pendingAdminMainIndex || 0), Math.max(photos.length - 1, 0)));
+    const saleRaw = document.getElementById('psale')?.value;
+    const color = document.getElementById('pcolor')?.value || 'Black';
+    const style = document.getElementById('pstyle')?.value || 'Clean everyday piece';
+    const section = document.getElementById('phome')?.value || 'trending-now';
+    const product = normalizeProduct({
+      id:'p' + Date.now(), name, price, salePrice:saleRaw===''?'':Number(saleRaw),
+      status:document.getElementById('pstatus')?.value || 'in-stock',
+      category:document.getElementById('pcat')?.value || 'Tops',
+      collection:document.getElementById('pcollection')?.value || 'Everyday Edit',
+      displaySection:section, homeSection:section, note:`${color} · ${style}`,
+      sizes:sizes.length ? sizes : ['One Size'], outOfStockSizes:out.filter(s => sizes.some(x=>keySize(x)===keySize(s))),
+      photos, mainPhotoIndex:main, img:photos[main] || photos[0] || 'linear-gradient(135deg,#fff,#ddd)',
+      desc:document.getElementById('pdesc')?.value.trim() || 'A carefully selected Italian-made piece for a clean, feminine wardrobe.'
+    });
+    const ps = allProducts(); ps.push(product);
+    const ok = await saveProducts(ps);
+    if(ok){
+      window.pendingAdminPhotos=[]; window.pendingAdminMainIndex=0;
+      ['pname','pprice','psale','pdesc'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+      document.querySelectorAll('#sizePicker .pill.on,#sizeOutPicker .pill.on').forEach(b=>b.classList.remove('on'));
+      const inp=document.getElementById('pphotos'); if(inp) inp.value='';
+      const prev=document.getElementById('photoPreview'); if(prev) prev.innerHTML='';
+      await loadSharedStore?.(); await window.renderAdmin?.(); toast?.('Product added globally.');
+    }
+  };
+
+  window.saveProductEditor = async function(id){
+    if(typeof loadSharedStore === 'function') await loadSharedStore();
+    if(window.nitaBackendOnline === false){ notify?.('Cannot save edit: cloud database is offline.', false, true); return; }
+    const ps = allProducts(); const p = ps.find(x => String(x.id) === String(id)); const root = document.getElementById('editor-' + id);
+    if(!p || !root) return;
+    const oldRegular = Number(p.price || 0); const entered = Number(root.querySelector('.edit-price')?.value || 0); const saleInput = root.querySelector('.edit-sale')?.value;
+    p.name = root.querySelector('.edit-name')?.value.trim() || p.name;
+    if(saleInput === ''){ if(entered > 0 && entered < oldRegular){ p.salePrice = entered; p.price = oldRegular; } else { p.price = entered; p.salePrice = ''; } }
+    else { p.price = entered; p.salePrice = Number(saleInput); }
+    p.status = root.querySelector('.edit-status')?.value || p.status || 'in-stock'; p.soldOut = p.status === 'out-of-stock';
+    p.category = root.querySelector('.edit-category')?.value || p.category; p.collection = root.querySelector('.edit-collection')?.value || p.collection;
+    p.displaySection = root.querySelector('.edit-home-section')?.value || p.displaySection || 'trending-now'; p.homeSection = p.displaySection;
+    const color = root.querySelector('.edit-color')?.value || 'Black'; const style = root.querySelector('.edit-style')?.value || 'Clean everyday piece'; p.note = `${color} · ${style}`;
+    const available = selectedPills(root, '.available-size-picker .pill.on'); const out = selectedPills(root, '.oos-picker .pill.on');
+    p.sizes = uniqSizes([...available, ...out]); if(!p.sizes.length) p.sizes = ['One Size'];
+    p.outOfStockSizes = out.filter(s => p.sizes.some(x => keySize(x) === keySize(s)));
+    p.desc = root.querySelector('.edit-desc')?.value.trim() || '';
+    if(window.editingPhotoBuffers?.[id]?.length){ p.photos = window.editingPhotoBuffers[id]; p.mainPhotoIndex = Number(window.editingMainPhotoIndex?.[id] || 0); p.img = p.photos[p.mainPhotoIndex] || p.photos[0]; delete window.editingPhotoBuffers[id]; delete window.editingMainPhotoIndex[id]; }
+    else if(root.dataset.mainIndex !== undefined){ const ph = (Array.isArray(p.photos) && p.photos.length ? p.photos : [p.img]).filter(Boolean); p.mainPhotoIndex = Number(root.dataset.mainIndex) || 0; p.img = ph[p.mainPhotoIndex] || ph[0] || p.img; }
+    normalizeProduct(p);
+    const ok = await saveProducts(ps);
+    if(ok){ await loadSharedStore?.(); await window.renderAdmin?.(); toast?.('Product updated globally.'); }
+  };
+
+  function customerSizeButtons(p, context){
+    p = normalizeProduct(p);
+    const firstAvailable = p.sizes.find(s => !isSizeOut(p,s)) || '';
+    if(context === 'quick') window.quickSelectedSize = (!isSizeOut(p, window.quickSelectedSize) && p.sizes.some(s=>keySize(s)===keySize(window.quickSelectedSize))) ? window.quickSelectedSize : firstAvailable;
+    else window.selectedSize = (!isSizeOut(p, window.selectedSize) && p.sizes.some(s=>keySize(s)===keySize(window.selectedSize))) ? window.selectedSize : firstAvailable;
+    const selected = context === 'quick' ? window.quickSelectedSize : window.selectedSize;
+    return p.sizes.map(s => {
+      const oos = isSizeOut(p,s); const active = !oos && keySize(s) === keySize(selected);
+      const click = context === 'quick' ? `quickSelectedSize='${safe(s)}'` : `selectedSize='${safe(s)}'; productPage()`;
+      return `<button type="button" class="size ${active?'active':''} ${oos?'size-disabled':''}" ${oos?'disabled aria-disabled="true" title="Out of stock"':`onclick="${click}; this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active')); this.classList.add('active')"`}>${safe(s)}</button>`;
+    }).join('');
+  }
+
+  const oldAddToCart = window.addToCart;
+  window.addToCart = function(id, size='One Size'){
+    const p = normalizeProduct(allProducts().find(x => String(x.id) === String(id)) || {});
+    if(p.status !== 'in-stock'){ toast?.('This product is not available yet.'); return; }
+    if(isSizeOut(p, size)){ toast?.('This size is out of stock.'); return; }
+    return oldAddToCart ? oldAddToCart(id, size) : undefined;
+  };
+
+  window.productPage = function(){
+    const detail = document.getElementById('detail'); if(!detail) return;
+    const id = new URL(location.href).searchParams.get('id'); const p = normalizeProduct(allProducts().find(x => String(x.id) === String(id)) || allProducts()[0]);
+    if(!p?.id){ detail.innerHTML = '<div class="card"><h1>Product not found</h1><a class="btn" href="shop.html">BACK TO SHOP</a></div>'; return; }
+    const im = typeof productImagesForDisplay === 'function' ? productImagesForDisplay(p) : {all:[p.img || 'linear-gradient(135deg,#fff,#ddd)']};
+    window.selectedPhoto = Math.max(0, Math.min(Number(window.selectedPhoto || 0), im.all.length - 1));
+    const sizeHtml = customerSizeButtons(p, 'page');
+    const sizeOos = !window.selectedSize || isSizeOut(p, window.selectedSize);
+    const canBuy = p.status === 'in-stock' && !sizeOos;
+    const action = canBuy ? `<button class="btn" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}', selectedSize || 'One Size')">ADD TO CART</button><a class="btn light" href="checkout.html">BUY NOW</a>` : `<button class="btn disabled" disabled aria-disabled="true">${p.status==='coming-soon'?'COMING SOON':(p.status==='out-of-stock'?'OUT OF STOCK':'SIZE OUT OF STOCK')}</button><button class="notify-btn" type="button" onclick="notifyMe&&notifyMe('${String(p.id).replace(/'/g,"\\'")}')">NOTIFY ME</button>`;
+    detail.innerHTML = `<div class="product-media"><div class="detail-img" style="${cssBg(im.all[window.selectedPhoto])}"></div><div class="product-thumbs">${im.all.map((ph,i)=>`<button class="${i===window.selectedPhoto?'active':''}" onclick="selectedPhoto=${i};productPage()" style="${cssBg(ph)}"></button>`).join('')}</div></div><div class="product-info"><p class="muted">${safe(p.category || '')}</p><h1>${safe(p.name || 'Product')}</h1>${typeof productPriceStatusRow === 'function' ? productPriceStatusRow(p,'h2') : `<h2>${moneySafe(p.salePrice || p.price)}</h2>`}<p>${safe(p.desc || '')}</p><div class="sizes product-size-list">${sizeHtml}</div><div class="product-actions">${action}</div><hr><p class="muted">Cash on delivery available. Online payment will be available soon.</p></div>`;
+  };
+
+  window.openQuickView = function(id){
+    const p = normalizeProduct(allProducts().find(x => String(x.id) === String(id))); if(!p?.id) return false;
+    const m = document.getElementById('quickModal'); const q = document.getElementById('quickContent'); if(!m || !q) return false;
+    const im = typeof productImagesForDisplay === 'function' ? productImagesForDisplay(p) : {first:p.img || 'linear-gradient(135deg,#fff,#ddd)'};
+    const sizeHtml = customerSizeButtons(p, 'quick');
+    const canBuy = p.status === 'in-stock' && window.quickSelectedSize && !isSizeOut(p, window.quickSelectedSize);
+    const action = canBuy ? `<button class="btn" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}', quickSelectedSize || 'One Size'); closeQuickView()">ADD TO CART</button>` : `<button class="btn disabled" disabled aria-disabled="true">${p.status==='coming-soon'?'COMING SOON':(p.status==='out-of-stock'?'OUT OF STOCK':'SIZE OUT OF STOCK')}</button><button class="notify-btn" type="button" onclick="notifyMe&&notifyMe('${String(p.id).replace(/'/g,"\\'")}')">NOTIFY ME</button>`;
+    q.innerHTML = `<div class="quick-grid"><div class="quick-image" style="${cssBg(im.first)}"></div><div class="quick-info"><p class="muted">${safe(p.category || '')}</p><h2>${safe(p.name || 'Product')}</h2>${typeof productPriceStatusRow === 'function' ? productPriceStatusRow(p,'h3') : `<h3>${moneySafe(p.salePrice || p.price)}</h3>`}<p>${safe(p.desc || '')}</p><div class="sizes">${sizeHtml}</div>${action}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div></div>`;
+    m.classList.add('open'); m.setAttribute('aria-hidden','false'); document.body.classList.add('quick-open','panel-open'); return false;
+  };
+
+  function homeSection(p){ return p.displaySection || p.homeSection || (p.collection === 'New Arrivals' ? 'new-arrivals' : 'trending-now'); }
+  function kickMarquee(id){
+    const el = document.getElementById(id); if(!el) return;
+    el.style.animation = 'none'; void el.offsetWidth;
+    el.style.animation = 'nitaAlwaysScroll 42s linear infinite';
+  }
+  window.renderHomeSections = function(){
+    const ps = allProducts().map(normalizeProduct);
+    const fill = (id, list) => { const box = document.getElementById(id); if(!box) return; const arr = list.length ? list : ps.slice(0,6); box.innerHTML = [...arr,...arr,...arr,...arr].map(p => productCard(p)).join('') || '<p class="muted">No products listed yet.</p>'; requestAnimationFrame(()=>kickMarquee(id)); };
+    fill('trendingMarquee', ps.filter(p => homeSection(p) === 'trending-now'));
+    fill('newArrivalsMarquee', ps.filter(p => homeSection(p) === 'new-arrivals'));
+  };
+  function bootHome(){ if(document.getElementById('trendingMarquee') || document.getElementById('newArrivalsMarquee')){ window.renderHomeSections(); setTimeout(()=>{kickMarquee('trendingMarquee'); kickMarquee('newArrivalsMarquee');}, 250); setTimeout(()=>{kickMarquee('trendingMarquee'); kickMarquee('newArrivalsMarquee');}, 1200); } }
+  window.addEventListener('DOMContentLoaded', bootHome);
+  window.addEventListener('load', bootHome);
+  window.addEventListener('nita-store-ready', bootHome);
+})();
+/* === END FINAL CRITICAL FIX === */
+
+/* === FINAL FIX: reliable homepage auto-scroll, product deletion, and $7 Aramex delivery === */
+(function(){
+  const DELIVERY_FEE = 7;
+  const DEFAULTS = (typeof defaultProducts !== 'undefined' && Array.isArray(defaultProducts)) ? defaultProducts : [];
+  const safeJSON = (key, fallback) => {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    try { return JSON.parse(raw); } catch { return fallback; }
+  };
+  const norm = (p) => typeof normalizeProduct === 'function' ? normalizeProduct(p) : (typeof normalizeProductStatus === 'function' ? normalizeProductStatus(p) : p);
+
+  // Important: if nitaProducts exists and is [], respect the empty list. Do not bring default items back.
+  window.getProducts = function(){
+    const raw = localStorage.getItem('nitaProducts');
+    let list;
+    if (raw !== null) {
+      try { list = JSON.parse(raw); } catch { list = []; }
+    } else {
+      list = DEFAULTS;
+    }
+    if (!Array.isArray(list)) list = [];
+    return list.map(p => norm({...p}));
+  };
+
+  window.saveProducts = async function(products){
+    const clean = (Array.isArray(products) ? products : []).map(p => norm({...p}));
+    localStorage.setItem('nitaProducts', JSON.stringify(clean));
+    try {
+      if (typeof saveCloudKey === 'function') await saveCloudKey('nitaProducts', clean);
+      else if (typeof nitaSaveKeyStrict === 'function') await nitaSaveKeyStrict('nitaProducts', clean);
+      if (typeof notify === 'function') notify('Saved globally. This update will appear on every device.');
+      else if (typeof toast === 'function') toast('Saved globally.');
+      return true;
+    } catch (err) {
+      console.error('Product cloud save failed:', err);
+      if (typeof notify === 'function') notify('Not saved globally: '+(err.message || err), false, true);
+      else if (typeof toast === 'function') toast('Not saved globally.');
+      return false;
+    }
+  };
+
+  window.removeProduct = async function(id){
+    if (!confirm('Remove this product from the website?')) return;
+    if (typeof loadSharedStore === 'function') { try { await loadSharedStore(); } catch(e){} }
+    const next = getProducts().filter(p => String(p.id) !== String(id));
+    const ok = await saveProducts(next);
+    if (ok) {
+      localStorage.setItem('nitaProducts', JSON.stringify(next));
+      if (typeof renderAdmin === 'function') await renderAdmin();
+      if (typeof renderHomeSections === 'function') renderHomeSections();
+      if (typeof renderProducts === 'function') renderProducts();
+      if (typeof toast === 'function') toast('Product removed globally.');
+    }
+  };
+
+  function homeSectionOf(p){
+    return p.displaySection || p.homeSection || (p.collection === 'New Arrivals' ? 'new-arrivals' : 'trending-now');
+  }
+
+  function cardFor(p){
+    if (typeof productCard === 'function') return productCard(p);
+    return `<a class="product" href="product.html?id=${encodeURIComponent(p.id)}"><div class="product-img"></div><h3>${p.name||'Product'}</h3></a>`;
+  }
+
+  const marqueeState = new WeakMap();
+  function startMarquee(track, speed){
+    if (!track) return;
+    const old = marqueeState.get(track);
+    if (old && old.raf) cancelAnimationFrame(old.raf);
+    track.style.animation = 'none';
+    track.style.transform = 'translate3d(0,0,0)';
+    track.style.willChange = 'transform';
+    track.dataset.autoMarquee = 'true';
+    let x = 0;
+    let last = performance.now();
+    const tick = (now) => {
+      const dt = Math.min(40, now - last); last = now;
+      const half = track.scrollWidth / 2;
+      if (half > 20) {
+        x = (x + speed * dt / 16.67) % half;
+        track.style.transform = `translate3d(${-x}px,0,0)`;
+      }
+      const state = marqueeState.get(track); if (state) state.raf = requestAnimationFrame(tick);
+    };
+    marqueeState.set(track, {raf: requestAnimationFrame(tick)});
+  }
+
+  window.renderHomeSections = function(){
+    const ps = getProducts();
+    const fill = (id, list) => {
+      const box = document.getElementById(id); if (!box) return;
+      const source = (list && list.length) ? list : ps.slice(0, 6);
+      if (!source.length) { box.innerHTML = '<p class="muted">No products listed yet.</p>'; return; }
+      // Duplicate enough times so the animation is seamless on laptop, tablet, and phone.
+      box.innerHTML = [...source, ...source, ...source, ...source, ...source, ...source].map(cardFor).join('');
+      requestAnimationFrame(() => startMarquee(box, window.innerWidth <= 760 ? 0.34 : 0.42));
+    };
+    fill('trendingMarquee', ps.filter(p => homeSectionOf(p) === 'trending-now'));
+    fill('newArrivalsMarquee', ps.filter(p => homeSectionOf(p) === 'new-arrivals'));
+  };
+
+  function bootHomeMarquee(){
+    if (document.getElementById('trendingMarquee') || document.getElementById('newArrivalsMarquee')) {
+      if (typeof loadSharedStore === 'function') {
+        loadSharedStore().finally(() => {
+          renderHomeSections();
+          setTimeout(renderHomeSections, 350);
+          setTimeout(renderHomeSections, 1200);
+        });
+      } else {
+        renderHomeSections();
+        setTimeout(renderHomeSections, 350);
+      }
+    }
+  }
+  window.addEventListener('DOMContentLoaded', bootHomeMarquee);
+  window.addEventListener('load', bootHomeMarquee);
+  window.addEventListener('nita-store-ready', bootHomeMarquee);
+  window.addEventListener('resize', () => setTimeout(() => { if (typeof renderHomeSections === 'function') renderHomeSections(); }, 150));
+
+  function line(label, amount, cls=''){
+    const m = typeof money === 'function' ? money(amount) : ('$'+Number(amount||0).toFixed(2));
+    return `<div class="summary-line ${cls}"><span>${label}</span><b>${m}</b></div>`;
+  }
+  function couponState(subtotal){
+    const form = document.getElementById('checkoutForm');
+    const code = (form?.querySelector('[name="coupon"]')?.value || '').trim().toUpperCase();
+    let discount = 0, message = '';
+    const applied = window.appliedCouponCode || localStorage.getItem('nitaAppliedCoupon') || '';
+    if (applied && code && applied === code) {
+      const coupons = safeJSON('nitaCoupons', []);
+      const found = (coupons || []).find(c => String(c.code||'').toUpperCase() === code);
+      const percent = found ? Number(found.percent || found.discount || 0) : (code === 'NITA10' ? 10 : 0);
+      if (percent > 0) { discount = subtotal * percent / 100; message = `<div class="summary-line discount-line"><span>Discount ${code}</span><b>-${typeof money==='function'?money(discount):('$'+discount.toFixed(2))}</b></div>`; }
+    }
+    return {discount, message};
+  }
+
+  window.renderCheckoutSummary = function(){
+    const box = document.getElementById('checkoutSummary'); if (!box) return;
+    const ps = getProducts();
+    let subtotal = 0;
+    const items = (cart && cart.length) ? cart.map(i => {
+      const p = ps.find(x => String(x.id) === String(i.id));
+      const unit = Number(p?.salePrice || p?.price || 0);
+      subtotal += unit * Number(i.qty || 1);
+      return `<div class="summary-line"><span><b>${p?.name || 'Product'}</b><br><span class="muted">${i.size || ''} × ${i.qty || 1}</span></span><span>${typeof money==='function'?money(unit * Number(i.qty || 1)):('$'+(unit*Number(i.qty||1)).toFixed(2))}</span></div>`;
+    }).join('') : '<p class="muted">Your cart is empty.</p>';
+    const c = couponState(subtotal);
+    const total = Math.max(0, subtotal - c.discount) + DELIVERY_FEE;
+    box.innerHTML = items + '<hr>' + line('Subtotal', subtotal) + c.message + line('Aramex delivery fee', DELIVERY_FEE) + `<p class="delivery-note">Delivery all over Lebanon in 2–3 business days.</p>` + line('Total', total, 'summary-total');
+  };
+
+  const oldApplyCoupon = window.applyCouponCode;
+  window.applyCouponCode = async function(){
+    if (oldApplyCoupon) await oldApplyCoupon();
+    renderCheckoutSummary();
+  };
+
+  const oldPlaceOrder = window.placeOrder;
+  window.placeOrder = async function(){
+    const formEl = document.getElementById('checkoutForm');
+    if (typeof validateCheckoutRequired === 'function' && !validateCheckoutRequired()) return;
+    if (!formEl) return oldPlaceOrder ? oldPlaceOrder() : undefined;
+    const form = new FormData(formEl);
+    const ps = getProducts();
+    let subtotal = 0;
+    const items = (cart || []).map(i => {
+      const p = ps.find(x => String(x.id) === String(i.id));
+      const unit = Number(p?.salePrice || p?.price || 0); subtotal += unit * Number(i.qty || 1);
+      return {...i, name:p?.name || 'Product', price:unit};
+    });
+    const c = couponState(subtotal);
+    const total = Math.max(0, subtotal - c.discount) + DELIVERY_FEE;
+    const orders = safeJSON('nitaOrders', []);
+    const order = {
+      id:'NS'+Date.now(), date:new Date().toLocaleString(), customer:form.get('name'), email:form.get('email'), phone:form.get('phone'),
+      address:{city:form.get('city'),street:form.get('street'),building:form.get('building'),floor:form.get('floor'),apartment:form.get('apartment'),landmark:form.get('landmark'),preferredTime:form.get('preferredTime'),notes:form.get('notes')},
+      payment:'Cash on delivery', deliveryMethod:'Aramex', deliveryFee:DELIVERY_FEE, deliveryTime:'2–3 business days across Lebanon', status:'Order submitted', items, subtotal, discount:c.discount, total
+    };
+    orders.push(order);
+    localStorage.setItem('nitaOrders', JSON.stringify(orders));
+    try { if (typeof saveCloudKey === 'function') await saveCloudKey('nitaOrders', orders); } catch(e){ console.warn(e); }
+    cart = []; saveCart(); location.href='order-success.html';
+  };
+
+  function patchCheckoutText(){
+    const form = document.getElementById('checkoutForm'); if (!form) return;
+    const pay = document.querySelector('.coming-soon-pay');
+    if (pay) pay.textContent = 'Online payment will be available soon.';
+    if (!document.querySelector('.delivery-mini-note')) {
+      const note = document.createElement('p');
+      note.className = 'delivery-mini-note muted';
+      note.textContent = 'Aramex delivery across Lebanon · $7 delivery fee · 2–3 business days.';
+      form.querySelector('h3')?.insertAdjacentElement('afterend', note);
+    }
+    renderCheckoutSummary();
+  }
+  window.addEventListener('DOMContentLoaded', patchCheckoutText);
+  window.addEventListener('load', patchCheckoutText);
+})();
+/* === END FINAL FIX === */
+
+/* === CART QUANTITY + INVENTORY + ORDER ROADMAP FINAL PATCH === */
+(function(){
+  const DELIVERY_FEE_FINAL = 7;
+  const moneyFinal = (n)=> (typeof money==='function'?money(n):('$'+Number(n||0).toFixed(2)));
+  const read = (k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f))}catch(e){return f}};
+  const write = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  const productsNow = ()=> (typeof getProducts==='function'?getProducts():read('nitaProducts',[]));
+  const saveProductsNow = async (ps)=>{write('nitaProducts',ps); try{ if(typeof saveProducts==='function') await saveProducts(ps); else if(typeof saveCloudKey==='function') await saveCloudKey('nitaProducts',ps);}catch(e){console.warn(e)} };
+  const primaryImg = (p)=>{try{return productMainImage(p)}catch(e){return (p?.photos?.[p.mainPhotoIndex||0] || p?.photos?.[0] || p?.img || 'linear-gradient(135deg,#fff,#ddd)')}};
+  const bgStyle = (url)=> String(url||'').startsWith('data:') ? `background-image:url(${url})` : `background:${url||'linear-gradient(135deg,#fff,#ddd)'}`;
+  const unitPrice = (p,i)=> Number(p?.salePrice || p?.price || i?.price || 0);
+  const itemName = (p,i)=> p?.name || i?.name || 'Product';
+  const itemPhoto = (p,i)=> primaryImg(p) || i?.photo || i?.img || 'linear-gradient(135deg,#fff,#ddd)';
+  const productQuantity = (p)=> p && p.quantity!==undefined && p.quantity!=='' && !Number.isNaN(Number(p.quantity)) ? Number(p.quantity) : null;
+
+  window.changeCartQty = function(index, delta){
+    cart = read('nitaCart',[]);
+    const item = cart[index]; if(!item) return;
+    const p = productsNow().find(x=>String(x.id)===String(item.id));
+    const max = productQuantity(p);
+    const next = Number(item.qty||1) + Number(delta||0);
+    if(next <= 0){ cart.splice(index,1); }
+    else if(max!==null && next > max){ if(typeof toast==='function') toast(`Only ${max} piece${max===1?'':'s'} available.`); return; }
+    else item.qty = next;
+    if(typeof saveCart==='function') saveCart(); else write('nitaCart',cart);
+    if(typeof renderCartPanel==='function') renderCartPanel();
+    if(typeof renderFullCart==='function') renderFullCart();
+    if(typeof renderCheckoutSummary==='function') renderCheckoutSummary();
+  };
+
+  window.renderCartPanel = function(){
+    const box=document.getElementById('cartItems'); if(!box) return;
+    cart = read('nitaCart',[]);
+    if(!cart.length){ box.innerHTML='<p class="muted">Your cart is empty.</p>'; if(typeof updateCartCount==='function')updateCartCount(); return; }
+    const ps=productsNow(); let total=0;
+    box.innerHTML = cart.map((i,idx)=>{
+      const p=ps.find(x=>String(x.id)===String(i.id)); const unit=unitPrice(p,i); const qty=Number(i.qty||1); total += unit*qty;
+      const img=itemPhoto(p,i);
+      return `<div class="cart-line"><span class="cart-thumb" style="${bgStyle(img)}"></span><div class="cart-copy"><b>${itemName(p,i)}</b><br><span class="muted">${i.size||''}</span><div class="qty-stepper" aria-label="Quantity selector"><button type="button" onclick="changeCartQty(${idx},-1)">−</button><span>${qty}</span><button type="button" onclick="changeCartQty(${idx},1)">+</button></div><strong>${moneyFinal(unit*qty)}</strong></div><button class="cart-remove" type="button" aria-label="Remove item" onclick="cart=JSON.parse(localStorage.getItem('nitaCart')||'[]');cart.splice(${idx},1);saveCart();renderCartPanel();">×</button></div>`;
+    }).join('') + `<div class="cart-total-line"><span>Subtotal</span><b>${moneyFinal(total)}</b></div><a class="btn cart-checkout-btn" href="checkout.html">CHECKOUT</a>`;
+    if(typeof updateCartCount==='function')updateCartCount();
+  };
+
+  window.renderFullCart = function(){
+    const root=document.getElementById('fullCart'); if(!root) return;
+    let temp=document.getElementById('cartItems');
+    if(!temp){temp=document.createElement('div'); temp.id='cartItems'; temp.style.display='none'; document.body.appendChild(temp)}
+    renderCartPanel();
+    root.innerHTML=temp.innerHTML;
+  };
+
+  window.addToCart = function(id,size='M'){
+    const ps=productsNow(); const p=ps.find(x=>String(x.id)===String(id));
+    if(!p){ if(typeof toast==='function') toast('Product not found.'); return; }
+    const status = (typeof productStatusValue==='function'?productStatusValue(p):(p.status||'in-stock'));
+    if(status!=='in-stock'){ if(typeof toast==='function') toast('This product is not available yet.'); return; }
+    if(typeof isOOS==='function' && isOOS(p,size)){ if(typeof toast==='function') toast('This size is out of stock.'); return; }
+    cart = read('nitaCart',[]);
+    const existing=cart.find(i=>String(i.id)===String(id) && String(i.size)===String(size));
+    const max=productQuantity(p);
+    const newQty=(existing?Number(existing.qty||1):0)+1;
+    if(max!==null && newQty>max){ if(typeof toast==='function') toast(`Only ${max} piece${max===1?'':'s'} available.`); return; }
+    if(existing) existing.qty=newQty;
+    else cart.push({id:p.id,size,qty:1,name:p.name,price:unitPrice(p),photo:primaryImg(p)});
+    if(typeof saveCart==='function') saveCart(); else write('nitaCart',cart);
+    if(typeof renderCartPanel==='function') renderCartPanel();
+    if(typeof toast==='function') toast('Added to cart');
+  };
+
+  window.renderCheckoutSummary = function(){
+    const box=document.getElementById('checkoutSummary'); if(!box) return;
+    cart=read('nitaCart',[]); const ps=productsNow(); let subtotal=0;
+    const rows = cart.length ? cart.map(i=>{
+      const p=ps.find(x=>String(x.id)===String(i.id)); const qty=Number(i.qty||1); const unit=unitPrice(p,i); subtotal+=unit*qty;
+      return `<div class="summary-line"><span><b>${itemName(p,i)}</b><br><span class="muted">${i.size||''} × ${qty}</span></span><span>${moneyFinal(unit*qty)}</span></div>`;
+    }).join('') : '<p class="muted">Your cart is empty.</p>';
+    let discount=0, msg='';
+    try{const c=typeof couponState==='function'?couponState(subtotal):{discount:0,message:''}; discount=Number(c.discount||0); msg=c.message||'';}catch(e){}
+    const total=Math.max(0,subtotal-discount)+DELIVERY_FEE_FINAL;
+    box.innerHTML = rows + '<hr>' + `<div class="summary-line"><span>Subtotal</span><b>${moneyFinal(subtotal)}</b></div>` + msg + `<div class="summary-line"><span>Aramex delivery fee</span><b>${moneyFinal(DELIVERY_FEE_FINAL)}</b></div><p class="delivery-note">Delivery all over Lebanon in 2–3 business days.</p><div class="summary-line summary-total"><span>Total</span><b>${moneyFinal(total)}</b></div>`;
+  };
+
+  window.placeOrder = async function(){
+    const formEl=document.getElementById('checkoutForm');
+    if(typeof validateCheckoutForm==='function' && !validateCheckoutForm()) return;
+    if(typeof validateCheckoutRequired==='function' && !validateCheckoutRequired()) return;
+    if(!formEl) return;
+    cart=read('nitaCart',[]); if(!cart.length){ if(typeof toast==='function') toast('Your cart is empty.'); return; }
+    const form=new FormData(formEl); const ps=productsNow(); let subtotal=0; const items=[];
+    for(const i of cart){
+      const p=ps.find(x=>String(x.id)===String(i.id)); const qty=Number(i.qty||1); const max=productQuantity(p);
+      if(!p){ if(typeof toast==='function') toast('A product in your cart is no longer available.'); return; }
+      if(max!==null && qty>max){ if(typeof toast==='function') toast(`${p.name} has only ${max} piece${max===1?'':'s'} left.`); return; }
+      const unit=unitPrice(p,i); subtotal+=unit*qty; items.push({id:p.id,name:p.name,size:i.size,qty,price:unit,total:unit*qty});
+    }
+    let discount=0; try{discount=Number((typeof couponState==='function'?couponState(subtotal):{}).discount||0)}catch(e){}
+    const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:form.get('name'),email:String(form.get('email')||'').toLowerCase(),phone:form.get('phone'),address:{city:form.get('city'),street:form.get('street'),building:form.get('building'),floor:form.get('floor'),apartment:form.get('apartment'),landmark:form.get('landmark'),preferredTime:form.get('preferredTime'),notes:form.get('notes')},payment:'Cash on delivery',deliveryMethod:'Aramex',deliveryFee:DELIVERY_FEE_FINAL,deliveryTime:'2–3 business days across Lebanon',status:'Order submitted',items,subtotal,discount,total:Math.max(0,subtotal-discount)+DELIVERY_FEE_FINAL};
+    const orders=read('nitaOrders',[]); orders.push(order); write('nitaOrders',orders);
+    // decrease private admin stock quantity after order submission
+    for(const item of items){
+      const p=ps.find(x=>String(x.id)===String(item.id)); if(!p) continue;
+      if(productQuantity(p)!==null){ p.quantity=Math.max(0,Number(p.quantity||0)-Number(item.qty||0)); if(p.quantity<=0){p.status='out-of-stock';p.soldOut=true;} }
+    }
+    await saveProductsNow(ps);
+    try{ if(typeof saveCloudKey==='function') await saveCloudKey('nitaOrders',orders); }catch(e){console.warn(e)}
+    cart=[]; if(typeof saveCart==='function') saveCart(); else write('nitaCart',cart);
+    location.href='order-success.html';
+  };
+
+  function ensureAdminQuantityField(){
+    const price=document.getElementById('pprice'); if(!price || document.getElementById('pquantity')) return;
+    const wrap=document.createElement('div');
+    wrap.innerHTML=`<label>Private quantity in stock</label><input id="pquantity" class="field" type="number" min="0" step="1" placeholder="Example: 15"><p class="field-help">Only admin sees this number. It decreases automatically after orders.</p>`;
+    price.closest('div')?.insertAdjacentElement('afterend',wrap);
+  }
+  const oldAddProductAdmin = window.addProductAdmin;
+  window.addProductAdmin = async function(){
+    if(!document.getElementById('pquantity')) ensureAdminQuantityField();
+    const qty = document.getElementById('pquantity')?.value;
+    await (oldAddProductAdmin ? oldAddProductAdmin() : undefined);
+    if(qty!==undefined && qty!==''){
+      const ps=productsNow(); const newest=ps[ps.length-1]; if(newest){newest.quantity=Number(qty); await saveProductsNow(ps);}
+      if(document.getElementById('pquantity')) document.getElementById('pquantity').value='';
+    }
+  };
+  const oldRenderAdmin = window.renderAdmin;
+  window.renderAdmin = function(){ if(oldRenderAdmin) oldRenderAdmin(); ensureAdminQuantityField(); document.querySelectorAll('.admin-product-card').forEach(card=>{
+      const id=(card.id||'').replace('edit-',''); const p=productsNow().find(x=>String(x.id)===String(id));
+      const info=card.querySelector('.admin-product-name')?.parentElement; if(info && p && !info.querySelector('.admin-private-qty')) info.insertAdjacentHTML('beforeend',`<div class="admin-private-qty">Private stock: ${p.quantity!==undefined&&p.quantity!==''?p.quantity:'Not set'}</div>`);
+    }); };
+
+  const oldProductEditorHTML = window.productEditorHTML;
+  window.productEditorHTML = function(p){
+    let html=oldProductEditorHTML ? oldProductEditorHTML(p) : '';
+    const q=`<div><label>Private quantity in stock</label><input class="field edit-quantity" type="number" min="0" step="1" value="${p.quantity!==undefined&&p.quantity!==''?p.quantity:''}" placeholder="Example: 15"><p class="field-help">Only admin sees this number. It decreases automatically after orders.</p></div>`;
+    if(html && !html.includes('edit-quantity')) html=html.replace(/<div><label>Regular price<\/label>/, q+'<div><label>Regular price</label>');
+    return html;
+  };
+  const oldSaveProductEditor = window.saveProductEditor;
+  window.saveProductEditor = async function(id){
+    const root=document.getElementById('editor-'+String(id).replace(/[^a-zA-Z0-9_-]/g,'')) || document.getElementById('editor-'+id);
+    const qty=root?.querySelector('.edit-quantity')?.value;
+    if(oldSaveProductEditor) await oldSaveProductEditor(id);
+    if(qty!==undefined){const ps=productsNow(); const p=ps.find(x=>String(x.id)===String(id)); if(p){p.quantity=qty===''?'':Number(qty); await saveProductsNow(ps); if(typeof renderAdmin==='function') renderAdmin();}}
+  };
+
+  // Make account order roadmaps readable on phone/tablet.
+  window.addEventListener('load',()=>{ensureAdminQuantityField(); if(document.getElementById('checkoutSummary')) renderCheckoutSummary();});
+  window.addEventListener('DOMContentLoaded',()=>{ensureAdminQuantityField(); if(document.getElementById('checkoutSummary')) setTimeout(renderCheckoutSummary,150);});
+})();
+/* === END CART QUANTITY + INVENTORY + ORDER ROADMAP FINAL PATCH === */
+
+/* === LOW STOCK AUTOMATIC STATUS FINAL PATCH === */
+(function(){
+  const STATUS_LABELS={
+    'in-stock':'In stock',
+    'low-stock':'Low in stock',
+    'coming-soon':'Coming soon',
+    'out-of-stock':'Out of stock'
+  };
+  const esc=(v)=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const read=(k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f))}catch(e){return f}};
+  const write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  const products=()=>{try{return typeof getProducts==='function'?getProducts():read('nitaProducts',[])}catch(e){return read('nitaProducts',[])}};
+  const saveProducts=async(ps)=>{write('nitaProducts',ps);try{if(typeof saveCloudKey==='function')await saveCloudKey('nitaProducts',ps);else if(window.saveProducts)await window.saveProducts(ps)}catch(e){console.warn(e)}};
+  const qtyNum=(v)=>v!==undefined&&v!==null&&v!==''&&!Number.isNaN(Number(v))?Number(v):null;
+  function ensureInitialQuantity(p){
+    const q=qtyNum(p?.quantity);
+    if(!p || q===null) return p;
+    const initial=qtyNum(p.initialQuantity);
+    if(initial===null || q>initial) p.initialQuantity=q;
+    return p;
+  }
+  function statusOf(p){
+    if(!p) return 'in-stock';
+    const manual=String(p.status||'in-stock');
+    const q=qtyNum(p.quantity); const initial=qtyNum(p.initialQuantity);
+    if(manual==='coming-soon') return 'coming-soon';
+    if(manual==='out-of-stock' || p.soldOut || q===0) return 'out-of-stock';
+    if(q!==null && initial!==null && initial>0 && q>0 && q<=initial*0.5) return 'low-stock';
+    return 'in-stock';
+  }
+  function normalize(p){
+    p=p||{}; ensureInitialQuantity(p); p.status=statusOf(p); p.soldOut=p.status==='out-of-stock';
+    if(!Array.isArray(p.sizes)||!p.sizes.length)p.sizes=['One Size'];
+    if(!Array.isArray(p.photos))p.photos=p.img&&String(p.img).startsWith('data:')?[p.img]:[];
+    p.mainPhotoIndex=Number(p.mainPhotoIndex||0);
+    return p;
+  }
+  window.productStatusValue=statusOf;
+  window.normalizeProductStatus=normalize;
+  window.stockStatusHtml=function(status){
+    status=status||'in-stock';
+    return `<span class="stock-status ${esc(status)}"><span class="stock-dot"></span><span>${STATUS_LABELS[status]||'In stock'}</span></span>`;
+  };
+  window.productPriceStatusRow=function(raw,tag='p'){
+    const p=normalize(raw);
+    const sale=p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price);
+    const price=sale?`<span class="muted old-price">${money(p.price)}</span><span class="price-drop">${money(p.salePrice)}</span>`:money(p.price||0);
+    return `<div class="product-price-row"><${tag} class="price-line">${price}</${tag}>${stockStatusHtml(p.status)}</div>`;
+  };
+  function mainImg(p){try{return productMainImage(p)}catch(e){return p?.photos?.[p.mainPhotoIndex||0]||p?.photos?.[0]||p?.img||'linear-gradient(135deg,#fff,#ddd)'}}
+  function imgs(p){try{return productImagesForDisplay(p)}catch(e){const first=mainImg(p);return{first,second:first,all:[first]}}}
+  function bg(u){try{return typeof cssBgImage==='function'?cssBgImage(u):(String(u||'').startsWith('data:')?`background-image:url(${u})`:`background:${u||'linear-gradient(135deg,#fff,#ddd)'}`)}catch(e){return 'background:linear-gradient(135deg,#fff,#ddd)'}}
+  window.productCard=function(raw){
+    const p=normalize(raw); const im=imgs(p); const sale=p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price);
+    return `<article class="product status-${esc(p.status)}" data-product-id="${esc(p.id)}"><a class="product-hit" href="product.html?id=${encodeURIComponent(p.id)}"><div class="product-img">${sale?'<span class="sale-badge">PRICE DROP</span>':''}<span class="product-img-layer product-img-primary" style="${bg(im.first)}"></span><span class="product-img-layer product-img-secondary" style="${bg(im.second)}"></span></div><h3>${esc(p.name||'Product')}</h3>${productPriceStatusRow(p,'p')}</a><button class="quick-view-btn" type="button" data-quick-id="${esc(p.id)}" onclick="event.stopPropagation();event.preventDefault();openQuickView('${String(p.id).replace(/'/g,"\\'")}')">QUICK VIEW</button></article>`;
+  };
+  window.renderProducts=function(el='#products',list=products()){const node=document.querySelector(el); if(node) node.innerHTML=(list||[]).map(window.productCard).join('') || '<p class="muted">No products listed yet.</p>';};
+  window.addToCart=function(id,size='One Size'){
+    const ps=products(); const p=normalize(ps.find(x=>String(x.id)===String(id)));
+    if(!p?.id){ if(typeof toast==='function')toast('Product not found.'); return; }
+    if(['coming-soon','out-of-stock'].includes(p.status)){ if(typeof toast==='function')toast('This product is not available yet.'); return; }
+    if(typeof isOOS==='function' && isOOS(p,size)){ if(typeof toast==='function')toast('This size is out of stock.'); return; }
+    let cart=read('nitaCart',[]); const existing=cart.find(i=>String(i.id)===String(id)&&String(i.size)===String(size));
+    const q=qtyNum(p.quantity); const next=(existing?Number(existing.qty||1):0)+1;
+    if(q!==null && next>q){ if(typeof toast==='function')toast(`Only ${q} piece${q===1?'':'s'} available.`); return; }
+    if(existing) existing.qty=next; else cart.push({id:p.id,size,qty:1,name:p.name,price:Number(p.salePrice||p.price||0),photo:mainImg(p)});
+    window.cart=cart; write('nitaCart',cart); if(typeof saveCart==='function')saveCart(); if(typeof renderCartPanel==='function')renderCartPanel(); if(typeof updateCartCount==='function')updateCartCount(); if(typeof toast==='function')toast('Added to cart');
+  };
+  window.openQuickView=function(id){
+    const p=normalize(products().find(x=>String(x.id)===String(id))); if(!p?.id)return false;
+    const im=imgs(p); const sizes=(p.sizes||['One Size']).map((s,i)=>`<button type="button" class="size ${i===0?'active':''}" onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${esc(s)}</button>`).join('');
+    const canBuy=!['coming-soon','out-of-stock'].includes(p.status);
+    const action=canBuy?`<button class="btn quick-add" type="button" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}', document.querySelector('#quickContent .size.active')?.textContent||'One Size'); closeQuickView && closeQuickView();">ADD TO CART</button>`:`<button class="btn disabled quick-disabled" type="button" disabled aria-disabled="true">${p.status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button><button class="notify-btn" type="button" onclick="notifyMe && notifyMe('${String(p.id).replace(/'/g,"\\'")}')">NOTIFY ME</button>`;
+    const q=document.getElementById('quickContent'); if(q)q.innerHTML=`<div class="quick-grid"><div class="quick-image" style="${bg(im.first)}"></div><div class="quick-info"><p class="muted">${esc(p.category||'')}</p><h2>${esc(p.name||'Product')}</h2>${productPriceStatusRow(p,'h3')}<p>${esc(p.desc||'')}</p><div class="sizes">${sizes}</div>${action}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div></div>`;
+    const m=document.getElementById('quickModal'); if(m){m.classList.add('open');m.setAttribute('aria-hidden','false')} document.body.classList.add('panel-open','quick-open'); return false;
+  };
+  const oldAdd=window.addProductAdmin;
+  window.addProductAdmin=async function(){
+    const qtyVal=document.getElementById('pquantity')?.value;
+    await (oldAdd?oldAdd():undefined);
+    const ps=products(); const newest=ps[ps.length-1];
+    if(newest && qtyVal!==undefined && qtyVal!==''){newest.quantity=Number(qtyVal); newest.initialQuantity=Number(qtyVal); normalize(newest); await saveProducts(ps); if(typeof renderAdmin==='function')renderAdmin();}
+  };
+  const oldSave=window.saveProductEditor;
+  window.saveProductEditor=async function(id){
+    await (oldSave?oldSave(id):undefined);
+    const ps=products(); const p=ps.find(x=>String(x.id)===String(id));
+    if(p){ensureInitialQuantity(p); normalize(p); await saveProducts(ps); if(typeof renderAdmin==='function')renderAdmin();}
+  };
+  function refresh(){try{const ps=products(); let changed=false; ps.forEach(p=>{const before=p.status; ensureInitialQuantity(p); const s=statusOf(p); if(p.status!==s){p.status=s;changed=true}}); if(changed)write('nitaProducts',ps); if(typeof renderProducts==='function')renderProducts('#products',ps); if(typeof renderHomeSections==='function')renderHomeSections();}catch(e){}}
+  window.addEventListener('nita-store-ready',()=>setTimeout(refresh,150));
+  window.addEventListener('load',()=>setTimeout(refresh,350));
+})();
+/* === END LOW STOCK AUTOMATIC STATUS FINAL PATCH === */
+
+
+/* === FINAL REQUEST PATCH: reliable marquee + cart persistence fix === */
+(function(){
+  const readJSON=(k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f))}catch(e){return f}};
+  const writeJSON=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  const moneySafe=(n)=>{try{return typeof money==='function'?money(Number(n||0)):'$'+Number(n||0).toFixed(2)}catch(e){return '$'+Number(n||0).toFixed(2)}};
+  const productsSafe=()=>{try{return typeof getProducts==='function'?getProducts():readJSON('nitaProducts',[])}catch(e){return readJSON('nitaProducts',[])}};
+  const mainPhoto=(p)=>{try{return productMainImage(p)}catch(e){return (p&&p.photos&&p.photos[p.mainPhotoIndex||0])||(p&&p.photos&&p.photos[0])||(p&&p.img)||''}};
+  const bg=(img)=>{try{return typeof cssBgImage==='function'?cssBgImage(img):(String(img||'').startsWith('data:')?`background-image:url(${img})`:'background:linear-gradient(135deg,#f7f7f7,#ddd)')}catch(e){return 'background:linear-gradient(135deg,#f7f7f7,#ddd)'}};
+  const unit=(p,i)=>Number((p&&(p.salePrice!==''&&p.salePrice!=null?Number(p.salePrice):Number(p.price))) || (i&&i.price) || 0);
+  const statusVal=(p)=>{try{return typeof productStatusValue==='function'?productStatusValue(p):(p.status||'in-stock')}catch(e){return p?.status||'in-stock'}};
+  const card=(p)=>{try{return typeof productCard==='function'?productCard(p):''}catch(e){return ''}};
+
+  // Fix cart bug caused by older saveCart overwriting localStorage with the old in-memory cart.
+  window.saveCart=function(){
+    const c = Array.isArray(window.cart) ? window.cart : readJSON('nitaCart',[]);
+    writeJSON('nitaCart', c);
+    try{ if(typeof updateCartCount==='function') updateCartCount(); }catch(e){}
+  };
+  window.updateCartCount=function(){
+    const count = readJSON('nitaCart',[]).reduce((s,i)=>s+Number(i.qty||1),0);
+    document.querySelectorAll('.cart-count').forEach(el=>el.textContent=String(count));
+  };
+  window.renderCartPanel=function(){
+    const box=document.getElementById('cartItems'); if(!box)return;
+    const cart=readJSON('nitaCart',[]); window.cart=cart;
+    const ps=productsSafe();
+    if(!cart.length){box.innerHTML='<p class="muted">Your cart is empty.</p>'; updateCartCount(); return;}
+    let total=0;
+    box.innerHTML=cart.map((i,idx)=>{
+      const p=ps.find(x=>String(x.id)===String(i.id)); const qty=Math.max(1,Number(i.qty||1)); const price=unit(p,i); total+=price*qty;
+      const img=p?mainPhoto(p):i.photo;
+      return `<div class="cart-line"><span class="cart-thumb" style="${bg(img)}"></span><div class="cart-copy"><b>${(p&&p.name)||i.name||'Product'}</b><br><span class="muted">${i.size||''}</span><div class="qty-stepper" aria-label="Quantity selector"><button type="button" onclick="changeCartQty(${idx},-1)">−</button><span>${qty}</span><button type="button" onclick="changeCartQty(${idx},1)">+</button></div><strong>${moneySafe(price*qty)}</strong></div><button class="cart-remove" type="button" aria-label="Remove item" onclick="window.removeCartItem(${idx})">×</button></div>`;
+    }).join('') + `<div class="cart-total-line"><span>Subtotal</span><b>${moneySafe(total)}</b></div><a class="btn cart-checkout-btn" href="checkout.html">CHECKOUT</a>`;
+    updateCartCount();
+  };
+  window.removeCartItem=function(idx){const c=readJSON('nitaCart',[]);c.splice(idx,1);window.cart=c;saveCart();renderCartPanel();};
+  window.changeCartQty=function(idx,delta){
+    const c=readJSON('nitaCart',[]); const item=c[idx]; if(!item)return;
+    const next=Number(item.qty||1)+Number(delta||0);
+    if(next<=0)c.splice(idx,1); else item.qty=next;
+    window.cart=c; saveCart(); renderCartPanel(); if(document.getElementById('checkoutSummary')&&typeof renderCheckoutSummary==='function')renderCheckoutSummary();
+  };
+  window.addToCart=function(id,size='One Size'){
+    const ps=productsSafe(); const p=ps.find(x=>String(x.id)===String(id));
+    if(!p){if(typeof toast==='function')toast('Product not found.');return;}
+    const st=statusVal(p); if(st==='coming-soon'||st==='out-of-stock'){if(typeof toast==='function')toast('This product is not available yet.');return;}
+    if(typeof isOOS==='function' && isOOS(p,size)){if(typeof toast==='function')toast('This size is out of stock.');return;}
+    const c=readJSON('nitaCart',[]); const existing=c.find(i=>String(i.id)===String(id)&&String(i.size)===String(size));
+    if(existing) existing.qty=Number(existing.qty||1)+1;
+    else c.push({id:p.id,size,qty:1,name:p.name,price:unit(p),photo:mainPhoto(p)});
+    window.cart=c; writeJSON('nitaCart',c); saveCart(); renderCartPanel(); if(typeof toast==='function')toast('Added to cart');
+  };
+
+  // Rebuild homepage rows as pure CSS marquees, duplicated exactly enough for seamless movement.
+  function homeSectionOf(p){return p.displaySection||p.homeSection||(p.collection==='New Arrivals'?'new-arrivals':'trending-now');}
+  function fillMarquee(id,list){
+    const box=document.getElementById(id); if(!box)return;
+    const ps=productsSafe(); const src=(list&&list.length?list:ps.slice(0,6));
+    if(!src.length){box.innerHTML='<p class="muted">No products listed yet.</p>';return;}
+    const base=src.map(p=>card(p)||`<article class="product"><a href="product.html?id=${encodeURIComponent(p.id)}"><div class="product-img" style="${bg(mainPhoto(p))}"></div><h3>${p.name||'Product'}</h3><p>${moneySafe(p.price)}</p></a></article>`).join('');
+    // Two identical halves are required because CSS moves exactly -50%.
+    box.innerHTML=base+base;
+    box.style.animation='none';
+    void box.offsetWidth;
+    box.style.animation='nitaContinuousMarquee '+(window.innerWidth<=760?'28s':'34s')+' linear infinite';
+  }
+  window.renderHomeSections=function(){
+    const ps=productsSafe();
+    fillMarquee('trendingMarquee',ps.filter(p=>homeSectionOf(p)==='trending-now'));
+    fillMarquee('newArrivalsMarquee',ps.filter(p=>homeSectionOf(p)==='new-arrivals'));
+  };
+  function bootMarquees(){
+    if(!(document.getElementById('trendingMarquee')||document.getElementById('newArrivalsMarquee')))return;
+    const run=()=>{try{renderHomeSections();setTimeout(renderHomeSections,300);setTimeout(renderHomeSections,1000)}catch(e){console.error(e)}};
+    if(typeof loadSharedStore==='function') loadSharedStore().finally(run); else run();
+  }
+  document.addEventListener('DOMContentLoaded',bootMarquees);
+  window.addEventListener('load',bootMarquees);
+  window.addEventListener('pageshow',bootMarquees);
+  window.addEventListener('nita-store-ready',bootMarquees);
+  setTimeout(bootMarquees,1200);
+})();
+
+/* === FINAL PATCH: empty cart checkout guard + saved address selector + professional delivery box === */
+(function(){
+  const DELIVERY_FEE_NITA=7;
+  const read=(k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f))}catch(e){return f}};
+  const write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  const esc=(s)=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const moneyFmt=(n)=>{try{return typeof money==='function'?money(Number(n||0)):'$'+Number(n||0).toFixed(2)}catch(e){return '$'+Number(n||0).toFixed(2)}};
+  const productsSafe=()=>{try{return typeof getProducts==='function'?getProducts():read('nitaProducts',[])}catch(e){return read('nitaProducts',[])}};
+  const unit=(p,i)=>Number((p&&(p.salePrice!==''&&p.salePrice!=null?Number(p.salePrice):Number(p.price))) || (i&&i.price) || 0);
+  const mainPhoto=(p)=>{try{return productMainImage(p)}catch(e){return (p&&p.photos&&p.photos[p.mainPhotoIndex||0])||(p&&p.photos&&p.photos[0])||(p&&p.img)||''}};
+  const bg=(img)=>{try{return typeof cssBgImage==='function'?cssBgImage(img):(String(img||'').startsWith('data:')?`background-image:url(${img})`:'background:linear-gradient(135deg,#f7f7f7,#ddd)')}catch(e){return 'background:linear-gradient(135deg,#f7f7f7,#ddd)'}};
+  function currentEmail(){
+    const u=read('nitaUser',null)||read('nitaCurrentUser',null); return String(u?.email||localStorage.getItem('nitaSessionEmail')||'').toLowerCase();
+  }
+  function currentUserRecord(){
+    const email=currentEmail(); if(!email)return null; const users=read('nitaUsersByEmail',{}); return users[email]||read('nitaUser',null)||null;
+  }
+  function userAddresses(){
+    const u=currentUserRecord(); if(!u)return [];
+    const out=[];
+    if(Array.isArray(u.addresses)) out.push(...u.addresses);
+    if(u.defaultAddress) out.push(u.defaultAddress);
+    const seen=new Set();
+    return out.filter(a=>a&&typeof a==='object').map((a,i)=>({label:a.label||a.name||a.addressName||(i===0?'Home':'Address '+(i+1)),...a})).filter(a=>{const key=[a.city,a.street,a.building,a.floor,a.apartment].map(x=>String(x||'').toLowerCase()).join('|'); if(seen.has(key))return false; seen.add(key); return true;});
+  }
+  function collectCheckoutAddress(form){
+    return {label:String(form.get('addressLabel')||'').trim(),city:String(form.get('city')||'').trim(),street:String(form.get('street')||'').trim(),building:String(form.get('building')||'').trim(),floor:String(form.get('floor')||'').trim(),apartment:String(form.get('apartment')||'').trim(),landmark:String(form.get('landmark')||'').trim(),preferredTime:String(form.get('preferredTime')||'').trim(),notes:String(form.get('notes')||'').trim()};
+  }
+  window.fillCheckoutAddress=function(index){
+    const a=userAddresses()[Number(index)]; if(!a)return;
+    const form=document.getElementById('checkoutForm'); if(!form)return;
+    ['city','street','building','floor','apartment','landmark','preferredTime','notes'].forEach(k=>{if(form.elements[k]) form.elements[k].value=a[k]||''});
+    if(form.elements.addressLabel) form.elements.addressLabel.value=a.label||'';
+    document.querySelectorAll('.address-choice').forEach((el,i)=>el.classList.toggle('active',i===Number(index)));
+  };
+  async function saveAddressForUserIfNeeded(form){
+    const email=currentEmail(); if(!email)return;
+    const shouldSave=!!form.elements.saveAddress?.checked || !!form.elements.addressLabel?.value;
+    if(!shouldSave)return;
+    const users=read('nitaUsersByEmail',{}); const existing=users[email]||read('nitaUser',{})||{email};
+    const addr=collectCheckoutAddress(new FormData(form));
+    addr.label=addr.label || 'Address '+(((existing.addresses||[]).length||0)+1);
+    const key=[addr.city,addr.street,addr.building,addr.floor,addr.apartment].map(x=>String(x||'').toLowerCase()).join('|');
+    let addresses=Array.isArray(existing.addresses)?existing.addresses.slice():[];
+    const idx=addresses.findIndex(a=>[a.city,a.street,a.building,a.floor,a.apartment].map(x=>String(x||'').toLowerCase()).join('|')===key);
+    if(idx>=0) addresses[idx]={...addresses[idx],...addr}; else addresses.push(addr);
+    users[email]={...existing,email,phone:form.elements.phone?.value||existing.phone||'',defaultAddress:addr,addresses};
+    write('nitaUsersByEmail',users); write('nitaUser',users[email]);
+    try{ if(typeof saveCloudKey==='function') await saveCloudKey('nitaUsersByEmail',users); }catch(e){console.warn(e)}
+  }
+  function injectSavedAddressSelector(){
+    const form=document.getElementById('checkoutForm'); if(!form || document.getElementById('savedAddressSection'))return;
+    const fields=form.querySelector('.checkout-fields'); if(!fields)return;
+    const addresses=userAddresses();
+    const section=document.createElement('div'); section.id='savedAddressSection'; section.className='saved-address-section';
+    if(addresses.length){
+      section.innerHTML=`<h3>Saved addresses</h3><p class="muted">Choose a saved delivery address, or enter a new one below.</p><div class="address-choice-grid">${addresses.map((a,i)=>`<label class="address-choice" onclick="fillCheckoutAddress(${i})"><input type="radio" name="savedAddressChoice" value="${i}"><strong>${esc(a.label||('Address '+(i+1)))}</strong><small>${esc(a.city||'')}${a.street?' · '+esc(a.street):''}${a.building?' · '+esc(a.building):''}</small><div class="address-details">Floor ${esc(a.floor||'-')} · Apt ${esc(a.apartment||'-')}<br>${esc(a.landmark||'')}</div></label>`).join('')}</div><div class="address-label-row"><input class="field" name="addressLabel" placeholder="Address name, for example Home, Office, Chalet"></div>`;
+    } else {
+      section.innerHTML=`<h3>Delivery address</h3><p class="muted">Add a delivery address. You can save it for future orders.</p><div class="address-label-row"><input class="field" name="addressLabel" placeholder="Address name, for example Home or Office"></div>`;
+    }
+    form.insertBefore(section, fields);
+  }
+  function injectDeliveryBox(){
+    const form=document.getElementById('checkoutForm'); if(!form || document.getElementById('deliveryInfoBox'))return;
+    const payment=form.querySelector('h3:nth-of-type(2)') || form.querySelector('.payment-option');
+    const box=document.createElement('div'); box.id='deliveryInfoBox'; box.className='delivery-info-box';
+    box.innerHTML='<div><b>Aramex delivery across Lebanon</b><span>Estimated delivery: 2–3 business days.</span></div><strong>$7 delivery fee</strong>';
+    if(payment) form.insertBefore(box,payment); else form.appendChild(box);
+  }
+  function disableCheckoutIfEmpty(){
+    const cart=read('nitaCart',[]);
+    const empty=!cart.length;
+    document.querySelectorAll('.cart-checkout-btn').forEach(a=>{a.classList.toggle('disabled',empty); if(empty){a.removeAttribute('href');a.setAttribute('aria-disabled','true');a.onclick=(e)=>{e.preventDefault(); if(typeof toast==='function')toast('Your cart is empty.');};}else{a.href='checkout.html';a.removeAttribute('aria-disabled');a.onclick=null;}});
+    const form=document.getElementById('checkoutForm');
+    const place=form?.querySelector('button[type="submit"],button.btn:not([type])');
+    if(form && empty){
+      if(place){place.classList.add('place-order-disabled'); place.disabled=true; place.textContent='CART IS EMPTY';}
+      if(!document.querySelector('.empty-cart-checkout-note')){const n=document.createElement('div');n.className='empty-cart-checkout-note';n.textContent='Your cart is empty. Add a product before checkout.';form.prepend(n);}
+    }
+  }
+  const oldRenderCartPanel=window.renderCartPanel;
+  window.renderCartPanel=function(){
+    if(oldRenderCartPanel) oldRenderCartPanel();
+    const box=document.getElementById('cartItems'); const cart=read('nitaCart',[]); if(!box)return;
+    if(!cart.length){box.innerHTML='<p class="muted">Your cart is empty.</p><button class="btn disabled cart-checkout-btn" disabled>CHECKOUT</button>';}
+    disableCheckoutIfEmpty();
+  };
+  const oldChange=window.changeCartQty;
+  window.changeCartQty=function(idx,delta){ if(oldChange) oldChange(idx,delta); setTimeout(disableCheckoutIfEmpty,0); };
+  const oldRemove=window.removeCartItem;
+  window.removeCartItem=function(idx){ if(oldRemove) oldRemove(idx); setTimeout(disableCheckoutIfEmpty,0); };
+  const oldRenderSummary=window.renderCheckoutSummary;
+  window.renderCheckoutSummary=function(){
+    if(oldRenderSummary) oldRenderSummary();
+    const box=document.getElementById('checkoutSummary'); if(!box)return;
+    const cart=read('nitaCart',[]);
+    if(!cart.length){box.innerHTML='<p class="muted">Your cart is empty.</p><hr><div class="summary-line"><span>Subtotal</span><b>$0.00</b></div><div class="summary-line"><span>Aramex delivery fee</span><b>$0.00</b></div><div class="summary-line summary-total"><span>Total</span><b>$0.00</b></div>';}
+    else if(!box.querySelector('.delivery-note')){
+      const total=box.querySelector('.summary-total'); const p=document.createElement('p'); p.className='delivery-note'; p.textContent='Delivery all over Lebanon in 2–3 business days.'; if(total) box.insertBefore(p,total);
+    }
+    disableCheckoutIfEmpty();
+  };
+  const oldPlace=window.placeOrder;
+  window.placeOrder=async function(){
+    const form=document.getElementById('checkoutForm');
+    if(!read('nitaCart',[]).length){ if(typeof toast==='function')toast('Your cart is empty.'); disableCheckoutIfEmpty(); return; }
+    if(form) await saveAddressForUserIfNeeded(form);
+    if(oldPlace) return oldPlace();
+  };
+  function boot(){injectSavedAddressSelector();injectDeliveryBox();try{window.renderCartPanel&&window.renderCartPanel();}catch(e){}try{window.renderCheckoutSummary&&window.renderCheckoutSummary();}catch(e){}disableCheckoutIfEmpty();}
+  document.addEventListener('DOMContentLoaded',boot); window.addEventListener('load',boot); window.addEventListener('pageshow',boot); setTimeout(boot,500); setTimeout(boot,1300);
+})();
