@@ -3343,3 +3343,27 @@ placeOrder=async function(){
   document.addEventListener('DOMContentLoaded',boot); window.addEventListener('load',boot); window.addEventListener('pageshow',boot); setTimeout(boot,150); setTimeout(boot,700);
 })();
 /* === END NITA STYLE FINAL CHECKOUT/CART ADDRESS HOTFIX 2026-06-08 === */
+
+/* === NITA STYLE FINAL SHIPPING DUPLICATE CLEANUP 2026-06-08 === */
+(function(){
+  function removeDuplicateDeliveryBox(){
+    document.querySelectorAll('#deliveryInfoBox, .delivery-info-box').forEach(function(el){
+      if(!el.classList.contains('shipping-method-box')) el.remove();
+    });
+  }
+  document.addEventListener('DOMContentLoaded', removeDuplicateDeliveryBox);
+  window.addEventListener('load', removeDuplicateDeliveryBox);
+  window.addEventListener('pageshow', removeDuplicateDeliveryBox);
+  setTimeout(removeDuplicateDeliveryBox, 250);
+  setTimeout(removeDuplicateDeliveryBox, 900);
+
+  /* Keep checkout summary minimal: shipping amount appears in summary, details appear only in Shipping method box. */
+  const oldRenderCheckoutSummary = window.renderCheckoutSummary;
+  window.renderCheckoutSummary = function(){
+    if(typeof oldRenderCheckoutSummary === 'function') oldRenderCheckoutSummary();
+    removeDuplicateDeliveryBox();
+    const notes = document.querySelectorAll('#checkoutSummary .delivery-note, .premium-order-summary .delivery-note');
+    notes.forEach(function(n){ n.remove(); });
+  };
+})();
+/* === END NITA STYLE FINAL SHIPPING DUPLICATE CLEANUP 2026-06-08 === */

@@ -1540,3 +1540,49 @@ a.btn:not(.light):not(.danger):not(.disabled):hover{
   .cart-fee-note{font-size:12px;}
 }
 /* === END NITA STYLE FINAL BUTTON/CART/CHECKOUT POLISH 2026-06-08 === */
+
+/* === NITA STYLE FINAL CART/SHIPPING BUTTON FIX 2026-06-08 === */
+/* Remove the duplicate Aramex box that appears below the Complete Order button. Keep only the Shipping method box. */
+#deliveryInfoBox,
+.delivery-info-box:not(.shipping-method-box){
+  display:none!important;
+}
+
+/* Make every dark/active cart control readable on hover, focus, and touch. */
+.qty-stepper button:hover,
+.qty-stepper button:focus,
+.qty-stepper button:active,
+.qty-stepper button.is-active,
+.remove-cart-btn:hover,
+.remove-cart-btn:focus,
+.remove-cart-btn:active,
+.cart-remove:hover,
+.cart-remove:focus,
+.cart-remove:active,
+button:hover.qty-minus,
+button:hover.qty-plus,
+button:active.qty-minus,
+button:active.qty-plus{
+  background:#000!important;
+  color:#fff!important;
+  border-color:#000!important;
+  opacity:1!important;
+}
+.qty-stepper button:hover *,
+.qty-stepper button:focus *,
+.qty-stepper button:active *,
+.remove-cart-btn:hover *,
+.remove-cart-btn:focus *,
+.remove-cart-btn:active *{
+  color:#fff!important;
+  fill:#fff!important;
+  stroke:#fff!important;
+}
+
+/* Keep the normal state clean and readable. */
+.qty-stepper button,
+.remove-cart-btn,
+.cart-remove{
+  transition:background .18s ease,color .18s ease,border-color .18s ease!important;
+}
+/* === END NITA STYLE FINAL CART/SHIPPING BUTTON FIX 2026-06-08 === */
