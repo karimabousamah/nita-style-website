@@ -9,7 +9,7 @@ function updateCartCount(){document.querySelectorAll('.cart-count').forEach(e=>e
 function header(){
  const isAdmin = ADMIN_EMAILS.includes(currentUser?.email);
  const admin = isAdmin ? '<a class="admin-link" href="admin.html">ADMIN</a>' : '';
- return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a href="${currentUser?'account.html':'login.html'}">${currentUser?'ACCOUNT':'SIGN IN'}</a>${admin}<button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, tops, pants..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`
+ return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a href="${currentUser?'account.html':'login.html'}">${currentUser?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, tops, pants..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`
 }
 
 function siteFooter(){return `<footer class="footer site-footer"><div><img class="footer-logo-img" src="assets/logo-cropped.png" alt="Nita Style"><p class="muted">Founded by Nicole and Tania, Nita Style curates Italian-made pieces for women who value clean silhouettes, refined textures, and effortless everyday elegance.</p></div><div><h4>Shop</h4><a href="shop.html">All products</a><a href="collections.html">Collections</a><a href="cart.html">Cart</a><a href="checkout.html">Checkout</a></div><div><h4>Support</h4><a href="contact.html">Contact</a><a href="about.html">About</a><a href="checkout.html">Cash on delivery</a><a href="checkout.html">Online payment coming soon</a></div><div><h4>Join the list</h4><p class="muted">Receive the first-order code and new drop updates.</p><div class="footer-newsletter"><input placeholder="Email address"><button onclick="toast('Use code NITA10 for 10% off')">SIGN UP</button></div></div></footer><div class="copyright site-footer"><span>© 2026 Nita Style. All rights reserved.</span><span>Privacy Policy · Terms · Shipping</span></div>`}
@@ -1746,7 +1746,7 @@ placeOrder=async function(){
     const user = activeUser();
     const isAdmin = ADMIN_EMAILS.includes(String(user?.email||'').toLowerCase());
     const admin = isAdmin ? '<a class="admin-link" href="admin.html">ADMIN</a>' : '';
-    return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a class="account-nav-link" href="account.html">${user?'ACCOUNT':'SIGN IN'}</a>${admin}<button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, tops, pants..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`;
+    return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a class="account-nav-link" href="account.html">${user?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, tops, pants..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`;
   };
 
   function statusStepClass(orderStatus, step){
@@ -3645,3 +3645,189 @@ placeOrder=async function(){
   document.addEventListener('DOMContentLoaded',function(){if(document.getElementById('orderSuccessRoot')) renderOrderSuccess();});
 })();
 /* === END NITA STYLE ORDER + EMAIL + SUCCESS FINAL RELIABILITY PATCH 2026-06-08 === */
+
+/* === NITA STYLE FINAL COUPON TOTAL CALCULATION FIX 2026-06-08 === */
+(function(){
+  const DELIVERY_FEE = 7;
+  const DELIVERY_THRESHOLD = 150;
+  const EMAIL_RE = /^\S+@\S+\.\S+$/;
+  function read(k,f){ try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f));}catch(e){return f;} }
+  function write(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+  function normCode(v){ return String(v||'').trim().toUpperCase(); }
+  function normEmail(v){ return String(v||'').trim().toLowerCase(); }
+  function moneyX(n){ try{return typeof money==='function'?money(Number(n||0)):'$'+Number(n||0).toFixed(2);}catch(e){return '$'+Number(n||0).toFixed(2);} }
+  function getCartNow(){ return Array.isArray(window.cart) && window.cart.length ? window.cart : read('nitaCart',[]); }
+  function getProductsNow(){ try{return typeof getProducts==='function'?getProducts():read('nitaProducts',[]);}catch(e){return read('nitaProducts',[]);} }
+  function cartSubtotal(){ const products=getProductsNow(); return getCartNow().reduce((sum,item)=>{ const p=products.find(x=>String(x.id)===String(item.id)); const price=Number(p?.salePrice || p?.price || item.price || 0); return sum + price * Math.max(1,Number(item.qty||1)); },0); }
+  function shippingFee(subtotal){ return subtotal>0 && subtotal<DELIVERY_THRESHOLD ? DELIVERY_FEE : 0; }
+  function signedEmail(){ try{return normEmail(document.querySelector('#checkoutForm [name="email"]')?.value || localStorage.getItem('nitaSessionEmail') || (JSON.parse(localStorage.getItem('nitaUser')||'{}').email) || localStorage.getItem('nitaDiscountEmail') || '');}catch(e){return '';} }
+  function getAppliedCode(){ return normCode(sessionStorage.getItem('nitaAppliedCoupon')||''); }
+  function setAppliedCode(code){ code=normCode(code); if(code) sessionStorage.setItem('nitaAppliedCoupon',code); else sessionStorage.removeItem('nitaAppliedCoupon'); }
+  function feedback(msg,ok){ const el=document.getElementById('couponFeedback'); if(el){ el.className=ok?'coupon-feedback discount-good':'coupon-feedback discount-bad'; el.innerHTML=msg||''; } }
+  function discountUses(){return read('nitaDiscountUses',{});}
+  function couponLive(c){ if(!c || c.active===false) return false; const today=new Date(); if(c.start && new Date(c.start)>today) return false; if(c.end){ const end=new Date(c.end); end.setHours(23,59,59,999); if(end<today) return false; } return true; }
+  function adminCouponDiscount(c,subtotal){
+    if(!c) return 0;
+    if(c.type==='fixed' || c.amount || c.fixedAmount){ return Math.min(subtotal, Math.max(0, Number(c.amount || c.fixedAmount || 0))); }
+    return Math.min(subtotal, Math.max(0, subtotal * (Number(c.percent||0)/100)));
+  }
+  function calculateDiscount(code,email,subtotal){
+    code=normCode(code); email=normEmail(email); if(!code || subtotal<=0) return {discount:0,kind:'none',message:''};
+    if(typeof window.calcCouponDiscount==='function'){
+      try{
+        const r=window.calcCouponDiscount(code,email,subtotal) || {};
+        if(Number(r.discount)>0) return {discount:Math.min(subtotal,Number(r.discount)),kind:r.kind||'custom',coupon:r.coupon||null,message:r.message||''};
+      }catch(e){}
+    }
+    if(code==='NITA10'){
+      const used=email && discountUses()[email];
+      return (!used && email) ? {discount:Math.min(subtotal,subtotal*0.10),kind:'nita10'} : {discount:0,kind:'nita10-invalid'};
+    }
+    const coupons=read('nitaCoupons',[]); const c=coupons.find(x=>normCode(x.code)===code);
+    if(!c || !couponLive(c)) return {discount:0,kind:'invalid'};
+    if(c.oneTime && email && c.usedEmails && c.usedEmails[email]) return {discount:0,kind:'used'};
+    const d=adminCouponDiscount(c,subtotal);
+    return d>0 ? {discount:d,kind:'admin',coupon:c} : {discount:0,kind:'invalid'};
+  }
+  function markCouponUsed(result,code,email){
+    code=normCode(code); email=normEmail(email); if(!code || !email || !result || !(Number(result.discount)>0)) return;
+    if(result.kind==='nita10'){
+      const uses=discountUses(); uses[email]=true; write('nitaDiscountUses',uses); try{window.saveCloudKey?.('nitaDiscountUses',uses);}catch(e){}
+    }
+    if(result.kind==='admin'){
+      const coupons=read('nitaCoupons',[]); const c=coupons.find(x=>normCode(x.code)===code);
+      if(c && c.oneTime){ c.usedEmails=c.usedEmails||{}; c.usedEmails[email]=true; write('nitaCoupons',coupons); try{window.saveCoupons?.(coupons);}catch(e){} }
+    }
+  }
+  window.applyCouponCode=function(){
+    const form=document.getElementById('checkoutForm'); if(!form) return;
+    const code=normCode(form.coupon?.value||''); const subtotal=cartSubtotal(); const email=signedEmail();
+    if(!code){ setAppliedCode(''); feedback('Enter a coupon code first.',false); window.renderCheckoutSummary?.(); return; }
+    if(!subtotal){ setAppliedCode(''); feedback('No discount is applicable because your cart is empty.',false); window.renderCheckoutSummary?.(); return; }
+    const result=calculateDiscount(code,email,subtotal);
+    if(Number(result.discount)>0){ setAppliedCode(code); feedback(`Coupon applied successfully. You saved ${moneyX(result.discount)}.`,true); }
+    else { setAppliedCode(''); feedback('Coupon code is expired, invalid, already used, or no discount is applicable.',false); }
+    window.renderCheckoutSummary?.();
+  };
+  window.renderCheckoutSummary=function(){
+    const box=document.getElementById('checkoutSummary'); if(!box) return;
+    const form=document.getElementById('checkoutForm'); const products=getProductsNow(); const cart=getCartNow();
+    const rows=cart.length?cart.map(item=>{ const p=products.find(x=>String(x.id)===String(item.id)); const name=p?.name || item.name || 'Product'; const qty=Math.max(1,Number(item.qty||1)); const price=Number(p?.salePrice || p?.price || item.price || 0); return `<div class="summary-product"><span>${name}<small>${item.size||'One Size'} × ${qty}</small></span><b>${moneyX(price*qty)}</b></div>`; }).join(''):'<p class="muted">Your cart is empty.</p>';
+    const subtotal=cartSubtotal(); const typed=normCode(form?.coupon?.value||''); const applied=getAppliedCode(); const email=signedEmail();
+    let result={discount:0}; let note='';
+    if(applied && typed && applied===typed){ result=calculateDiscount(applied,email,subtotal); if(Number(result.discount)<=0){ setAppliedCode(''); note='<p class="discount-bad">Coupon code is expired, invalid, already used, or no discount is applicable.</p>'; } }
+    else if(typed){ note='<p class="muted">Click Apply to validate this coupon before placing your order.</p>'; }
+    const discount=Math.min(subtotal,Number(result.discount||0)); const fee=shippingFee(subtotal); const total=Math.max(0,subtotal-discount)+fee;
+    box.innerHTML=`${rows}<hr><div class="summary-line"><span>Subtotal</span><b>${moneyX(subtotal)}</b></div>${discount>0?`<div class="summary-line discount-line"><span>Discount</span><b>-${moneyX(discount)}</b></div>`:''}<div class="summary-line"><span>Aramex delivery</span><b>${fee?moneyX(fee):'Free'}</b></div><div class="summary-line summary-total"><span>Total</span><b>${moneyX(total)}</b></div>${note}`;
+  };
+  window.placeOrder=async function(){
+    const form=document.getElementById('checkoutForm'); if(!form) return;
+    const cart=getCartNow(); if(!cart.length){ try{toast('Your cart is empty.')}catch(e){} return; }
+    const customer=String(form.name?.value||'').trim(); const email=signedEmail(); const phone=String(form.phone?.value||'').trim();
+    if(!customer || !EMAIL_RE.test(email) || !phone){ try{toast('Please complete your contact details.')}catch(e){} return; }
+    const typed=normCode(form.coupon?.value||''); const applied=getAppliedCode();
+    if(typed && typed!==applied){ feedback('Please click Apply before placing the order, or remove the coupon code.',false); return; }
+    let address=null;
+    try{ const addresses=(typeof window.allCheckoutAddresses==='function')?window.allCheckoutAddresses():[]; if(addresses?.length && window.nitaCheckoutMode!=='new') address=addresses[Number(window.nitaSelectedCheckoutAddress||0)]; if(!address && window.nitaCheckoutTempAddress) address=window.nitaCheckoutTempAddress; }catch(e){}
+    if(!address){ const u=(()=>{try{return JSON.parse(localStorage.getItem('nitaUser')||'{}')}catch(e){return {}}})(); address=(u.addresses&&u.addresses[0])||u.defaultAddress||read('nitaGuestAddresses',[])[0]||null; }
+    if(!address){ try{toast('Please add and save a delivery address.')}catch(e){} if(typeof window.nitaShowCheckoutAddressForm==='function') window.nitaShowCheckoutAddressForm(); return; }
+    try{ if(typeof window.loadSharedStore==='function') await window.loadSharedStore(); }catch(e){}
+    const products=getProductsNow(); let subtotal=0; const items=[];
+    cart.forEach(item=>{ const p=products.find(x=>String(x.id)===String(item.id)); if(!p) return; const qty=Math.max(1,Number(item.qty||1)); const price=Number(p.salePrice||p.price||item.price||0); subtotal+=price*qty; items.push({id:p.id,name:p.name,size:item.size||'One Size',qty,price,total:price*qty}); if(p.quantity!==undefined && p.quantity!==''){ p.quantity=Math.max(0,Number(p.quantity||0)-qty); if(p.quantity<=0) p.status='out-of-stock'; }});
+    const result=applied?calculateDiscount(applied,email,subtotal):{discount:0}; const discount=Math.min(subtotal,Number(result.discount||0)); const fee=shippingFee(subtotal); const total=Math.max(0,subtotal-discount)+fee;
+    markCouponUsed(result,applied,email);
+    const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer,email,phone,address,payment:'Cash on Delivery',deliveryMethod:'Aramex',deliveryFee:fee,deliveryTime:'2–3 business days across Lebanon',status:'Order submitted',items,subtotal,discount,coupon:applied,total};
+    const orders=read('nitaOrders',[]); orders.push(order); write('nitaOrders',orders); write('nitaProducts',products); write('nitaLastOrder',order);
+    try{ if(typeof window.saveCloudKey==='function'){ await window.saveCloudKey('nitaOrders',orders); await window.saveCloudKey('nitaProducts',products); } else if(typeof window.saveSharedKeyNow==='function'){ await window.saveSharedKeyNow('nitaOrders',orders); await window.saveSharedKeyNow('nitaProducts',products); } }catch(e){console.warn(e);}
+    const users=read('nitaUsersByEmail',{}); if(users[email]){ users[email].orders=users[email].orders||[]; users[email].orders.push(order.id); write('nitaUsersByEmail',users); try{ await window.saveCloudKey?.('nitaUsersByEmail',users); }catch(e){} }
+    const fails=[]; try{ await window.sendStoreEmail?.({type:'order_confirmation',to:email,order}); }catch(e){fails.push('customer confirmation');}
+    try{ await window.sendStoreEmail?.({type:'admin_order',order}); }catch(e){fails.push('admin notification');}
+    if(fails.length) localStorage.setItem('nitaLastEmailError','Failed: '+fails.join(', ')+'. Check Resend logs and Netlify environment variables.'); else localStorage.removeItem('nitaLastEmailError');
+    write('nitaCart',[]); try{window.cart=[]; window.saveCart?.(); window.updateCartCount?.();}catch(e){}
+    setAppliedCode(''); location.href='order-success.html';
+  };
+  document.addEventListener('input',function(e){ if(e.target?.name==='coupon'){ setAppliedCode(''); feedback('',true); window.renderCheckoutSummary?.(); } });
+  document.addEventListener('DOMContentLoaded',function(){ if(document.getElementById('checkoutSummary')) window.renderCheckoutSummary(); });
+})();
+/* === END NITA STYLE FINAL COUPON TOTAL CALCULATION FIX 2026-06-08 === */
+
+/* === NITA STYLE PREMIUM EMAIL / ADMIN PAGES / FAVORITES FINAL PATCH 2026-06-08 === */
+(function(){
+  const esc=(v)=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const read=(k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f))}catch(e){return f}};
+  const write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  const emailNorm=(e)=>String(e||'').trim().toLowerCase();
+  const cloud=async(k,v)=>{write(k,v);try{if(typeof saveCloudKey==='function')await saveCloudKey(k,v);else if(typeof saveSharedKeyNow==='function')await saveSharedKeyNow(k,v)}catch(e){console.warn('Cloud save skipped',k,e)}};
+  const products=()=>{try{return typeof getProducts==='function'?getProducts():read('nitaProducts',[])}catch(e){return read('nitaProducts',[])}};
+  const orders=()=>read('nitaOrders',[]);
+  const users=()=>read('nitaUsersByEmail',{});
+  const moneyX=(n)=>{try{return typeof money==='function'?money(n):'$'+Number(n||0).toFixed(2)}catch(e){return '$'+Number(n||0).toFixed(2)}};
+  const mainImg=(p)=>{try{return productMainImage(p)}catch(e){return p?.photos?.[p?.mainPhotoIndex||0]||p?.photos?.[0]||p?.img||'linear-gradient(135deg,#fff,#ddd)'}};
+  const bg=(u)=>{try{return typeof cssBgImage==='function'?cssBgImage(u):(String(u||'').startsWith('data:')?`background-image:url(${u})`:`background:${u||'linear-gradient(135deg,#fff,#ddd)'}`)}catch(e){return 'background:linear-gradient(135deg,#fff,#ddd)'}};
+  function currentEmail(){return emailNorm(read('nitaUser',{}).email||localStorage.getItem('nitaSessionEmail'))}
+  function likesKey(){return 'nitaLikes_'+currentEmail()}
+  function likedIds(){return read(likesKey(),[]).map(String)}
+  async function saveLikes(ids){write(likesKey(),ids); const email=currentEmail(); if(email){const us=users(); if(us[email]){us[email].likedProducts=ids; write('nitaUsersByEmail',us); await cloud('nitaUsersByEmail',us)}}}
+  window.toggleLike=async function(id,ev){ if(ev){ev.preventDefault();ev.stopPropagation()} const email=currentEmail(); if(!email){try{toast('Sign in to save liked items.')}catch(e){} location.href='login.html'; return false;} let ids=likedIds(); id=String(id); ids=ids.includes(id)?ids.filter(x=>x!==id):ids.concat(id); await saveLikes(ids); document.querySelectorAll(`[data-like-id="${CSS.escape(id)}"]`).forEach(b=>{b.classList.toggle('active',ids.includes(id));b.innerHTML=ids.includes(id)?'♥':'♡'}); try{renderAccountLikedItems&&renderAccountLikedItems()}catch(e){} return false; };
+  function heart(id){const active=likedIds().includes(String(id));return `<button class="favorite-btn ${active?'active':''}" data-like-id="${esc(id)}" type="button" onclick="toggleLike('${String(id).replace(/'/g,"\\'")}',event)" aria-label="Like product">${active?'♥':'♡'}</button>`}
+
+  const oldProductCard=window.productCard;
+  window.productCard=function(p){let html=oldProductCard?oldProductCard(p):''; if(!html)return html; if(html.includes('favorite-btn'))return html; return html.replace('<div class="product-img">',`<div class="product-img">${heart(p.id)}`)};
+  const oldRenderProducts=window.renderProducts;
+  window.renderProducts=function(el='#products',list=products()){ if(oldRenderProducts) oldRenderProducts(el,list); const node=document.querySelector(el); if(node&&!node.querySelector('.favorite-btn')) node.innerHTML=(list||[]).map(window.productCard).join('')||'<p class="muted">No products listed yet.</p>'; };
+  const oldProductPage=window.productPage;
+  window.productPage=function(){ if(oldProductPage) oldProductPage(); const id=new URL(location.href).searchParams.get('id'); const detail=document.getElementById('detail'); if(detail&&id&&!detail.querySelector('.product-detail-fav')){ const target=detail.querySelector('h1'); if(target) target.insertAdjacentHTML('afterend',`<button class="btn light product-detail-fav" onclick="toggleLike('${String(id).replace(/'/g,"\\'")}',event)">${likedIds().includes(String(id))?'♥ Liked':'♡ Like this product'}</button>`); } };
+
+  window.renderAccountLikedItems=function(){ const root=document.getElementById('likedItemsRoot'); if(!root)return; const ids=likedIds(); const ps=products().filter(p=>ids.includes(String(p.id))); root.innerHTML=ps.length?`<div class="liked-grid">${ps.map(p=>`<article class="liked-card"><a href="product.html?id=${encodeURIComponent(p.id)}"><div class="liked-img" style="${bg(mainImg(p))}"></div><h3>${esc(p.name)}</h3><p>${moneyX(p.salePrice||p.price)}</p></a><button class="btn outline-danger" onclick="toggleLike('${String(p.id).replace(/'/g,"\\'")}',event)">REMOVE</button></article>`).join('')}</div>`:'<p class="muted">No liked items yet.</p>'; };
+  // Liked items are shown in their own top-navigation page, not inside the account page.
+  const oldAccount=window.renderAccount;
+  window.renderAccount=async function(){ if(oldAccount) await oldAccount(); };
+
+  function unreadOrders(){return orders().filter(o=>!o.adminSeen).length}
+  function markOrdersSeen(){const os=orders(); let changed=false; os.forEach(o=>{if(!o.adminSeen){o.adminSeen=true;changed=true}}); if(changed)cloud('nitaOrders',os)}
+  window.showAdminSection=function(name){ document.querySelectorAll('.admin-section-page').forEach(s=>s.classList.toggle('active',s.dataset.section===name)); document.querySelectorAll('.admin-nav-button').forEach(b=>b.classList.toggle('active',b.dataset.section===name)); if(name==='orders')markOrdersSeen(); };
+  function statusSelect(o,i){const all=['Order submitted','Confirmed','Packing','Out for delivery','Delivered','Cancelled']; return `<select class="field admin-order-status" onchange="updateOrder(${i},this.value)">${all.map(s=>`<option ${String(o.status||'Order submitted')===s?'selected':''}>${s}</option>`).join('')}</select>`}
+  window.deleteOrderAdmin=async function(i){ if(!confirm('Delete this order from the admin dashboard?'))return; const os=orders(); os.splice(i,1); await cloud('nitaOrders',os); renderAdmin(); };
+  window.editCustomerAdmin=function(email){ const panel=document.getElementById('cust-edit-'+email.replace(/[^a-z0-9]/gi,'_')); if(panel)panel.classList.toggle('open'); };
+  window.saveCustomerAdmin=async function(email){ const id=email.replace(/[^a-z0-9]/gi,'_'); const us=users(); const u=us[email]; if(!u)return; u.firstName=document.getElementById('custFirst_'+id)?.value||''; u.lastName=document.getElementById('custLast_'+id)?.value||''; u.phone=document.getElementById('custPhone_'+id)?.value||''; const addr=u.addresses?.[0]||u.defaultAddress||{}; addr.label=document.getElementById('custLabel_'+id)?.value||addr.label||'Home'; addr.city=document.getElementById('custCity_'+id)?.value||''; addr.street=document.getElementById('custStreet_'+id)?.value||''; addr.building=document.getElementById('custBuilding_'+id)?.value||''; addr.floor=document.getElementById('custFloor_'+id)?.value||''; addr.apartment=document.getElementById('custApartment_'+id)?.value||''; u.addresses=[addr]; u.defaultAddress=addr; us[email]=u; await cloud('nitaUsersByEmail',us); const cur=read('nitaUser',{}); if(emailNorm(cur.email)===email){write('nitaUser',u); localStorage.setItem('nitaSessionEmail',email)} renderAdmin(); try{toast('Customer updated globally.')}catch(e){} };
+  window.deleteCustomerAdmin=async function(email){ if(!confirm('Delete this customer account?'))return; const us=users(); delete us[email]; await cloud('nitaUsersByEmail',us); renderAdmin(); };
+  function customerCard(email,u){const id=email.replace(/[^a-z0-9]/gi,'_'); const addr=(u.addresses&&u.addresses[0])||u.defaultAddress||{}; const count=orders().filter(o=>emailNorm(o.email)===email).length; return `<article class="admin-list-card"><div><h3>${esc((u.firstName||'')+' '+(u.lastName||''))||'Customer'}</h3><p class="muted">${esc(email)} · ${esc(u.phone||'No phone')} · ${count} order${count===1?'':'s'}</p><div id="cust-edit-${id}" class="admin-edit-panel"><div class="admin-mini-grid"><input class="field" id="custFirst_${id}" value="${esc(u.firstName||'')}" placeholder="First name"><input class="field" id="custLast_${id}" value="${esc(u.lastName||'')}" placeholder="Last name"><input class="field" id="custPhone_${id}" value="${esc(u.phone||'')}" placeholder="Phone"><input class="field" id="custLabel_${id}" value="${esc(addr.label||'Home')}" placeholder="Address name"><input class="field" id="custCity_${id}" value="${esc(addr.city||'')}" placeholder="City"><input class="field" id="custStreet_${id}" value="${esc(addr.street||'')}" placeholder="Street"><input class="field" id="custBuilding_${id}" value="${esc(addr.building||'')}" placeholder="Building"><input class="field" id="custFloor_${id}" value="${esc(addr.floor||'')}" placeholder="Floor"><input class="field" id="custApartment_${id}" value="${esc(addr.apartment||'')}" placeholder="Apartment"></div><button class="btn" onclick="saveCustomerAdmin('${email}')">SAVE CUSTOMER</button></div></div><div class="admin-actions"><button class="btn light" onclick="editCustomerAdmin('${email}')">EDIT</button><button class="btn danger" onclick="deleteCustomerAdmin('${email}')">DELETE</button></div></article>`}
+  function adminProductsPage(){ const ps=products(); return ps.length?ps.map(p=>{ const img=mainImg(p); return `<article class="admin-list-card" id="edit-${esc(p.id)}"><div style="display:flex;gap:14px;align-items:center"><div class="admin-product-photo" style="${bg(img)};background-size:cover;background-position:center"></div><div><h3>${esc(p.name)}</h3><p class="muted">${esc(p.category||'')} · ${moneyX(p.price||0)} · ${esc(p.collection||'')}</p></div></div><div class="admin-actions"><button class="btn light" onclick="toggleProductEditor('${String(p.id).replace(/'/g,"\\'")}')">EDIT LISTING</button><button class="btn danger" onclick="removeProduct('${String(p.id).replace(/'/g,"\\'")}')">REMOVE</button></div><div class="product-editor" id="editor-${esc(p.id)}">${typeof productEditorHTML==='function'?productEditorHTML(p):''}</div></article>`}).join(''):'<p class="muted">No products listed yet.</p>'}
+  window.renderAdmin=async function(){ if(typeof protectAdmin==='function'&&!protectAdmin())return; try{if(typeof loadSharedStore==='function')await loadSharedStore()}catch(e){} const page=document.querySelector('.admin-page'); if(!page)return; const os=orders(); const us=users(); const ps=products(); page.innerHTML=`<div class="admin-toolbar admin-hero"><div><p class="eyebrow">Nita Style Backend</p><h1>Admin Dashboard</h1><p class="muted">Choose a section to manage orders, customers, products, and coupons without overcrowding one page.</p></div><a class="btn" href="shop.html">VIEW STORE</a></div><div class="admin-overview-grid"><button class="admin-stat-card" onclick="showAdminSection('orders')"><div><p>Orders</p><h3>${os.length}</h3></div>${unreadOrders()?`<span class="admin-badge">${unreadOrders()}</span>`:''}</button><button class="admin-stat-card" onclick="showAdminSection('customers')"><div><p>Customers</p><h3>${Object.keys(us).length}</h3></div></button><button class="admin-stat-card" onclick="showAdminSection('products')"><div><p>Products</p><h3>${ps.length}</h3></div></button></div>${unreadOrders()?`<div class="admin-notice unread">${unreadOrders()} new order notification${unreadOrders()===1?'':'s'} waiting for review.</div>`:''}<div class="admin-grid"><aside class="admin-side"><h3>Management</h3><button class="admin-nav-button active" data-section="orders" onclick="showAdminSection('orders')">Orders ${unreadOrders()?`<span class="admin-badge">${unreadOrders()}</span>`:''}</button><button class="admin-nav-button" data-section="customers" onclick="showAdminSection('customers')">Signed-up customers</button><button class="admin-nav-button" data-section="products" onclick="showAdminSection('products')">Edit listed products</button><button class="admin-nav-button" data-section="add" onclick="showAdminSection('add')">Add product</button><button class="admin-nav-button" data-section="coupons" onclick="showAdminSection('coupons')">Coupon codes</button></aside><section class="admin-layout"><div class="card admin-section-page active" data-section="orders"><div class="admin-toolbar"><h2>Orders</h2><span class="pill">${os.length} total</span></div>${os.length?os.map((o,i)=>`<article class="admin-list-card"><div><h3>${esc(o.id)}</h3><p class="muted">${esc(o.customer||'-')} · ${esc(o.email||'')} · ${esc(o.phone||'')}</p><p><b>${moneyX(o.total||0)}</b> · ${esc(o.status||'Order submitted')}</p></div><div class="admin-actions">${statusSelect(o,i)}<button class="btn danger" onclick="deleteOrderAdmin(${i})">DELETE</button></div></article>`).join(''):'<p class="muted">No orders yet.</p>'}</div><div class="card admin-section-page" data-section="customers"><div class="admin-toolbar"><h2>Signed-up customers</h2><span class="pill">${Object.keys(us).length}</span></div>${Object.keys(us).length?Object.entries(us).map(([email,u])=>customerCard(email,u)).join(''):'<p class="muted">No signed-up customers yet.</p>'}</div><div class="card admin-section-page" data-section="products"><div class="admin-toolbar"><h2>Edit listed products</h2><span class="pill">Live products</span></div><div id="adminProducts">${adminProductsPage()}</div></div><div class="card admin-section-page" data-section="add" id="addProductBox"><div class="admin-toolbar"><h2>Add product</h2><span class="pill on">New listing</span></div>${document.querySelector('#addProductBox .admin-form')?.outerHTML||''}<button class="btn" onclick="addProductAdmin()">ADD PRODUCT TO WEBSITE</button></div><div class="card admin-section-page" data-section="coupons" id="couponsBox"><div class="admin-toolbar"><h2>Coupon codes</h2><span class="pill">Promotions</span></div><div class="coupon-builder"><input id="couponCode" class="field" placeholder="Code"><input id="couponPercent" class="field" type="number" placeholder="Discount %"><input id="couponStart" class="field" type="date"><input id="couponEnd" class="field" type="date"><label><input id="couponOneTime" type="checkbox" checked> One-time use</label><button class="btn" onclick="addCouponAdmin()">CREATE COUPON</button></div><div id="adminCoupons" class="coupon-list"></div></div></section></div>`; try{const sizePicker=document.getElementById('sizePicker');if(sizePicker&&!sizePicker.dataset.ready&&typeof renderSizeButtons==='function'){sizePicker.innerHTML=renderSizeButtons(['S','M','L']);sizePicker.dataset.ready='1'} renderCouponsAdmin&&renderCouponsAdmin();}catch(e){} };
+
+  // Upgrade order placement emails/admin notification even if older placeOrder path runs.
+  const oldPlace=window.placeOrder;
+  window.placeOrder=async function(){ const before=orders().length; await oldPlace?.apply(this,arguments); const after=orders(); const order=after[after.length-1]; if(order&&after.length>before){order.adminSeen=false; await cloud('nitaOrders',after); try{await window.sendStoreEmail?.({type:'order_confirmation',to:order.email,order})}catch(e){console.warn(e)} try{await window.sendStoreEmail?.({type:'admin_order',order})}catch(e){console.warn(e)} } };
+})();
+/* === END NITA STYLE PREMIUM EMAIL / ADMIN PAGES / FAVORITES FINAL PATCH === */
+
+
+/* --- Liked items top navigation page --- */
+(function(){
+  function escLocal(v){return String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));}
+  function moneyLocal(v){try{return moneyX(v)}catch(e){return '$'+Number(v||0).toFixed(2)}}
+  function productImageLocal(p){try{return mainImg(p)}catch(e){return (p&&p.image)||'linear-gradient(135deg,#f7f7f7,#e8e8e8)'}}
+  function bgLocal(img){try{return bg(img)}catch(e){return String(img||'').startsWith('data:')?`background-image:url(${img})`:`background:${img}`}}
+  window.updateLikedCount=function(){
+    let n=0; try{n=(typeof likedIds==='function'?likedIds():[]).length;}catch(e){}
+    document.querySelectorAll('.liked-count').forEach(el=>el.textContent=n);
+    document.querySelectorAll('.heart-nav').forEach(el=>{el.textContent=n?'♥':'♡'});
+  };
+  const oldToggle=window.toggleLike;
+  window.toggleLike=async function(id,ev){
+    const out=oldToggle ? await oldToggle(id,ev) : false;
+    try{updateLikedCount(); if(document.getElementById('likedPageRoot')) renderLikedPage();}catch(e){}
+    return out;
+  };
+  window.renderLikedPage=function(){
+    const root=document.getElementById('likedPageRoot'); if(!root)return;
+    const email=(typeof currentEmail==='function'?currentEmail():null);
+    if(!email){root.innerHTML=`<section class="page-hero"><p class="eyebrow">Saved pieces</p><h1>Liked items</h1><p class="muted">Sign in to save and revisit your favorite pieces.</p><a class="btn" href="login.html">SIGN IN</a></section>`;return;}
+    const ids=(typeof likedIds==='function'?likedIds():[]).map(String);
+    const ps=(typeof products==='function'?products():getProducts()).filter(p=>ids.includes(String(p.id)));
+    root.innerHTML=`<section class="page-hero liked-hero"><p class="eyebrow">Saved pieces</p><h1>Liked items</h1><p class="muted">Your favorite Nita Style pieces, saved for later.</p></section>` +
+      (ps.length?`<section class="liked-page-grid">${ps.map(p=>`<article class="product-card liked-page-card"><a href="product.html?id=${encodeURIComponent(p.id)}"><div class="product-img" style="${bgLocal(productImageLocal(p))}"></div><h3>${escLocal(p.name)}</h3><p>${moneyLocal(p.salePrice||p.price)}</p></a><button class="btn light liked-remove-btn" onclick="toggleLike('${String(p.id).replace(/'/g,"\\'")}',event)">♥ REMOVE</button></article>`).join('')}</section>`:`<section class="empty-state"><h2>No liked items yet</h2><p class="muted">Tap the heart on a product to save it here.</p><a class="btn" href="shop.html">SHOP NOW</a></section>`);
+  };
+  document.addEventListener('DOMContentLoaded',()=>{try{updateLikedCount(); renderLikedPage();}catch(e){}});
+  window.addEventListener('load',()=>{try{updateLikedCount(); renderLikedPage();}catch(e){}});
+})();
