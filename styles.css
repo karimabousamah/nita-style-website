@@ -1832,3 +1832,49 @@ button.logout-outline-btn:active{
 .favorite-btn:hover *,.favorite-btn:focus *,.favorite-btn:active *,.favorite-btn.active *,.product-detail-fav:hover *,.product-detail-fav:focus *,.product-detail-fav:active *,.liked-remove-btn:hover *,.liked-remove-btn:focus *,.liked-remove-btn:active *{color:#fff!important;fill:#fff!important;stroke:#fff!important;}
 .actions .liked-nav-link{display:inline-flex!important;align-items:center!important;gap:6px!important;opacity:1!important;visibility:visible!important;}
 /* === END NITA STYLE FINAL VISIBLE PATCH 2026-06-08 === */
+
+/* === NITA STYLE PREMIUM LIKES RELIABLE FINAL PATCH 2026-06-08 === */
+.product-img{position:relative!important;overflow:hidden!important}
+.favorite-btn.premium-card-like,
+.product .favorite-btn,
+.product-card .favorite-btn{
+  position:absolute!important;top:14px!important;right:14px!important;z-index:20!important;width:42px!important;height:42px!important;border:1px solid #111!important;border-radius:999px!important;background:rgba(255,255,255,.94)!important;color:#111!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;font-size:22px!important;line-height:1!important;font-weight:900!important;cursor:pointer!important;box-shadow:0 8px 24px rgba(0,0,0,.08)!important;transition:background .2s ease,color .2s ease,transform .2s ease,border-color .2s ease!important;
+}
+.favorite-btn.premium-card-like:hover,
+.favorite-btn.premium-card-like:focus,
+.favorite-btn.premium-card-like:active,
+.favorite-btn.premium-card-like.active,
+.product .favorite-btn:hover,
+.product .favorite-btn:focus,
+.product .favorite-btn:active,
+.product .favorite-btn.active,
+.product-card .favorite-btn:hover,
+.product-card .favorite-btn:focus,
+.product-card .favorite-btn:active,
+.product-card .favorite-btn.active{
+  background:#111!important;color:#fff!important;border-color:#111!important;transform:translateY(-1px)!important;
+}
+.product-detail-fav.premium-like-action,
+.product-detail-fav{
+  margin:14px 0 18px!important;padding:13px 18px!important;border:1px solid #111!important;background:#fff!important;color:#111!important;display:inline-flex!important;align-items:center!important;gap:10px!important;font-weight:900!important;letter-spacing:.04em!important;text-transform:uppercase!important;cursor:pointer!important;min-height:46px!important;transition:background .2s ease,color .2s ease,border-color .2s ease!important;text-decoration:none!important;
+}
+.product-detail-fav .fav-heart{font-size:19px!important;line-height:1!important;color:inherit!important}
+.product-detail-fav:hover,
+.product-detail-fav:focus,
+.product-detail-fav:active,
+.product-detail-fav.active{
+  background:#111!important;color:#fff!important;border-color:#111!important;
+}
+.product-detail-fav:hover *,
+.product-detail-fav:focus *,
+.product-detail-fav:active *,
+.product-detail-fav.active *{color:#fff!important}
+.actions .liked-nav-link{display:inline-flex!important;align-items:center!important;gap:6px!important;color:#111!important;text-decoration:none!important}
+.actions .liked-nav-link:hover .heart-nav,.actions .liked-nav-link:focus .heart-nav{color:#111!important}
+.liked-page-grid.premium-liked-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:28px!important;margin:30px 0!important}
+.liked-page-card{position:relative!important;border:0!important;background:#fff!important}
+.liked-page-img{height:360px!important;background-size:cover!important;background-position:center!important;background-color:#f3f3f3!important}
+.liked-remove-btn{background:#fff!important;color:#111!important;border:1px solid #111!important}
+.liked-remove-btn:hover,.liked-remove-btn:focus,.liked-remove-btn:active{background:#111!important;color:#fff!important;border-color:#111!important}
+@media(max-width:900px){.liked-page-grid.premium-liked-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:18px!important}.liked-page-img{height:240px!important}.product-detail-fav{width:100%!important;justify-content:center!important}.favorite-btn.premium-card-like,.product .favorite-btn,.product-card .favorite-btn{width:38px!important;height:38px!important;font-size:20px!important}}
+/* === END NITA STYLE PREMIUM LIKES RELIABLE FINAL PATCH === */

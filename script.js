@@ -3960,3 +3960,137 @@ placeOrder=async function(){
   setTimeout(applyFinalButtonFixes, 1000);
   try{ new MutationObserver(applyFinalButtonFixes).observe(document.documentElement,{childList:true,subtree:true}); }catch(e){}
 })();
+
+/* === NITA STYLE PREMIUM LIKES RELIABLE FINAL PATCH 2026-06-08 === */
+(function(){
+  function readJSON(k,f){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f));}catch(e){return f;}}
+  function writeJSON(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function userObj(){
+    const u=readJSON('nitaUser',null)||readJSON('nitaCurrentUser',null)||window.currentUser||null;
+    if(u&&u.email){try{window.currentUser=u;}catch(e){} return u;}
+    const email=String(localStorage.getItem('nitaSessionEmail')||'').trim().toLowerCase();
+    if(email){const users=readJSON('nitaUsersByEmail',{}); if(users[email]){writeJSON('nitaUser',users[email]); try{window.currentUser=users[email];}catch(e){} return users[email];} return {email};}
+    return null;
+  }
+  function email(){return String(userObj()?.email||'').trim().toLowerCase();}
+  function allKeys(){const e=email();return e?[`nitaLikes_${e}`,`nitaLikedProducts_${e}`,'nitaLikedProducts','nitaGuestLikedProducts']:['nitaGuestLikedProducts'];}
+  function canonicalIds(){
+    const set=new Set();
+    allKeys().forEach(k=>readJSON(k,[]).forEach(id=>set.add(String(id))));
+    const u=userObj(); if(u&&Array.isArray(u.likedProducts))u.likedProducts.forEach(id=>set.add(String(id)));
+    return Array.from(set);
+  }
+  async function persist(ids){
+    ids=Array.from(new Set((ids||[]).map(String)));
+    allKeys().forEach(k=>writeJSON(k,ids));
+    const e=email();
+    if(e){
+      const users=readJSON('nitaUsersByEmail',{});
+      const current=userObj()||{};
+      users[e]={...users[e],...current,email:e,likedProducts:ids};
+      writeJSON('nitaUsersByEmail',users);
+      writeJSON('nitaUser',users[e]);
+      localStorage.setItem('nitaSessionEmail',e);
+      try{window.currentUser=users[e];}catch(err){}
+      try{ if(typeof window.saveCloudKey==='function') await window.saveCloudKey('nitaUsersByEmail',users); else if(typeof window.nitaSaveKeyStrict==='function') await window.nitaSaveKeyStrict('nitaUsersByEmail',users); }catch(err){console.warn('Liked products saved locally, cloud sync pending.',err)}
+    }
+  }
+  function prodList(){try{return typeof products==='function'?products():(typeof getProducts==='function'?getProducts():readJSON('nitaProducts',[]));}catch(e){return readJSON('nitaProducts',[]);}}
+  function esc(s){return String(s??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));}
+  function money(v){try{return typeof moneyX==='function'?moneyX(v):(typeof window.money==='function'?window.money(v):'$'+Number(v||0).toFixed(2));}catch(e){return '$'+Number(v||0).toFixed(2);}}
+  function image(p){try{return typeof mainImg==='function'?mainImg(p):(typeof productMainImage==='function'?productMainImage(p):(p.photos&&p.photos[0])||p.img||'linear-gradient(135deg,#fff,#ddd)');}catch(e){return (p.photos&&p.photos[0])||p.img||'linear-gradient(135deg,#fff,#ddd)';}}
+  function bg(u){return String(u||'').startsWith('data:')?`background-image:url('${u}')`:`background:${u||'linear-gradient(135deg,#fff,#ddd)'}`;}
+  function label(active){return active?'♥':'♡';}
+  function setBtn(btn,active){
+    btn.classList.toggle('active',!!active);
+    btn.setAttribute('aria-pressed',active?'true':'false');
+    if(btn.classList.contains('product-detail-fav')){
+      btn.innerHTML=`<span class="fav-heart">${active?'♥':'♡'}</span><span>${active?'Saved to liked items':'Add to liked items'}</span>`;
+    }else{
+      btn.innerHTML=label(active);
+    }
+  }
+  function updateEveryButton(){
+    const ids=canonicalIds();
+    document.querySelectorAll('[data-like-id]').forEach(btn=>setBtn(btn,ids.includes(String(btn.dataset.likeId))));
+    document.querySelectorAll('.liked-count').forEach(el=>el.textContent=ids.length);
+    document.querySelectorAll('.heart-nav').forEach(el=>el.textContent=ids.length?'♥':'♡');
+  }
+  window.nitaLikedIds=canonicalIds;
+  window.toggleLike=async function(id,ev){
+    if(ev){ev.preventDefault();ev.stopPropagation();}
+    const e=email();
+    if(!e){try{toast('Sign in to save liked items.')}catch(err){} location.href='login.html'; return false;}
+    id=String(id);
+    let ids=canonicalIds();
+    ids=ids.includes(id)?ids.filter(x=>x!==id):ids.concat(id);
+    await persist(ids);
+    updateEveryButton();
+    try{if(typeof renderLikedPage==='function')renderLikedPage();}catch(err){}
+    return false;
+  };
+  function favButton(id,detail){
+    const active=canonicalIds().includes(String(id));
+    if(detail){return `<button type="button" class="product-detail-fav premium-like-action ${active?'active':''}" data-like-id="${esc(id)}" aria-pressed="${active?'true':'false'}" onclick="toggleLike('${String(id).replace(/'/g,"\\'")}',event)"><span class="fav-heart">${active?'♥':'♡'}</span><span>${active?'Saved to liked items':'Add to liked items'}</span></button>`;}
+    return `<button type="button" class="favorite-btn premium-card-like ${active?'active':''}" data-like-id="${esc(id)}" aria-pressed="${active?'true':'false'}" onclick="toggleLike('${String(id).replace(/'/g,"\\'")}',event)" aria-label="Like product">${active?'♥':'♡'}</button>`;
+  }
+  function enhanceProductCards(root){
+    (root||document).querySelectorAll('article.product, .product-card').forEach(card=>{
+      if(card.querySelector('[data-like-id]'))return;
+      const a=card.querySelector('a[href*="product.html?id="]');
+      const img=card.querySelector('.product-img');
+      if(!a||!img)return;
+      let id=''; try{id=new URL(a.getAttribute('href'),location.href).searchParams.get('id')||'';}catch(e){}
+      if(!id)return;
+      img.insertAdjacentHTML('afterbegin',favButton(id,false));
+    });
+    updateEveryButton();
+  }
+  const oldRenderProducts=window.renderProducts;
+  window.renderProducts=function(el='#products',list){
+    const result=oldRenderProducts?oldRenderProducts.apply(this,arguments):undefined;
+    enhanceProductCards(document.querySelector(el)||document);
+    return result;
+  };
+  const oldProductCard=window.productCard;
+  window.productCard=function(p){
+    let html=oldProductCard?oldProductCard.apply(this,arguments):'';
+    if(html && !html.includes('data-like-id') && p&&p.id){
+      html=html.replace('<div class="product-img">',`<div class="product-img">${favButton(p.id,false)}`)
+               .replace('<div class="product-img" ',`<div class="product-img" `); // fallback keeps old markup safe
+    }
+    return html;
+  };
+  function injectProductDetailLike(){
+    const detail=document.getElementById('detail'); if(!detail)return;
+    const id=new URL(location.href).searchParams.get('id'); if(!id)return;
+    detail.querySelectorAll('.product-detail-fav,.premium-like-action').forEach(el=>el.remove());
+    const title=detail.querySelector('.product-info h1, h1');
+    const price=detail.querySelector('.product-price-row, h2');
+    const target=price||title;
+    if(target) target.insertAdjacentHTML('afterend',favButton(id,true));
+    updateEveryButton();
+  }
+  const oldProductPage=window.productPage;
+  window.productPage=function(){
+    const result=oldProductPage?oldProductPage.apply(this,arguments):undefined;
+    injectProductDetailLike();
+    return result;
+  };
+  window.renderLikedPage=function(){
+    const root=document.getElementById('likedPageRoot'); if(!root)return;
+    if(!email()){root.innerHTML='<section class="page-hero"><p class="eyebrow">Saved pieces</p><h1>Liked items</h1><p class="muted">Sign in to save and revisit your favorite pieces.</p><a class="btn" href="login.html">SIGN IN</a></section>';return;}
+    const ids=canonicalIds(); const list=prodList().filter(p=>ids.includes(String(p.id)));
+    root.innerHTML='<section class="page-hero liked-hero"><p class="eyebrow">Saved pieces</p><h1>Liked items</h1><p class="muted">A private edit of pieces you may want to revisit later.</p></section>'+
+      (list.length?'<section class="liked-page-grid premium-liked-grid">'+list.map(p=>'<article class="product-card liked-page-card"><a href="product.html?id='+encodeURIComponent(p.id)+'"><div class="product-img liked-page-img" style="'+bg(image(p))+'"></div><h3>'+esc(p.name)+'</h3><p>'+money(p.salePrice||p.price)+'</p></a><button class="btn light liked-remove-btn" data-like-id="'+esc(p.id)+'" onclick="toggleLike(\''+String(p.id).replace(/'/g,"\\'")+'\',event)">♥ REMOVE</button></article>').join('')+'</section>':'<section class="empty-state"><h2>No liked items yet</h2><p class="muted">Tap the heart on a product to save it here.</p><a class="btn" href="shop.html">SHOP NOW</a></section>');
+    updateEveryButton();
+  };
+  function boot(){
+    try{userObj(); enhanceProductCards(document); injectProductDetailLike(); updateEveryButton(); if(document.getElementById('likedPageRoot'))renderLikedPage();}catch(e){console.warn(e)}
+  }
+  document.addEventListener('DOMContentLoaded',boot);
+  window.addEventListener('load',boot);
+  setTimeout(boot,600);
+  setTimeout(boot,1600);
+})();
+/* === END NITA STYLE PREMIUM LIKES RELIABLE FINAL PATCH === */
