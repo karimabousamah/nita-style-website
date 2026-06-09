@@ -4206,3 +4206,84 @@ placeOrder=async function(){
   document.head.appendChild(style);
 })();
 /* === END NITA STYLE MINIMAL ADMIN ACCESS PATCH === */
+
+/* === NITA STYLE TARGETED FINAL FIX: real automatic Trending/New Arrivals scrolling === */
+(function(){
+  const states = new Map();
+  const readJSON = (key, fallback) => { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch(e) { return fallback; } };
+  const productsSafe = () => { try { return typeof getProducts === 'function' ? getProducts() : readJSON('nitaProducts', []); } catch(e) { return readJSON('nitaProducts', []); } };
+  const sectionOf = (p) => (p && (p.displaySection || p.homeSection)) || (p && p.collection === 'New Arrivals' ? 'new-arrivals' : 'trending-now');
+  const fallbackMoney = (n) => { try { return typeof money === 'function' ? money(Number(n || 0)) : '$' + Number(n || 0).toFixed(2); } catch(e) { return '$' + Number(n || 0).toFixed(2); } };
+  const imageFor = (p) => { try { return typeof productMainImage === 'function' ? productMainImage(p) : ((p.photos && p.photos[p.mainPhotoIndex || 0]) || p.img || ''); } catch(e) { return (p && ((p.photos && p.photos[0]) || p.img)) || ''; } };
+  const bgFor = (img) => { try { return typeof cssBgImage === 'function' ? cssBgImage(img) : (String(img || '').startsWith('data:') ? `background-image:url(${img})` : 'background:linear-gradient(135deg,#f7f7f7,#ddd)'); } catch(e) { return 'background:linear-gradient(135deg,#f7f7f7,#ddd)'; } };
+  const cardFor = (p) => {
+    try { if (typeof productCard === 'function') return productCard(p); } catch(e) {}
+    return `<article class="product"><a href="product.html?id=${encodeURIComponent(p.id)}"><div class="product-img" style="${bgFor(imageFor(p))}"></div><h3>${String(p.name || 'Product')}</h3><p>${fallbackMoney(p.salePrice || p.price)}</p></a></article>`;
+  };
+
+  function stopTrack(track){
+    const st = states.get(track);
+    if(st && st.raf) cancelAnimationFrame(st.raf);
+    states.delete(track);
+  }
+
+  function startTrack(track, speed){
+    if(!track) return;
+    stopTrack(track);
+    track.classList.add('nita-js-marquee');
+    track.style.animation = 'none';
+    track.style.transform = 'translate3d(0,0,0)';
+    track.style.willChange = 'transform';
+    let x = 0;
+    let last = performance.now();
+    function tick(now){
+      const dt = Math.min(50, now - last);
+      last = now;
+      const half = Math.max(0, track.scrollWidth / 2);
+      if(half > track.clientWidth){
+        x = (x + speed * dt) % half;
+        track.style.transform = `translate3d(${-x}px,0,0)`;
+      }
+      const st = states.get(track);
+      if(st) st.raf = requestAnimationFrame(tick);
+    }
+    states.set(track, {raf: requestAnimationFrame(tick)});
+  }
+
+  function fillTrack(id, products){
+    const track = document.getElementById(id);
+    if(!track) return;
+    const all = productsSafe();
+    const source = products && products.length ? products : all.slice(0, 6);
+    if(!source.length){
+      stopTrack(track);
+      track.innerHTML = '<p class="muted">No products listed yet.</p>';
+      return;
+    }
+    const html = source.map(cardFor).join('');
+    // Two identical halves: the JS loop moves one half, then restarts invisibly.
+    track.innerHTML = html + html;
+    requestAnimationFrame(() => startTrack(track, window.innerWidth <= 760 ? 0.035 : 0.045));
+  }
+
+  window.renderHomeSections = function(){
+    const all = productsSafe();
+    fillTrack('trendingMarquee', all.filter(p => sectionOf(p) === 'trending-now'));
+    fillTrack('newArrivalsMarquee', all.filter(p => sectionOf(p) === 'new-arrivals'));
+  };
+
+  function boot(){
+    if(!document.getElementById('trendingMarquee') && !document.getElementById('newArrivalsMarquee')) return;
+    const run = () => { try { window.renderHomeSections(); } catch(e) { console.error('Nita Style marquee fix:', e); } };
+    if(typeof loadSharedStore === 'function') { try { loadSharedStore().finally(run); } catch(e) { run(); } }
+    else run();
+  }
+
+  document.addEventListener('DOMContentLoaded', boot);
+  window.addEventListener('load', boot);
+  window.addEventListener('pageshow', boot);
+  window.addEventListener('resize', () => setTimeout(boot, 180));
+  window.addEventListener('nita-store-ready', boot);
+  setTimeout(boot, 250);
+  setTimeout(boot, 1200);
+})();

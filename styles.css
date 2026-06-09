@@ -1878,3 +1878,37 @@ button.logout-outline-btn:active{
 .liked-remove-btn:hover,.liked-remove-btn:focus,.liked-remove-btn:active{background:#111!important;color:#fff!important;border-color:#111!important}
 @media(max-width:900px){.liked-page-grid.premium-liked-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:18px!important}.liked-page-img{height:240px!important}.product-detail-fav{width:100%!important;justify-content:center!important}.favorite-btn.premium-card-like,.product .favorite-btn,.product-card .favorite-btn{width:38px!important;height:38px!important;font-size:20px!important}}
 /* === END NITA STYLE PREMIUM LIKES RELIABLE FINAL PATCH === */
+
+/* === NITA STYLE TARGETED FIX: automatic homepage product scrolling only === */
+.trending-scroll,.new-arrivals-scroll{
+  overflow:hidden!important;
+}
+.trending-scroll .product-marquee.nita-js-marquee,
+.new-arrivals-scroll .product-marquee.nita-js-marquee{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  width:max-content!important;
+  min-width:max-content!important;
+  gap:28px!important;
+  animation:none!important;
+  will-change:transform!important;
+  transform:translate3d(0,0,0);
+}
+.trending-scroll .product-marquee.nita-js-marquee:hover,
+.new-arrivals-scroll .product-marquee.nita-js-marquee:hover{
+  animation:none!important;
+}
+.trending-scroll .product-marquee.nita-js-marquee .product,
+.new-arrivals-scroll .product-marquee.nita-js-marquee .product{
+  flex:0 0 260px!important;
+  width:260px!important;
+  min-width:260px!important;
+}
+@media(max-width:760px){
+  .trending-scroll .product-marquee.nita-js-marquee,
+  .new-arrivals-scroll .product-marquee.nita-js-marquee{gap:20px!important;}
+  .trending-scroll .product-marquee.nita-js-marquee .product,
+  .new-arrivals-scroll .product-marquee.nita-js-marquee .product{flex-basis:210px!important;width:210px!important;min-width:210px!important;}
+  .trending-scroll .product-marquee.nita-js-marquee .product-img,
+  .new-arrivals-scroll .product-marquee.nita-js-marquee .product-img{height:260px!important;}
+}
