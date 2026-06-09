@@ -4568,3 +4568,188 @@ placeOrder=async function(){
   setTimeout(forceMarquees,250); setTimeout(forceMarquees,1200); setTimeout(forceMarquees,2500);
 })();
 /* === END NITA STYLE NEW ARRIVALS + ADMIN LOAD FINAL FIX === */
+
+/* === NITA STYLE FINAL NEW ARRIVALS ONLY AUTO-SCROLL FIX 2026-06-09 ===
+   This patch touches only the New Arrivals homepage row. Trending Now is left untouched. */
+(function(){
+  const STATE_KEY='__nitaNewArrivalsOnlyAutoScroll';
+  const state = window[STATE_KEY] || (window[STATE_KEY] = { raf:null, observer:null, busy:false, signature:'' });
+  const safeJSON=(k,f)=>{try{const raw=localStorage.getItem(k);return raw?JSON.parse(raw):f;}catch(e){return f;}};
+  const allProducts=()=>{try{return typeof getProducts==='function'?getProducts():safeJSON('nitaProducts',[]);}catch(e){return safeJSON('nitaProducts',[]);}};
+  const normalizeSection=(v)=>String(v||'').trim().toLowerCase().replace(/[_\s]+/g,'-');
+  const productSection=(p)=>{
+    const direct = normalizeSection(p && (p.displaySection || p.homeSection));
+    if(direct==='new-arrivals' || direct==='newarrival' || direct==='arrivals') return 'new-arrivals';
+    if(direct==='trending-now' || direct==='trending') return 'trending-now';
+    const collection = normalizeSection(p && p.collection);
+    return collection==='new-arrivals' ? 'new-arrivals' : 'trending-now';
+  };
+  const renderCard=(p)=>{
+    try{ if(typeof productCard==='function') return productCard(p); }catch(e){}
+    const esc=(v)=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    const price=(n)=>{try{return typeof money==='function'?money(n):'$'+Number(n||0).toFixed(2);}catch(e){return '$'+Number(n||0).toFixed(2);}};
+    let img='linear-gradient(135deg,#f7f7f7,#ddd)';
+    try{ img = typeof productMainImage==='function' ? productMainImage(p) : ((p.photos&&p.photos[p.mainPhotoIndex||0])||p.photos?.[0]||p.img||img); }catch(e){}
+    let bg='background:linear-gradient(135deg,#f7f7f7,#ddd)';
+    try{ bg = typeof cssBgImage==='function' ? cssBgImage(img) : (String(img).startsWith('data:')||String(img).startsWith('http') ? `background-image:url(${img})` : `background:${img}`); }catch(e){}
+    return `<article class="product"><a href="product.html?id=${encodeURIComponent(p.id||'')}"><div class="product-img" style="${bg}"></div><h3>${esc(p.name||'Product')}</h3><p>${price(p.salePrice||p.price)}</p></a></article>`;
+  };
+  const important=(el,prop,val)=>{try{el.style.setProperty(prop,val,'important');}catch(e){el.style[prop]=val;}};
+  function stop(){ if(state.raf) cancelAnimationFrame(state.raf); state.raf=null; }
+  function sourceProducts(){
+    const ps=allProducts();
+    const arrivals=ps.filter(p=>productSection(p)==='new-arrivals');
+    return arrivals.length ? arrivals : ps.slice(0,6);
+  }
+  function buildTrack(track){
+    const list=sourceProducts();
+    if(!track || !list.length) return false;
+    const signature=list.map(p=>String(p.id||p.name||'')).join('|');
+    // Always rebuild New Arrivals from clean product data, so old duplicated/overriding HTML cannot freeze it.
+    const one=list.map(renderCard).join('');
+    track.innerHTML = one.repeat(8);
+    state.signature=signature;
+    return true;
+  }
+  function start(){
+    const track=document.getElementById('newArrivalsMarquee');
+    if(!track || state.busy) return;
+    state.busy=true;
+    stop();
+    try{
+      if(!buildTrack(track)){ state.busy=false; return; }
+      const section=track.closest('.new-arrivals-scroll');
+      if(section){ important(section,'overflow','hidden'); important(section,'position','relative'); }
+      track.classList.remove('nita-js-marquee','nita-premium-auto','nita-force-marquee');
+      track.classList.add('nita-new-arrivals-only-scroll');
+      important(track,'display','flex');
+      important(track,'flex-wrap','nowrap');
+      important(track,'width','max-content');
+      important(track,'min-width','max-content');
+      important(track,'animation','none');
+      important(track,'transition','none');
+      important(track,'will-change','transform');
+      important(track,'transform','translate3d(0,0,0)');
+      let x=0, last=performance.now();
+      const speed=window.innerWidth<=760?0.055:0.075;
+      function tick(now){
+        const current=document.getElementById('newArrivalsMarquee');
+        if(current!==track){ stop(); state.busy=false; setTimeout(start,80); return; }
+        const dt=Math.min(45,Math.max(0,now-last)); last=now;
+        const oneWidth=Math.max(1, track.scrollWidth/8);
+        const viewWidth=(track.parentElement&&track.parentElement.clientWidth)||window.innerWidth||1;
+        if(oneWidth>20 && track.scrollWidth>viewWidth){
+          x=(x+speed*dt)%oneWidth;
+          important(track,'transform','translate3d('+(-x)+'px,0,0)');
+        }
+        state.raf=requestAnimationFrame(tick);
+      }
+      state.raf=requestAnimationFrame(tick);
+    }finally{
+      setTimeout(()=>{state.busy=false;},100);
+    }
+  }
+  function boot(){
+    const track=document.getElementById('newArrivalsMarquee');
+    if(!track) return;
+    // Run after existing homepage renderers finish, then take control only of New Arrivals.
+    setTimeout(start,100);
+    setTimeout(start,600);
+    setTimeout(start,1600);
+    if(state.observer) try{state.observer.disconnect();}catch(e){}
+    try{
+      state.observer=new MutationObserver(()=>{
+        if(state.busy) return;
+        clearTimeout(state.moTimer);
+        state.moTimer=setTimeout(start,140);
+      });
+      state.observer.observe(track,{childList:true});
+    }catch(e){}
+  }
+  window.nitaStartNewArrivalsOnlyScroll=start;
+  document.addEventListener('DOMContentLoaded',boot);
+  window.addEventListener('load',boot);
+  window.addEventListener('pageshow',boot);
+  window.addEventListener('resize',()=>setTimeout(start,180));
+  window.addEventListener('nita-store-ready',()=>setTimeout(start,180));
+  setTimeout(boot,300); setTimeout(start,1200); setTimeout(start,2600);
+})();
+/* === END NITA STYLE FINAL NEW ARRIVALS ONLY AUTO-SCROLL FIX === */
+
+/* === NITA STYLE QUICK VIEW OUT-OF-STOCK SIZE ONLY FIX 2026-06-09 ===
+   Only fixes Quick View size availability so it matches the full product page. */
+(function(){
+  const SIZE_ORDER=['XS','S','M','L','XL','One Size'];
+  const esc=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const key=s=>String(s||'').trim().toLowerCase();
+  const uniq=arr=>[...new Set((arr||[]).map(x=>String(x||'').trim()).filter(Boolean))]
+    .sort((a,b)=>{const ia=SIZE_ORDER.findIndex(x=>key(x)===key(a));const ib=SIZE_ORDER.findIndex(x=>key(x)===key(b));return (ia<0?99:ia)-(ib<0?99:ib);});
+  const allProducts=()=>{try{return typeof getProducts==='function'?getProducts():JSON.parse(localStorage.getItem('nitaProducts')||'[]')}catch(e){return []}};
+  const normalize=p=>{try{if(typeof normalizeProductStatus==='function')p=normalizeProductStatus(p||{});}catch(e){p=p||{}} return p||{};};
+  const sizeList=p=>{
+    p=normalize(p);
+    const base=Array.isArray(p.sizes)?p.sizes:[];
+    const out=outSizeList(p);
+    return uniq([...base,...out]).length?uniq([...base,...out]):['One Size'];
+  };
+  function outSizeList(p){
+    p=normalize(p);
+    let out=[];
+    ['outOfStockSizes','unavailableSizes','disabledSizes','soldOutSizes','outSizes','sizeOutOfStock','oosSizes'].forEach(k=>{
+      if(Array.isArray(p[k])) out=out.concat(p[k]);
+    });
+    if(p.sizeStock && typeof p.sizeStock==='object'){
+      Object.entries(p.sizeStock).forEach(([s,v])=>{
+        const val=String(v&&typeof v==='object'?(v.status||v.available||v.stock||v.qty||v.quantity):v).toLowerCase();
+        const num=Number(v&&typeof v==='object'?(v.stock||v.qty||v.quantity):v);
+        if(val.includes('out') || val==='false' || num===0) out.push(s);
+      });
+    }
+    return uniq(out);
+  }
+  function isOut(p,s){const ks=key(s);return outSizeList(p).some(x=>key(x)===ks);}
+  const cssBg=u=>{try{return typeof cssBgImage==='function'?cssBgImage(u):(String(u||'').startsWith('data:')||String(u||'').startsWith('http')?`background-image:url(${u})`:`background:${u||'linear-gradient(135deg,#f7f7f7,#ddd)'}`)}catch(e){return 'background:linear-gradient(135deg,#f7f7f7,#ddd)'}};
+  const imgs=p=>{try{return typeof productImagesForDisplay==='function'?productImagesForDisplay(p):{first:(p.photos&&p.photos[p.mainPhotoIndex||0])||p.photos?.[0]||p.img||'linear-gradient(135deg,#f7f7f7,#ddd)'}}catch(e){return {first:'linear-gradient(135deg,#f7f7f7,#ddd)'}}};
+  const price=p=>{try{return typeof productPriceStatusRow==='function'?productPriceStatusRow(p,'h3'):`<h3>${typeof money==='function'?money(p.salePrice||p.price):('$'+Number(p.salePrice||p.price||0).toFixed(2))}</h3>`}catch(e){return `<h3>$${Number(p.salePrice||p.price||0).toFixed(2)}</h3>`}};
+  function modal(){
+    let m=document.getElementById('quickModal');
+    if(!m){
+      document.body.insertAdjacentHTML('beforeend',`<div class="quick-modal" id="quickModal" aria-hidden="true"><div class="quick-backdrop" data-quick-close="true"></div><div class="quick-dialog" role="dialog" aria-modal="true"><button class="quick-close" type="button" data-quick-close="true">×</button><div id="quickContent"></div></div></div>`);
+      m=document.getElementById('quickModal');
+    }
+    return m;
+  }
+  window.selectedQuickSize=function(){
+    const active=document.querySelector('#quickContent .size.active:not(.size-disabled):not([disabled])');
+    return active?.dataset?.size || active?.textContent?.replace(/out of stock/ig,'').trim() || '';
+  };
+  const previousAddToCart=window.addToCart;
+  window.addToCart=function(id,size){
+    const p=normalize(allProducts().find(x=>String(x.id)===String(id))||{});
+    if(p.id && isOut(p,size)){
+      if(typeof toast==='function') toast('This size is out of stock.');
+      return false;
+    }
+    return previousAddToCart?previousAddToCart.apply(this,arguments):false;
+  };
+  window.openQuickView=function(id){
+    const p=normalize(allProducts().find(x=>String(x.id)===String(id)));
+    if(!p?.id) return false;
+    const sizes=sizeList(p);
+    const firstAvailable=sizes.find(s=>!isOut(p,s))||'';
+    window.quickSelectedSize=firstAvailable;
+    const sizesHtml=sizes.map(s=>{
+      const oos=isOut(p,s); const active=!oos && key(s)===key(firstAvailable);
+      return `<button type="button" data-size="${esc(s)}" class="size ${active?'active':''} ${oos?'size-disabled':''}" ${oos?'disabled aria-disabled="true" title="Out of stock"':`onclick="quickSelectedSize='${esc(s)}';this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')"`}>${esc(s)}${oos?'<span class="size-oos-text">Out of stock</span>':''}</button>`;
+    }).join('');
+    const status=p.status||(p.soldOut?'out-of-stock':'in-stock');
+    const canBuy=status==='in-stock' && !!firstAvailable;
+    const action=canBuy
+      ? `<button class="btn quick-add" type="button" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}', selectedQuickSize() || quickSelectedSize || 'One Size'); closeQuickView();">ADD TO CART</button>`
+      : `<button class="btn disabled quick-disabled" type="button" disabled aria-disabled="true">${status==='coming-soon'?'COMING SOON':(status==='out-of-stock'?'OUT OF STOCK':'SIZE OUT OF STOCK')}</button><button class="notify-btn" type="button" onclick="notifyMe&&notifyMe('${String(p.id).replace(/'/g,"\\'")}')">NOTIFY ME</button>`;
+    const im=imgs(p);
+    modal().querySelector('#quickContent').innerHTML=`<div class="quick-grid"><div class="quick-image" style="${cssBg(im.first)}"></div><div class="quick-info"><p class="muted">${esc(p.category||'')}</p><h2>${esc(p.name||'Product')}</h2>${price(p)}<p>${esc(p.desc||'')}</p><div class="sizes quick-size-list">${sizesHtml}</div>${action}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div></div>`;
+    const m=modal(); m.classList.add('open'); m.setAttribute('aria-hidden','false'); document.body.classList.add('quick-open','panel-open'); return false;
+  };
+})();
+/* === END NITA STYLE QUICK VIEW OUT-OF-STOCK SIZE ONLY FIX === */

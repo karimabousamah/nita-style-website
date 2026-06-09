@@ -1965,3 +1965,65 @@ button.logout-outline-btn:active{
   .new-arrivals-scroll .product-marquee.nita-force-marquee .product-img{height:260px!important;}
 }
 /* === END NITA STYLE NEW ARRIVALS + ADMIN LOAD FINAL FIX === */
+
+/* New Arrivals only forced marquee. Trending Now is not changed. */
+.new-arrivals-scroll{overflow:hidden!important;}
+.new-arrivals-scroll .product-marquee.nita-new-arrivals-only-scroll{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  width:max-content!important;
+  min-width:max-content!important;
+  gap:28px!important;
+  animation:none!important;
+  transition:none!important;
+  will-change:transform!important;
+}
+.new-arrivals-scroll .product-marquee.nita-new-arrivals-only-scroll:hover{animation:none!important;}
+.new-arrivals-scroll .product-marquee.nita-new-arrivals-only-scroll .product{
+  flex:0 0 260px!important;
+  width:260px!important;
+  min-width:260px!important;
+  max-width:260px!important;
+}
+@media(max-width:900px){
+  .new-arrivals-scroll .product-marquee.nita-new-arrivals-only-scroll{gap:20px!important;}
+  .new-arrivals-scroll .product-marquee.nita-new-arrivals-only-scroll .product{
+    flex-basis:210px!important;
+    width:210px!important;
+    min-width:210px!important;
+    max-width:210px!important;
+  }
+}
+
+/* Quick View out-of-stock size only fix */
+.quick-size-list .size.size-disabled,
+#quickContent .size.size-disabled{
+  position:relative!important;
+  background:#f3f3f3!important;
+  color:#9a9a9a!important;
+  border-color:#d9d9d9!important;
+  opacity:.72!important;
+  cursor:not-allowed!important;
+  pointer-events:none!important;
+}
+.quick-size-list .size.size-disabled::after,
+#quickContent .size.size-disabled::after{
+  content:''!important;
+  position:absolute!important;
+  left:12%!important;
+  right:12%!important;
+  top:50%!important;
+  height:1.5px!important;
+  background:#8a8a8a!important;
+  transform:rotate(-30deg)!important;
+  transform-origin:center!important;
+}
+.quick-size-list .size-oos-text,
+#quickContent .size-oos-text{
+  display:block!important;
+  margin-top:3px!important;
+  font-size:9px!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+  color:#777!important;
+}
