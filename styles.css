@@ -1912,3 +1912,36 @@ button.logout-outline-btn:active{
   .trending-scroll .product-marquee.nita-js-marquee .product-img,
   .new-arrivals-scroll .product-marquee.nita-js-marquee .product-img{height:260px!important;}
 }
+
+
+/* === NITA STYLE MARQUEE + ADMIN DIRECT LOAD ONLY FIX 2026-06-09 === */
+.admin-loading-clean{min-height:70vh;display:flex;flex-direction:column;justify-content:center;padding:8vw 5vw;background:#fff;}
+.admin-loading-clean h1{font-size:clamp(48px,8vw,96px);line-height:.9;margin:10px 0 18px;text-transform:uppercase;}
+.trending-scroll,.new-arrivals-scroll{overflow:hidden!important;}
+.trending-scroll .product-marquee.nita-premium-auto,
+.new-arrivals-scroll .product-marquee.nita-premium-auto{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  gap:28px!important;
+  width:max-content!important;
+  min-width:max-content!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  animation:none!important;
+  transition:none!important;
+  will-change:transform!important;
+  transform:translate3d(0,0,0);
+}
+.trending-scroll .product-marquee.nita-premium-auto:hover,
+.new-arrivals-scroll .product-marquee.nita-premium-auto:hover{animation:none!important;}
+.trending-scroll .product-marquee.nita-premium-auto .product,
+.new-arrivals-scroll .product-marquee.nita-premium-auto .product{flex:0 0 260px!important;width:260px!important;min-width:260px!important;max-width:260px!important;}
+@media(max-width:760px){
+  .trending-scroll .product-marquee.nita-premium-auto,
+  .new-arrivals-scroll .product-marquee.nita-premium-auto{gap:20px!important;}
+  .trending-scroll .product-marquee.nita-premium-auto .product,
+  .new-arrivals-scroll .product-marquee.nita-premium-auto .product{flex-basis:210px!important;width:210px!important;min-width:210px!important;max-width:210px!important;}
+  .trending-scroll .product-marquee.nita-premium-auto .product-img,
+  .new-arrivals-scroll .product-marquee.nita-premium-auto .product-img{height:260px!important;}
+}
+/* === END NITA STYLE MARQUEE + ADMIN DIRECT LOAD ONLY FIX === */

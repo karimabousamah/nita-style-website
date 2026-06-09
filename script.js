@@ -4287,3 +4287,231 @@ placeOrder=async function(){
   setTimeout(boot, 250);
   setTimeout(boot, 1200);
 })();
+
+/* === NITA STYLE ADMIN PERMISSION PERSISTENCE ONLY FIX 2026-06-09 ===
+   Fixes only: promoted admins stay admin after reload / on another device. */
+(function(){
+  const OWNER_ADMIN_EMAILS = ['karim.abousamah1@gmail.com','karim.abousamah@gmail.com'];
+  const norm = (v)=>String(v||'').trim().toLowerCase();
+  const read = (k,f)=>{try{const raw=localStorage.getItem(k); return raw?JSON.parse(raw):f;}catch(e){return f;}};
+  const write = (k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
+  const toastSafe = (msg)=>{try{ if(typeof toast==='function') toast(msg); else alert(msg); }catch(e){}};
+  const owner = (email)=>OWNER_ADMIN_EMAILS.includes(norm(email));
+
+  async function fetchStoreFresh(){
+    if(typeof window.nitaFetchStore === 'function') return await window.nitaFetchStore();
+    const res = await fetch('/.netlify/functions/store?adminPermTs=' + Date.now(), {cache:'no-store', headers:{'Cache-Control':'no-cache'}});
+    if(!res.ok) throw new Error('Cloud store unavailable: ' + res.status);
+    return await res.json();
+  }
+
+  async function refreshUsersFromCloud(){
+    try{
+      const remote = await fetchStoreFresh();
+      if(remote && remote.nitaUsersByEmail){
+        write('nitaUsersByEmail', remote.nitaUsersByEmail || {});
+        syncCurrentUserFromUserMap();
+        return remote.nitaUsersByEmail || {};
+      }
+    }catch(e){
+      console.warn('Admin permission cloud refresh failed:', e);
+    }
+    syncCurrentUserFromUserMap();
+    return read('nitaUsersByEmail',{});
+  }
+
+  async function saveUsersToCloud(users){
+    users = users || {};
+    write('nitaUsersByEmail', users);
+    syncCurrentUserFromUserMap();
+    if(typeof window.nitaSaveKeyStrict === 'function'){
+      await window.nitaSaveKeyStrict('nitaUsersByEmail', users);
+      await refreshUsersFromCloud();
+      return true;
+    }
+    if(typeof window.saveUsers === 'function'){
+      const ok = await window.saveUsers(users);
+      await refreshUsersFromCloud();
+      if(ok === false) throw new Error('Cloud save returned false');
+      return true;
+    }
+    const res = await fetch('/.netlify/functions/store', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Cache-Control':'no-cache'},
+      body:JSON.stringify({key:'nitaUsersByEmail', value:users})
+    });
+    if(!res.ok) throw new Error('Cloud save failed: ' + res.status);
+    await refreshUsersFromCloud();
+    return true;
+  }
+
+  function currentEmail(){
+    const u = read('nitaUser', null) || {};
+    return norm(u.email || localStorage.getItem('nitaSessionEmail'));
+  }
+
+  function syncCurrentUserFromUserMap(){
+    const email = currentEmail();
+    if(!email) return null;
+    const users = read('nitaUsersByEmail',{});
+    if(users[email]){
+      const merged = {...read('nitaUser',{}), ...users[email], email};
+      write('nitaUser', merged);
+      try{ localStorage.setItem('nitaSessionEmail', email); window.currentUser = merged; currentUser = merged; }catch(e){}
+      return merged;
+    }
+    return read('nitaUser', null);
+  }
+
+  window.nitaRefreshAdminPermissions = refreshUsersFromCloud;
+  window.isAdminEmail = function(email){
+    email = norm(email);
+    if(owner(email)) return true;
+    const user = (read('nitaUsersByEmail',{}) || {})[email];
+    return !!(user && (user.isAdmin === true || user.admin === true || user.role === 'admin'));
+  };
+
+  window.nitaToggleCustomerAdmin = async function(email){
+    email = norm(email);
+    if(!email || !email.includes('@')) return;
+    if(owner(email)){ toastSafe('Owner admin access cannot be removed.'); return; }
+    let users = await refreshUsersFromCloud();
+    if(!users[email]){ toastSafe('Customer not found. Refresh the admin dashboard and try again.'); return; }
+    const nextValue = !(users[email].isAdmin === true || users[email].admin === true || users[email].role === 'admin');
+    users[email] = {...users[email], email, isAdmin: nextValue, admin: nextValue, role: nextValue ? 'admin' : 'customer', adminUpdatedAt: new Date().toISOString()};
+    try{
+      await saveUsersToCloud(users);
+      toastSafe(nextValue ? 'Admin access saved globally. The user can reload and open the admin dashboard.' : 'Admin access removed globally.');
+      setTimeout(()=>{ try{ window.renderAdmin && window.renderAdmin(); }catch(e){} }, 120);
+    }catch(e){
+      console.error('Admin permission save failed:', e);
+      toastSafe('Admin access was not saved globally. Check Netlify Functions / environment variables.');
+    }
+  };
+
+  const previousProtectAdmin = window.protectAdmin;
+  window.protectAdmin = function(){
+    syncCurrentUserFromUserMap();
+    const email = currentEmail();
+    if(email && window.isAdminEmail(email)) return true;
+    if(typeof previousProtectAdmin === 'function') return previousProtectAdmin.apply(this, arguments);
+    return false;
+  };
+
+  const previousRenderAdmin = window.renderAdmin;
+  window.renderAdmin = async function(){
+    try{ await refreshUsersFromCloud(); }catch(e){}
+    syncCurrentUserFromUserMap();
+    return previousRenderAdmin ? await previousRenderAdmin.apply(this, arguments) : undefined;
+  };
+
+  const previousHeader = window.header;
+  window.header = function(){
+    syncCurrentUserFromUserMap();
+    let html = typeof previousHeader === 'function' ? previousHeader.apply(this, arguments) : '';
+    const email = currentEmail();
+    const hasAdminLink = /href="admin\.html"/.test(html);
+    if(email && window.isAdminEmail(email) && !hasAdminLink){
+      html = html.replace('<a class="liked-nav-link"', '<a class="admin-link" href="admin.html">ADMIN</a><a class="liked-nav-link"');
+    }
+    if(email && !window.isAdminEmail(email) && hasAdminLink && !owner(email)){
+      html = html.replace(/<a class="admin-link" href="admin\.html">ADMIN<\/a>/g,'');
+    }
+    return html;
+  };
+
+  // When a promoted user reloads any page, refresh the user map and update the header without changing layout.
+  document.addEventListener('DOMContentLoaded', function(){
+    refreshUsersFromCloud().then(()=>{
+      syncCurrentUserFromUserMap();
+      const email = currentEmail();
+      const actions = document.querySelector('.actions');
+      if(actions && email && window.isAdminEmail(email) && !actions.querySelector('.admin-link')){
+        const liked = actions.querySelector('.liked-nav-link');
+        const a = document.createElement('a');
+        a.className = 'admin-link';
+        a.href = 'admin.html';
+        a.textContent = 'ADMIN';
+        actions.insertBefore(a, liked || actions.lastElementChild);
+      }
+    });
+  });
+})();
+/* === END NITA STYLE ADMIN PERMISSION PERSISTENCE ONLY FIX === */
+
+
+/* === NITA STYLE MARQUEE + ADMIN DIRECT LOAD ONLY FIX 2026-06-09 ===
+   Changes only: homepage Trending/New Arrivals automatic scrolling + admin direct-load blank shell. */
+(function(){
+  const states = new WeakMap();
+  const readJSON=(k,f)=>{try{const raw=localStorage.getItem(k);return raw?JSON.parse(raw):f;}catch(e){return f;}};
+  const allProducts=()=>{try{return typeof getProducts==='function'?getProducts():readJSON('nitaProducts',[]);}catch(e){return readJSON('nitaProducts',[]);}};
+  const sectionOf=(p)=>String((p&&(p.displaySection||p.homeSection))||(p&&p.collection==='New Arrivals'?'new-arrivals':'trending-now')||'trending-now').toLowerCase();
+  const moneySafe=(n)=>{try{return typeof money==='function'?money(n):'$'+Number(n||0).toFixed(2);}catch(e){return '$'+Number(n||0).toFixed(2);}};
+  const imgFor=(p)=>{try{return typeof productMainImage==='function'?productMainImage(p):((p.photos&&p.photos[p.mainPhotoIndex||0])||p.photos?.[0]||p.img||'');}catch(e){return (p&&((p.photos&&p.photos[0])||p.img))||'';}};
+  const bgFor=(img)=>{try{return typeof cssBgImage==='function'?cssBgImage(img):(String(img||'').startsWith('data:')?`background-image:url(${img})`:`background:${img||'linear-gradient(135deg,#f7f7f7,#ddd)'}`);}catch(e){return 'background:linear-gradient(135deg,#f7f7f7,#ddd)';}};
+  const esc=(v)=>String(v??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  function card(p){
+    try{ if(typeof productCard==='function') return productCard(p); }catch(e){}
+    const img=imgFor(p);
+    return `<article class="product"><a href="product.html?id=${encodeURIComponent(p.id)}"><div class="product-img" style="${bgFor(img)}"></div><h3>${esc(p.name||'Product')}</h3><p>${moneySafe(p.salePrice||p.price)}</p></a></article>`;
+  }
+  function stop(track){const st=states.get(track);if(st&&st.raf)cancelAnimationFrame(st.raf);states.delete(track);}
+  function setImportant(el,prop,val){try{el.style.setProperty(prop,val,'important');}catch(e){el.style[prop]=val;}}
+  function start(track){
+    if(!track) return;
+    stop(track);
+    track.classList.add('nita-premium-auto');
+    setImportant(track,'animation','none');
+    setImportant(track,'transition','none');
+    setImportant(track,'will-change','transform');
+    let x=0, last=performance.now(), pauseUntil=performance.now()+120;
+    const speed=window.innerWidth<=760?0.055:0.07; // pixels per ms
+    function tick(now){
+      const dt=Math.min(40,Math.max(0,now-last)); last=now;
+      const half=Math.max(1,Number(track.dataset.nitaHalfWidth||0));
+      if(now>pauseUntil && half>track.parentElement.clientWidth*0.65){
+        x=(x+speed*dt)%half;
+        setImportant(track,'transform',`translate3d(${-x}px,0,0)`);
+      }else{
+        setImportant(track,'transform','translate3d(0,0,0)');
+      }
+      const st=states.get(track); if(st) st.raf=requestAnimationFrame(tick);
+    }
+    states.set(track,{raf:requestAnimationFrame(tick)});
+  }
+  function fill(id,list){
+    const track=document.getElementById(id); if(!track)return;
+    const source=(list&&list.length?list:allProducts().slice(0,8));
+    if(!source.length){stop(track);track.innerHTML='<p class="muted">No products listed yet.</p>';return;}
+    const one=source.map(card).join('');
+    // Build several copies so the movement is always visible even on wide screens.
+    track.innerHTML=one+one+one+one;
+    track.classList.add('nita-premium-auto');
+    setImportant(track,'animation','none');
+    requestAnimationFrame(()=>{
+      const cards=track.children.length;
+      track.dataset.nitaHalfWidth=String(Math.max(1,track.scrollWidth/4));
+      start(track);
+    });
+  }
+  window.renderHomeSections=function(){
+    const ps=allProducts();
+    fill('trendingMarquee',ps.filter(p=>sectionOf(p)==='trending-now'));
+    fill('newArrivalsMarquee',ps.filter(p=>sectionOf(p)==='new-arrivals'));
+  };
+  function boot(){
+    if(!document.getElementById('trendingMarquee')&&!document.getElementById('newArrivalsMarquee'))return;
+    const run=()=>{try{window.renderHomeSections();}catch(e){console.error('Nita marquee final fix failed:',e);}};
+    if(typeof loadSharedStore==='function'){
+      try{const r=loadSharedStore(); if(r&&typeof r.finally==='function')r.finally(run); else run();}catch(e){run();}
+    }else run();
+  }
+  document.addEventListener('DOMContentLoaded',boot);
+  window.addEventListener('load',boot);
+  window.addEventListener('pageshow',boot);
+  window.addEventListener('resize',()=>setTimeout(boot,180));
+  window.addEventListener('nita-store-ready',()=>setTimeout(boot,60));
+  setTimeout(boot,250); setTimeout(boot,1200); setTimeout(boot,2500);
+})();
+/* === END NITA STYLE MARQUEE + ADMIN DIRECT LOAD ONLY FIX === */
