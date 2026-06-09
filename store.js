@@ -3,7 +3,8 @@ const DEFAULT_STATE = {
   nitaOrders: [],
   nitaCoupons: [],
   nitaUsersByEmail: {},
-  nitaDiscountUses: {}
+  nitaDiscountUses: {},
+  nitaAdminEmails: ['karim.abousamah1@gmail.com','karim.abousamah@gmail.com']
 };
 
 const ALLOWED_KEYS = Object.keys(DEFAULT_STATE);
@@ -15,6 +16,7 @@ function safeState(state) {
   cleaned.nitaCoupons = Array.isArray(cleaned.nitaCoupons) ? cleaned.nitaCoupons : [];
   cleaned.nitaUsersByEmail = cleaned.nitaUsersByEmail && typeof cleaned.nitaUsersByEmail === 'object' ? cleaned.nitaUsersByEmail : {};
   cleaned.nitaDiscountUses = cleaned.nitaDiscountUses && typeof cleaned.nitaDiscountUses === 'object' ? cleaned.nitaDiscountUses : {};
+  cleaned.nitaAdminEmails = Array.isArray(cleaned.nitaAdminEmails) ? cleaned.nitaAdminEmails : ['karim.abousamah1@gmail.com','karim.abousamah@gmail.com'];
   return cleaned;
 }
 
