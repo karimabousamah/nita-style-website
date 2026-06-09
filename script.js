@@ -4515,3 +4515,56 @@ placeOrder=async function(){
   setTimeout(boot,250); setTimeout(boot,1200); setTimeout(boot,2500);
 })();
 /* === END NITA STYLE MARQUEE + ADMIN DIRECT LOAD ONLY FIX === */
+
+
+/* === NITA STYLE NEW ARRIVALS + ADMIN LOAD FINAL FIX marquee-new-arrivals-admin-load-fix-20260609-1125 ===
+   Only fixes: both homepage marquee tracks and reliable admin page load. */
+(function(){
+  const marqueeState = window.__nitaForceMarqueeState || (window.__nitaForceMarqueeState = {});
+  function setImportant(el, prop, val){ try{ el.style.setProperty(prop, val, 'important'); }catch(e){ el.style[prop]=val; } }
+  function stop(id){ const st=marqueeState[id]; if(st&&st.raf) cancelAnimationFrame(st.raf); delete marqueeState[id]; }
+  function prepareTrack(id){
+    const track=document.getElementById(id);
+    if(!track) return;
+    if(!track.children.length) return;
+    stop(id);
+    // Keep the current cards, then rebuild enough repeated copies so movement is always visible.
+    let original = track.dataset.nitaOriginalHtml || track.innerHTML;
+    if(!track.dataset.nitaOriginalHtml) track.dataset.nitaOriginalHtml = original;
+    const repeated = original + original + original + original + original + original;
+    if(track.innerHTML !== repeated) track.innerHTML = repeated;
+    track.classList.remove('nita-js-marquee','nita-premium-auto');
+    track.classList.add('nita-force-marquee');
+    setImportant(track,'animation','none');
+    setImportant(track,'transition','none');
+    setImportant(track,'will-change','transform');
+    setImportant(track,'transform','translate3d(0,0,0)');
+    let x=0;
+    let last=performance.now();
+    const speed = window.innerWidth <= 760 ? 0.055 : 0.075;
+    function tick(now){
+      const dt=Math.min(45, Math.max(0, now-last));
+      last=now;
+      const oneWidth=Math.max(1, track.scrollWidth/6);
+      x=(x + speed*dt) % oneWidth;
+      setImportant(track,'transform','translate3d(' + (-x) + 'px,0,0)');
+      if(marqueeState[id]) marqueeState[id].raf=requestAnimationFrame(tick);
+    }
+    marqueeState[id]={raf:requestAnimationFrame(tick)};
+  }
+  function forceMarquees(){
+    const hasHome=document.getElementById('trendingMarquee') || document.getElementById('newArrivalsMarquee');
+    if(!hasHome) return;
+    // Let the existing product renderer build the card HTML first, then force both tracks to move.
+    try{ if(typeof window.renderHomeSections==='function' && !window.__nitaForceRendering){ window.__nitaForceRendering=true; window.renderHomeSections(); window.__nitaForceRendering=false; } }catch(e){ window.__nitaForceRendering=false; console.warn('Home section render skipped:',e); }
+    setTimeout(()=>{ prepareTrack('trendingMarquee'); prepareTrack('newArrivalsMarquee'); }, 60);
+  }
+  window.nitaForceHomepageMarquees=forceMarquees;
+  document.addEventListener('DOMContentLoaded', forceMarquees);
+  window.addEventListener('load', forceMarquees);
+  window.addEventListener('pageshow', forceMarquees);
+  window.addEventListener('resize', ()=>setTimeout(forceMarquees,180));
+  window.addEventListener('nita-store-ready', ()=>setTimeout(forceMarquees,120));
+  setTimeout(forceMarquees,250); setTimeout(forceMarquees,1200); setTimeout(forceMarquees,2500);
+})();
+/* === END NITA STYLE NEW ARRIVALS + ADMIN LOAD FINAL FIX === */
