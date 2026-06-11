@@ -5663,3 +5663,72 @@ placeOrder=async function(){
   window.addEventListener('load', function(){ setTimeout(scheduleSmoothMarquees, 100); setTimeout(refreshCurrentPageOnce, 500); });
 })();
 /* === END NITA STYLE VISIBLE TIMER + SMOOTH MARQUEE + FIRST LOAD RELIABILITY ONLY === */
+
+/* === NITA STYLE ADMIN MULTI-PHOTO APPEND + PRODUCT SECOND PHOTO HOVER ONLY 2026-06-11 ===
+   Fixes only: admin add-product photos append instead of replace, and product cards show second image on laptop hover. */
+(function(){
+  function esc(v){return String(v ?? '').replace(/[&<>"']/g,function(ch){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]);});}
+  function readFiles(files, cb){
+    if(typeof window.fileListToDataUrls === 'function') return window.fileListToDataUrls(files, cb);
+    const arr=[...(files||[])];
+    if(!arr.length){ cb([]); return; }
+    Promise.all(arr.map(function(file){
+      return new Promise(function(resolve){
+        const reader=new FileReader();
+        reader.onload=function(e){ resolve(e.target.result); };
+        reader.onerror=function(){ resolve(''); };
+        reader.readAsDataURL(file);
+      });
+    })).then(function(urls){ cb(urls.filter(Boolean)); });
+  }
+  function renderAddPhotoPreview(){
+    const box=document.getElementById('photoPreview');
+    if(!box) return;
+    const photos=Array.isArray(window.pendingAdminPhotos) ? window.pendingAdminPhotos : [];
+    const main=Math.max(0, Math.min(Number(window.pendingAdminMainIndex||0), Math.max(photos.length-1,0)));
+    box.innerHTML=photos.map(function(url,i){
+      return '<button type="button" class="admin-thumb selectable-thumb '+(i===main?'selected-main':'')+'" onclick="setPendingMainPhoto('+i+')"><img src="'+esc(url)+'" alt="Product photo '+(i+1)+'"><span>'+(i===main?'Main photo':'Photo '+(i+1))+'</span></button>';
+    }).join('') + (photos.length ? '<p class="muted admin-photo-note">You can add more photos by clicking upload again. Click a photo to choose the main image.</p>' : '');
+  }
+  window.setPendingMainPhoto=function(i){
+    window.pendingAdminMainIndex=Number(i)||0;
+    renderAddPhotoPreview();
+  };
+  window.previewAdminPhotos=function(event){
+    const input=event && event.target;
+    readFiles(input ? input.files : [], function(urls){
+      window.pendingAdminPhotos = Array.isArray(window.pendingAdminPhotos) ? window.pendingAdminPhotos : [];
+      // Append new selected photos instead of replacing the existing gallery.
+      window.pendingAdminPhotos = window.pendingAdminPhotos.concat((urls||[]).filter(Boolean));
+      if(!Number.isFinite(Number(window.pendingAdminMainIndex))) window.pendingAdminMainIndex=0;
+      renderAddPhotoPreview();
+      // Allows the admin to pick another photo immediately, even the same file again.
+      if(input) input.value='';
+    });
+  };
+  // If the Add Product section is opened after admin render, keep the append-preview function attached.
+  document.addEventListener('change', function(e){
+    const input=e.target && e.target.closest && e.target.closest('#pphotos');
+    if(input){ e.stopPropagation(); window.previewAdminPhotos({target:input}); }
+  }, true);
+  // After any product render, mark cards that have a real second image for the hover animation.
+  function markSecondImageCards(root){
+    (root||document).querySelectorAll('.product').forEach(function(card){
+      const secondary=card.querySelector('.product-img-secondary');
+      if(secondary && secondary.getAttribute('style') && secondary.getAttribute('style') !== (card.querySelector('.product-img-primary')||{}).getAttribute?.('style')){
+        card.classList.add('has-second-photo');
+      }
+    });
+  }
+  const previousRenderProducts=window.renderProducts;
+  if(typeof previousRenderProducts === 'function'){
+    window.renderProducts=function(){
+      const result=previousRenderProducts.apply(this, arguments);
+      setTimeout(function(){ markSecondImageCards(document); }, 20);
+      return result;
+    };
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ markSecondImageCards(document); }, 400); });
+  window.addEventListener('load', function(){ setTimeout(function(){ markSecondImageCards(document); }, 600); });
+})();
+/* === END NITA STYLE ADMIN MULTI-PHOTO APPEND + PRODUCT SECOND PHOTO HOVER ONLY === */
