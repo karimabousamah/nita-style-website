@@ -2215,3 +2215,31 @@ button.logout-outline-btn:active{
 img{max-width:100%;height:auto}
 .product-img,.quick-image,.admin-product-photo,.banner-photo,.hero-panel{content-visibility:auto}
 /* === END NITA STYLE PERFORMANCE + VERIFICATION TIMER ONLY === */
+
+/* === NITA STYLE SMOOTHER RENDERING FINAL PATCH === */
+img{content-visibility:auto;}
+.product,.card,.banner,.trending-scroll,.new-arrivals-scroll,.page section{content-visibility:auto;contain-intrinsic-size:1px 420px;}
+.topbar,.hero,.admin-page,.auth-page,.checkout-page{content-visibility:visible;}
+.product-img,.detail-img,.quick-image,.banner-photo,.hero-panel{will-change:auto;}
+@media (prefers-reduced-motion:no-preference){
+  .product,.card,.btn,.field{transition-duration:.18s;}
+}
+/* === END NITA STYLE SMOOTHER RENDERING FINAL PATCH === */
+
+
+/* === NITA STYLE VISIBLE TIMER + SMOOTH MARQUEE + FIRST LOAD RELIABILITY ONLY === */
+.visible-verification-page{min-height:calc(100vh - 80px);display:grid;place-items:center;padding:42px 18px;background:linear-gradient(180deg,#fff,#f7f7f4)}
+.premium-verify-card{width:min(560px,100%);background:#fff;border:1px solid #e7e3dc;box-shadow:0 24px 70px rgba(0,0,0,.08);padding:42px;text-align:center}
+.verify-logo{width:118px;height:auto;margin:0 auto 20px;display:block}
+.verify-code-field{text-align:center;font-size:28px;letter-spacing:.32em;font-weight:800;margin-top:22px}
+.verify-timer-box{margin:16px auto 10px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#555}
+.verify-timer-box strong{color:#000;font-size:15px}.resend-code-btn[disabled],.resend-code-btn.disabled{opacity:.42;cursor:not-allowed;filter:grayscale(1)}
+@media(max-width:640px){.premium-verify-card{padding:30px 18px}.verify-code-field{font-size:22px;letter-spacing:.22em}}
+.trending-scroll,.new-arrivals-scroll{overflow:hidden!important;contain:layout paint!important;}
+.trending-scroll .product-marquee.nita-smooth-css-marquee,.new-arrivals-scroll .product-marquee.nita-smooth-css-marquee{display:flex!important;flex-wrap:nowrap!important;gap:28px!important;width:max-content!important;min-width:max-content!important;will-change:transform!important;transform:translate3d(0,0,0)!important;animation:nitaSmoothCSSMarquee var(--marquee-duration,36s) linear infinite!important;transition:none!important;backface-visibility:hidden!important;}
+.trending-scroll .product-marquee.nita-smooth-css-marquee:hover,.new-arrivals-scroll .product-marquee.nita-smooth-css-marquee:hover{animation-play-state:running!important;}
+.trending-scroll .product-marquee.nita-smooth-css-marquee .product,.new-arrivals-scroll .product-marquee.nita-smooth-css-marquee .product{flex:0 0 260px!important;width:260px!important;min-width:260px!important;max-width:260px!important;}
+@keyframes nitaSmoothCSSMarquee{from{transform:translate3d(0,0,0)}to{transform:translate3d(var(--marquee-distance,-50%),0,0)}}
+@media(max-width:900px){.trending-scroll .product-marquee.nita-smooth-css-marquee,.new-arrivals-scroll .product-marquee.nita-smooth-css-marquee{gap:20px!important;--marquee-duration:30s}.trending-scroll .product-marquee.nita-smooth-css-marquee .product,.new-arrivals-scroll .product-marquee.nita-smooth-css-marquee .product{flex-basis:210px!important;width:210px!important;min-width:210px!important;max-width:210px!important}.trending-scroll .product-marquee.nita-smooth-css-marquee .product-img,.new-arrivals-scroll .product-marquee.nita-smooth-css-marquee .product-img{height:260px!important}}
+@media(prefers-reduced-motion:reduce){.product-marquee.nita-smooth-css-marquee{animation-duration:90s!important}}
+/* === END NITA STYLE VISIBLE TIMER + SMOOTH MARQUEE + FIRST LOAD RELIABILITY ONLY === */

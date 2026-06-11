@@ -5415,3 +5415,251 @@ placeOrder=async function(){
   document.addEventListener('DOMContentLoaded',()=>{ if(document.getElementById('nitaVerifyTimer')) startTimer(); });
 })();
 /* === END NITA STYLE VERIFICATION RESEND TIMER ONLY === */
+
+// === NITA STYLE SMOOTHER LOADING FINAL PATCH ===
+// Speeds up every page without changing features by preventing repeated cloud database fetches
+// during one page load, using a short session cache, and refreshing the live database in the background.
+(function(){
+  const CACHE_KEY = 'nitaStoreFastCache_v2';
+  const CACHE_TTL = 5 * 60 * 1000;
+  const LIVE_KEYS = ['nitaProducts','nitaOrders','nitaCoupons','nitaUsersByEmail','nitaDiscountUses','nitaHomepageWallpapers'];
+  const originalFetchStore = window.nitaFetchStore;
+  let sharedPromise = null;
+  let lastLoadedAt = 0;
+
+  function readJSON(k, fallback){ try { return JSON.parse(sessionStorage.getItem(k) || 'null') || fallback; } catch(e){ return fallback; } }
+  function writeJSON(k, v){ try { sessionStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+  function applyStore(store){
+    if(!store || typeof store !== 'object') return;
+    LIVE_KEYS.forEach(function(key){
+      if(store[key] !== undefined){
+        try { localStorage.setItem(key, JSON.stringify(store[key])); } catch(e){}
+      }
+    });
+    window.nitaBackendOnline = true;
+    window.nitaStoreLoaded = true;
+    try { document.body && document.body.classList.add('cloud-online'); document.body && document.body.classList.remove('cloud-offline'); } catch(e){}
+  }
+  function localSnapshot(){
+    const out = {};
+    LIVE_KEYS.forEach(function(key){
+      try { out[key] = JSON.parse(localStorage.getItem(key) || 'null'); } catch(e) { out[key] = null; }
+    });
+    return out;
+  }
+  function fetchWithTimeout(ms){
+    if(typeof originalFetchStore !== 'function') return Promise.resolve(localSnapshot());
+    return Promise.race([
+      originalFetchStore(),
+      new Promise(function(_, reject){ setTimeout(function(){ reject(new Error('Store fetch timeout')); }, ms); })
+    ]);
+  }
+  function backgroundRefresh(){
+    if(typeof originalFetchStore !== 'function') return;
+    originalFetchStore().then(function(remote){
+      applyStore(remote);
+      writeJSON(CACHE_KEY, { time: Date.now(), data: remote });
+      lastLoadedAt = Date.now();
+      try { window.dispatchEvent(new Event('nita-store-ready')); } catch(e){}
+      try {
+        if(location.pathname.endsWith('index.html') || location.pathname === '/' || location.pathname.endsWith('/')){
+          window.renderHomeSections && window.renderHomeSections();
+        }
+      } catch(e){}
+    }).catch(function(err){ console.warn('Background store refresh skipped:', err); });
+  }
+
+  window.loadSharedStore = async function(){
+    const now = Date.now();
+    if(sharedPromise) return sharedPromise;
+    if(lastLoadedAt && now - lastLoadedAt < 15000){ return localSnapshot(); }
+
+    const cached = readJSON(CACHE_KEY, null);
+    const isAdmin = location.pathname.endsWith('admin.html');
+    const hasFreshCache = cached && cached.data && (now - cached.time < CACHE_TTL);
+
+    if(hasFreshCache && !isAdmin){
+      applyStore(cached.data);
+      lastLoadedAt = now;
+      setTimeout(backgroundRefresh, 250);
+      return cached.data;
+    }
+
+    sharedPromise = (async function(){
+      try{
+        const remote = await fetchWithTimeout(isAdmin ? 4500 : 1600);
+        applyStore(remote);
+        writeJSON(CACHE_KEY, { time: Date.now(), data: remote });
+        lastLoadedAt = Date.now();
+        return remote;
+      }catch(err){
+        const fallback = cached && cached.data ? cached.data : localSnapshot();
+        applyStore(fallback);
+        window.nitaBackendOnline = cached && cached.data ? true : false;
+        lastLoadedAt = Date.now();
+        setTimeout(backgroundRefresh, 100);
+        return fallback;
+      }finally{
+        setTimeout(function(){ sharedPromise = null; }, 50);
+      }
+    })();
+    return sharedPromise;
+  };
+
+  // Preload the live store as soon as the browser is idle so clicks between pages feel faster.
+  const idle = window.requestIdleCallback || function(fn){ return setTimeout(fn, 800); };
+  idle(function(){ try{ window.loadSharedStore(); }catch(e){} });
+})();
+// === END NITA STYLE SMOOTHER LOADING FINAL PATCH ===
+
+
+/* === NITA STYLE VISIBLE TIMER + SMOOTH MARQUEE + FIRST LOAD RELIABILITY ONLY === */
+(function(){
+  const COOLDOWN = 60000;
+  const PENDING_KEY = 'nitaPendingSignup';
+  function readJSON(k,f){ try{return JSON.parse(localStorage.getItem(k)||'null')||f;}catch(e){return f;} }
+  function writeJSON(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
+  function safe(s){return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function pending(){ return readJSON(PENDING_KEY,null); }
+  function format(ms){ const t=Math.max(0,Math.ceil(ms/1000)); return '0:' + String(t).padStart(2,'0'); }
+  function left(){ const p=pending(); if(!p||!p.awaitingVerification) return 0; const started=Number(p.codeSentAt||p.createdAt||Date.now()); return Math.max(0, COOLDOWN - (Date.now()-started)); }
+  function visibleVerificationHTML(p){
+    return '<section class="verify-page-shell visible-verification-page">'
+      + '<div class="verify-card premium-verify-card">'
+      + '<img src="assets/logo-cropped.png" alt="Nita Style" class="verify-logo">'
+      + '<p class="eyebrow">Email verification</p>'
+      + '<h1>Enter your code</h1>'
+      + '<p class="muted">We sent a six-digit verification code to <b>'+safe(p&&p.email||'your email')+'</b>. Enter it below to activate your account.</p>'
+      + '<div id="authMessage" class="auth-message"></div>'
+      + '<input id="authCode" class="field verify-code-field" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code">'
+      + '<button class="btn auth-submit" type="button" onclick="submitAuth()">VERIFY & CREATE ACCOUNT</button>'
+      + '<div class="verify-timer-box"><span id="nitaVerifyTimer" class="verify-timer">You can request a new code in <strong>1:00</strong></span></div>'
+      + '<button id="nitaResendCodeBtn" class="btn light resend-code-btn" type="button" onclick="resendVerificationCode()" disabled>SEND A NEW CODE</button>'
+      + '<p class="muted mini-note">For your security, the resend button unlocks after one minute.</p>'
+      + '</div></section>';
+  }
+  let timerInterval=null;
+  function startVisibleTimer(){
+    if(timerInterval) clearInterval(timerInterval);
+    const tick=function(){
+      const btn=document.getElementById('nitaResendCodeBtn');
+      const txt=document.getElementById('nitaVerifyTimer');
+      if(!btn || !txt){ clearInterval(timerInterval); timerInterval=null; return; }
+      const remaining=left();
+      if(remaining>0){
+        btn.disabled=true;
+        btn.classList.add('disabled');
+        txt.innerHTML='You can request a new code in <strong>'+format(remaining)+'</strong>';
+      }else{
+        btn.disabled=false;
+        btn.classList.remove('disabled');
+        txt.innerHTML='<strong>You can request a new code now.</strong>';
+        clearInterval(timerInterval); timerInterval=null;
+      }
+    };
+    tick(); timerInterval=setInterval(tick,250);
+  }
+  const previousRenderLoginPage = window.renderLoginPage;
+  window.renderLoginPage = function(){
+    const root=document.getElementById('loginRoot');
+    const p=pending();
+    if(root && p && p.awaitingVerification){
+      if(!p.codeSentAt){ p.codeSentAt=p.createdAt||Date.now(); writeJSON(PENDING_KEY,p); }
+      root.innerHTML=visibleVerificationHTML(p);
+      setTimeout(function(){ document.getElementById('authCode')?.focus(); startVisibleTimer(); }, 30);
+      return;
+    }
+    return previousRenderLoginPage && previousRenderLoginPage.apply(this, arguments);
+  };
+  const previousSubmitAuth = window.submitAuth;
+  window.submitAuth = async function(){
+    const result = previousSubmitAuth ? await previousSubmitAuth.apply(this, arguments) : undefined;
+    try{
+      const p=pending();
+      if(document.getElementById('loginRoot') && p && p.awaitingVerification){
+        if(!p.codeSentAt){ p.codeSentAt=p.createdAt||Date.now(); writeJSON(PENDING_KEY,p); }
+        window.renderLoginPage();
+      }
+    }catch(e){}
+    return result;
+  };
+  const previousResend = window.resendVerificationCode;
+  window.resendVerificationCode = async function(){
+    const m=document.getElementById('authMessage');
+    if(left()>0){ if(m)m.textContent='Please wait until the timer reaches 0:00 before requesting a new code.'; startVisibleTimer(); return; }
+    const b=document.getElementById('nitaResendCodeBtn'); if(b)b.disabled=true;
+    const res = previousResend ? await previousResend.apply(this, arguments) : undefined;
+    const p=pending(); if(p){ p.codeSentAt=Date.now(); p.createdAt=p.codeSentAt; writeJSON(PENDING_KEY,p); }
+    window.renderLoginPage();
+    const msg=document.getElementById('authMessage'); if(msg) msg.textContent='A new verification code has been sent.';
+    return res;
+  };
+
+  // Smooth, low-lag homepage auto-scroll: CSS transform only, no continuous JS animation loop.
+  let marqueeScheduled=false;
+  function cardWidthFor(track){ const card=track.querySelector('.product'); return card ? Math.max(160, card.getBoundingClientRect().width + 24) : 284; }
+  function prepareSmoothTrack(section){
+    if(!section) return;
+    const track=section.querySelector('.product-marquee');
+    if(!track || track.dataset.nitaSmoothFinal==='1') return;
+    // Replace with a clean clone to remove older mouse/timer handlers attached by previous patches.
+    const clean=track.cloneNode(true);
+    clean.dataset.nitaSmoothFinal='1';
+    clean.classList.remove('nita-js-marquee','nita-premium-auto','nita-force-marquee','nita-new-arrivals-only-scroll');
+    clean.classList.add('nita-smooth-css-marquee');
+    clean.style.transform=''; clean.style.transition=''; clean.style.animation='';
+    const original=[...clean.children].filter(el=>el.classList && el.classList.contains('product'));
+    if(!original.length) return;
+    // Keep enough repeated cards so it never has an empty gap and remains smooth on phones/laptops.
+    const approx=cardWidthFor(clean);
+    const needed=Math.max(original.length*2, Math.ceil((window.innerWidth*2.4)/approx));
+    let i=0;
+    while(clean.children.length < needed){ clean.appendChild(original[i % original.length].cloneNode(true)); i++; }
+    clean.style.setProperty('--marquee-distance', '-' + Math.max(1, Math.round((clean.scrollWidth || (needed*approx))/2)) + 'px');
+    clean.style.setProperty('--marquee-duration', (section.classList.contains('new-arrivals-scroll') ? '34s' : '36s'));
+    track.replaceWith(clean);
+  }
+  function smoothMarquees(){
+    if(!document.querySelector('.trending-scroll,.new-arrivals-scroll')) return;
+    prepareSmoothTrack(document.querySelector('.trending-scroll'));
+    prepareSmoothTrack(document.querySelector('.new-arrivals-scroll'));
+  }
+  function scheduleSmoothMarquees(){
+    if(marqueeScheduled) return;
+    marqueeScheduled=true;
+    requestAnimationFrame(function(){ marqueeScheduled=false; smoothMarquees(); });
+  }
+  const previousRenderHomeSections = window.renderHomeSections;
+  window.renderHomeSections = function(){
+    const res = previousRenderHomeSections ? previousRenderHomeSections.apply(this, arguments) : undefined;
+    setTimeout(scheduleSmoothMarquees, 30);
+    setTimeout(scheduleSmoothMarquees, 350);
+    return res;
+  };
+  window.addEventListener('resize', function(){ document.querySelectorAll('.product-marquee.nita-smooth-css-marquee').forEach(t=>{t.dataset.nitaSmoothFinal='';}); setTimeout(scheduleSmoothMarquees, 120); }, {passive:true});
+
+  // If live data arrives after the first paint, rerender only the current page so products/sections appear without refresh.
+  let refreshedOnce=false;
+  async function refreshCurrentPageOnce(){
+    if(refreshedOnce) return; refreshedOnce=true;
+    try{
+      const path=location.pathname;
+      if(path.endsWith('/') || path.endsWith('index.html') || path==='') { window.renderHomeSections && window.renderHomeSections(); scheduleSmoothMarquees(); }
+      else if(path.endsWith('shop.html')) { window.shopPage && window.shopPage(); }
+      else if(path.endsWith('product.html')) { window.productPage && window.productPage(); }
+      else if(path.endsWith('liked.html')) { window.renderLikedPage && window.renderLikedPage(); }
+      else if(path.endsWith('account.html')) { window.renderAccount && window.renderAccount(); }
+      else if(path.endsWith('cart.html')) { window.renderFullCart && window.renderFullCart(); }
+      else if(path.endsWith('checkout.html')) { window.nitaPremiumCheckoutInit && window.nitaPremiumCheckoutInit(); }
+    }catch(e){ console.warn('Nita first-load refresh skipped:', e); }
+    setTimeout(function(){ refreshedOnce=false; }, 2000);
+  }
+  window.addEventListener('nita-store-ready', refreshCurrentPageOnce);
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){ if(document.getElementById('nitaVerifyTimer')) startVisibleTimer(); scheduleSmoothMarquees(); }, 120);
+    setTimeout(function(){ refreshCurrentPageOnce(); }, 900);
+    setTimeout(scheduleSmoothMarquees, 1800);
+  });
+  window.addEventListener('load', function(){ setTimeout(scheduleSmoothMarquees, 100); setTimeout(refreshCurrentPageOnce, 500); });
+})();
+/* === END NITA STYLE VISIBLE TIMER + SMOOTH MARQUEE + FIRST LOAD RELIABILITY ONLY === */
