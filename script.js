@@ -5345,3 +5345,73 @@ placeOrder=async function(){
   document.addEventListener('DOMContentLoaded', function(){ setTimeout(applyAdminRoadmaps, 300); });
 })();
 /* === END NITA STYLE ADMIN ORDER ROADMAP ONLY FIX === */
+
+
+/* === NITA STYLE VERIFICATION RESEND TIMER ONLY 2026-06-11 ===
+   Adds a 60-second resend timer on the standalone verification page only.
+   Does not change account creation, emails, products, cart, admin, checkout, or design logic. */
+(function(){
+  const readJSON=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d));}catch(e){return d;}};
+  const writeJSON=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){console.warn(e);}};
+  const safe=(v='')=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const COOLDOWN=60000;
+  let timerId=null;
+  function pending(){return readJSON('nitaPendingSignup',null);}
+  function remainingMs(){const p=pending(); if(!p||!p.awaitingVerification)return 0; const base=Number(p.codeSentAt||p.createdAt||Date.now()); return Math.max(0, COOLDOWN-(Date.now()-base));}
+  function format(ms){const sec=Math.ceil(ms/1000); return '0:'+String(sec).padStart(2,'0');}
+  function verificationTimerShell(p){return `<section class="verify-page-shell">
+    <div class="verify-card">
+      <img src="assets/logo-cropped.png" alt="Nita Style" class="verify-logo">
+      <p class="eyebrow">Email verification</p>
+      <h1>Enter your code</h1>
+      <p class="muted">We sent a six-digit verification code to <b>${safe(p?.email||'your email')}</b>. Enter it below to activate your account.</p>
+      <div id="authMessage" class="auth-message"></div>
+      <input id="authCode" class="field verify-code-field" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+      <button class="btn auth-submit" type="button" onclick="submitAuth()">VERIFY & CREATE ACCOUNT</button>
+      <div class="verify-resend-row">
+        <button id="nitaResendCodeBtn" class="btn light" type="button" onclick="resendVerificationCode()" disabled>SEND A NEW CODE</button>
+        <div id="nitaVerifyTimer" class="verify-timer">You can request a new code in <strong>1:00</strong></div>
+      </div>
+      <button class="link-button" type="button" onclick="clearPendingSignupAndReturn()">Edit email address</button>
+    </div>
+  </section>`;}
+  function startTimer(){
+    if(timerId) clearInterval(timerId);
+    const btn=document.getElementById('nitaResendCodeBtn');
+    const txt=document.getElementById('nitaVerifyTimer');
+    function tick(){
+      const left=remainingMs();
+      if(!btn||!txt){ if(timerId) clearInterval(timerId); return; }
+      if(left>0){ btn.disabled=true; txt.innerHTML='You can request a new code in <strong>'+format(left)+'</strong>'; }
+      else{ btn.disabled=false; txt.innerHTML='You can request a new code now.'; if(timerId) clearInterval(timerId); }
+    }
+    tick(); timerId=setInterval(tick,500);
+  }
+  const previousRenderLoginPage=window.renderLoginPage;
+  window.renderLoginPage=function(mode){
+    const root=document.getElementById('loginRoot');
+    const p=pending();
+    if(root && p && p.awaitingVerification){
+      if(!p.codeSentAt){p.codeSentAt=p.createdAt||Date.now(); writeJSON('nitaPendingSignup',p);}
+      root.innerHTML=verificationTimerShell(p);
+      setTimeout(()=>{document.getElementById('authCode')?.focus(); startTimer();},40);
+      return;
+    }
+    if(typeof previousRenderLoginPage==='function') return previousRenderLoginPage.apply(this, arguments);
+  };
+  const previousResend=window.resendVerificationCode;
+  window.resendVerificationCode=async function(){
+    const msg=document.getElementById('authMessage');
+    const left=remainingMs();
+    if(left>0){ if(msg) msg.textContent='Please wait until the timer finishes before requesting a new code.'; startTimer(); return; }
+    const btn=document.getElementById('nitaResendCodeBtn'); if(btn) btn.disabled=true;
+    if(typeof previousResend==='function'){
+      await previousResend.apply(this, arguments);
+      const p=pending(); if(p){p.codeSentAt=Date.now(); p.createdAt=p.codeSentAt; writeJSON('nitaPendingSignup',p);}
+      window.renderLoginPage();
+      const m=document.getElementById('authMessage'); if(m) m.textContent='A new verification code has been sent.';
+    }
+  };
+  document.addEventListener('DOMContentLoaded',()=>{ if(document.getElementById('nitaVerifyTimer')) startTimer(); });
+})();
+/* === END NITA STYLE VERIFICATION RESEND TIMER ONLY === */
