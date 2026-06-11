@@ -2102,3 +2102,53 @@ button.logout-outline-btn:active{
 .delete-account-actions .btn.light{background:#fff!important;color:#111!important;border:1px solid #111!important;}
 @media(max-width:760px){.auth-premium-clean .auth-panel-left{padding:28px 22px}.auth-premium-clean .auth-panel-left img{width:170px}.delete-account-modal{padding:26px}.delete-account-modal h2{font-size:26px}.delete-account-actions .btn{min-width:100%;}}
 /* === END NITA STYLE TARGETED AUTH ENTRY + DELETE ACCOUNT CONFIRM ONLY === */
+
+/* === Footer Instagram + CODEVIQ credit only === */
+.footer-instagram{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:9px!important;
+  width:max-content!important;
+  margin-top:18px!important;
+  font-weight:900!important;
+  color:#111!important;
+  letter-spacing:.02em!important;
+  transition:opacity .2s ease, transform .2s ease!important;
+}
+.footer-instagram:hover{opacity:.65!important;transform:translateY(-1px)!important;}
+.footer-instagram-icon{
+  width:22px!important;
+  height:22px!important;
+  border:1.5px solid #111!important;
+  border-radius:50%!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:15px!important;
+  line-height:1!important;
+}
+.footer-codeviq{
+  margin-left:18px!important;
+  color:#111!important;
+  font-weight:900!important;
+  letter-spacing:.04em!important;
+}
+@media(max-width:850px){
+  .footer-codeviq{display:block!important;margin-left:0!important;margin-top:8px!important;}
+  .footer-instagram{margin-top:16px!important;}
+}
+
+
+/* === NITA STYLE PATCH: clickable footer policy pages === */
+.footer-legal-links{display:inline-flex!important;align-items:center!important;gap:8px!important;flex-wrap:wrap!important;justify-content:flex-end!important;}
+.footer-legal-links a{color:#777!important;text-transform:uppercase!important;font-weight:900!important;letter-spacing:.03em!important;transition:color .2s ease, opacity .2s ease!important;}
+.footer-legal-links a:hover{color:#000!important;opacity:.75!important;}
+.legal-page{max-width:980px;margin:0 auto;padding:120px 28px 90px;}
+.legal-kicker{text-transform:uppercase;letter-spacing:.22em;font-size:12px;font-weight:900;color:#777;margin-bottom:18px;}
+.legal-page h1{font-size:clamp(46px,7vw,92px);line-height:.9;margin:0 0 28px;text-transform:uppercase;}
+.legal-card{border:1px solid #e8e8e8;background:#fff;padding:34px;margin-top:22px;}
+.legal-card h2{font-size:26px;text-transform:uppercase;margin:0 0 14px;}
+.legal-card p,.legal-card li{color:#555;line-height:1.75;font-size:16px;}
+.legal-card ul{margin:0;padding-left:20px;}
+.legal-note{border:1px solid #111;background:#fafafa;padding:20px;margin-top:26px;font-weight:800;line-height:1.6;}
+@media(max-width:850px){.footer-legal-links{justify-content:flex-start!important;margin-top:10px!important}.legal-page{padding:85px 18px 60px}.legal-card{padding:24px}.legal-page h1{font-size:44px}}
