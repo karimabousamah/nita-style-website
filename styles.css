@@ -2027,3 +2027,51 @@ button.logout-outline-btn:active{
   text-transform:uppercase!important;
   color:#777!important;
 }
+
+
+/* === Homepage wallpapers admin addition === */
+.hero-panel.nita-wallpaper-applied::before,
+.banner.banner-photo.nita-wallpaper-applied{
+  background-image:linear-gradient(135deg,rgba(255,255,255,.28),rgba(245,245,245,.54)),var(--nita-home-wallpaper)!important;
+  background-size:cover!important;
+  background-position:center!important;
+  background-repeat:no-repeat!important;
+}
+.hero-panel.nita-wallpaper-applied:nth-child(2)::before{
+  background-image:linear-gradient(135deg,rgba(255,255,255,.26),rgba(245,245,245,.58)),var(--nita-home-wallpaper)!important;
+}
+.banner.banner-photo.nita-wallpaper-applied{position:relative;overflow:hidden;}
+.banner.banner-photo.nita-wallpaper-applied .banner-overlay{position:relative;z-index:2;}
+.wallpaper-admin-card{display:grid;grid-template-columns:220px 1fr;gap:22px;align-items:center;border:1px solid var(--line);padding:18px;margin:16px 0;background:#fff;}
+.wallpaper-preview{height:150px;background:linear-gradient(135deg,#f6f6f6,#dedede);background-size:cover;background-position:center;border:1px solid #e4e4e4;}
+.wallpaper-preview.has-image{box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);}
+.small-note{font-size:13px;margin-top:12px;}
+@media(max-width:700px){.wallpaper-admin-card{grid-template-columns:1fr}.wallpaper-preview{height:210px}}
+/* === End homepage wallpapers admin addition === */
+
+
+/* === NITA STYLE PREMIUM AUTH / VERIFICATION / ADDRESS VALIDATION 2026-06-11 === */
+.auth-page{min-height:100vh;background:#f7f6f3;display:flex;align-items:center;justify-content:center;padding:42px 18px}
+.auth-premium-shell,.verify-page-shell{width:100%}
+.auth-premium-panel{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:1.05fr .95fr;background:#fff;border:1px solid #e8e2da;box-shadow:0 28px 80px rgba(0,0,0,.08);min-height:620px}
+.auth-copy{padding:54px;display:flex;flex-direction:column;justify-content:center;background:linear-gradient(135deg,#fff,#f3f1ee)}
+.auth-logo-premium{width:205px;max-width:70%;height:auto;margin-bottom:38px}
+.auth-copy h1{font-size:clamp(42px,5vw,78px);line-height:.92;margin:0 0 22px;text-transform:uppercase;letter-spacing:-1.5px}
+.auth-benefits{display:grid;gap:10px;margin-top:30px;color:#222;font-weight:900;text-transform:uppercase;font-size:12px;letter-spacing:1px}
+.auth-benefits span{border-top:1px solid #ded8d0;padding-top:12px}
+.premium-auth-card{padding:46px!important;border:0!important;box-shadow:none!important;display:flex;flex-direction:column;justify-content:center}
+.premium-auth-tabs{display:grid!important;grid-template-columns:1fr 1fr;border:1px solid #111;margin-bottom:24px}
+.premium-auth-tabs button{border:0!important;border-right:1px solid #111!important;background:#fff!important;color:#111!important;padding:16px 12px!important;font-weight:900!important;letter-spacing:1px!important;cursor:pointer!important}
+.premium-auth-tabs button:last-child{border-right:0!important}
+.premium-auth-tabs button.active,.premium-auth-tabs button:hover{background:#111!important;color:#fff!important}
+.auth-message{min-height:22px;margin:10px 0 14px;color:#9f001e;font-weight:800;font-size:13px}
+.verify-card{max-width:520px;margin:0 auto;background:#fff;border:1px solid #e6e0d8;box-shadow:0 28px 80px rgba(0,0,0,.08);padding:46px;text-align:center}
+.verify-logo{width:185px;max-width:70%;height:auto;margin:0 auto 26px;display:block}
+.verify-card h1{font-size:clamp(38px,8vw,64px);line-height:.9;text-transform:uppercase;margin:0 0 18px}
+.verify-code-field{text-align:center!important;font-size:30px!important;letter-spacing:10px!important;font-weight:900!important;height:68px!important;margin:22px 0!important}
+.link-button{border:0;background:transparent;text-decoration:underline;text-transform:uppercase;font-weight:900;letter-spacing:1px;margin-top:14px;cursor:pointer;color:#111}
+.address-label-select{appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center;background-size:14px;padding-right:42px!important}
+.field-required-error{border-color:#b00020!important;box-shadow:0 0 0 1px #b00020!important;background:#fff8f9!important}
+.field-error-message{margin:7px 0 0;color:#b00020;font-size:12px;font-weight:900;letter-spacing:.3px;text-transform:none}
+@media(max-width:820px){.auth-page{align-items:flex-start;padding:22px 14px}.auth-premium-panel{grid-template-columns:1fr;min-height:0}.auth-copy,.premium-auth-card,.verify-card{padding:30px 22px}.auth-logo-premium{width:165px;margin-bottom:22px}.auth-copy h1{font-size:44px}.premium-auth-tabs button{font-size:11px;padding:14px 8px!important}.verify-code-field{font-size:24px!important;letter-spacing:7px!important}}
+/* === END NITA STYLE PREMIUM AUTH / VERIFICATION / ADDRESS VALIDATION === */

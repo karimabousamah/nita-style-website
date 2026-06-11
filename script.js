@@ -1070,7 +1070,7 @@ placeOrder=async function(){
 // === NITA STYLE ABSOLUTE FIX PATCH: cloud-only admin saves, pro login, multi-photo galleries ===
 (function(){
   const ADMIN_EMAILS_FINAL=['karim.abousamah1@gmail.com','karim.abousamah@gmail.com'];
-  const PERSIST_KEYS_FINAL=['nitaProducts','nitaOrders','nitaCoupons','nitaUsersByEmail','nitaDiscountUses'];
+  const PERSIST_KEYS_FINAL=['nitaProducts','nitaOrders','nitaCoupons','nitaUsersByEmail','nitaDiscountUses','nitaHomepageWallpapers'];
   const safe=(v='')=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   window.safe=safe;
   const getJSON=(k,f)=>{try{return JSON.parse(localStorage.getItem(k)||'null')??f}catch{return f}};
@@ -4753,3 +4753,272 @@ placeOrder=async function(){
   };
 })();
 /* === END NITA STYLE QUICK VIEW OUT-OF-STOCK SIZE ONLY FIX === */
+
+
+/* === NITA STYLE ORDER EMAIL CUSTOMER-FACING WARNING FIX 2026-06-09 ===
+   Purpose: keep checkout success clean even if Resend/Netlify email delivery fails.
+   Emails are still attempted; failures are logged to console for admin debugging only.
+*/
+(function(){
+  function readJSON(k,f){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f));}catch(e){return f;}}
+  function safe(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+  function money(v){return '$'+Number(v||0).toFixed(2);}
+
+  // Do not show technical email errors to customers on the purchase success screen.
+  localStorage.removeItem('nitaLastEmailError');
+
+  // Keep email sending best-effort: try to send, but never break checkout UI.
+  const previousSendStoreEmail = window.sendStoreEmail;
+  window.sendStoreEmail = async function(payload){
+    try{
+      if(typeof previousSendStoreEmail === 'function') return await previousSendStoreEmail(payload);
+      const res = await fetch('/.netlify/functions/send-email', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload || {})
+      });
+      let body={};
+      try{ body=await res.json(); }catch(e){ body={raw:await res.text()}; }
+      if(!res.ok || body.ok===false){
+        console.warn('Nita Style email was not delivered:', body.error || body.raw || body);
+        return {ok:false, suppressed:true, error:body.error || 'Email delivery failed'};
+      }
+      return body;
+    }catch(error){
+      console.warn('Nita Style email was not delivered:', error);
+      return {ok:false, suppressed:true, error:error?.message || String(error)};
+    }
+  };
+
+  // If older checkout code writes the red warning flag, remove it immediately.
+  const originalSetItem = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function(key,value){
+    if(key === 'nitaLastEmailError'){
+      console.warn('Nita Style email warning suppressed for customer:', value);
+      localStorage.removeItem('nitaLastEmailError');
+      return;
+    }
+    return originalSetItem(key,value);
+  };
+
+  // Final success page renderer: never displays Resend/Netlify technical warnings to shoppers.
+  window.renderOrderSuccess = function(){
+    const root=document.getElementById('orderSuccessRoot');
+    if(!root) return;
+    localStorage.removeItem('nitaLastEmailError');
+    const order=readJSON('nitaLastOrder',null);
+    root.innerHTML=`<section class="order-success-wrap"><div class="success-mark"><span>✓</span></div><p class="eyebrow">Order received</p><h1>Thank you for your purchase</h1><p class="muted">Your Nita Style order has been submitted successfully. We will prepare your order and contact you if any detail needs confirmation.</p>${order?`<div class="success-summary"><div><span>Order number</span><b>${safe(order.id)}</b></div><div><span>Total</span><b>${money(order.total)}</b></div><div><span>Delivery</span><b>Aramex · 2–3 business days</b></div><div><span>Payment</span><b>Cash on Delivery</b></div></div>`:''}<div class="success-actions"><a class="btn" href="shop.html">CONTINUE SHOPPING</a><a class="btn light" href="account.html">VIEW MY ORDER</a></div></section>`;
+  };
+
+  document.addEventListener('DOMContentLoaded',function(){
+    if(document.getElementById('orderSuccessRoot')) window.renderOrderSuccess();
+  });
+  window.addEventListener('pageshow',function(){
+    if(document.getElementById('orderSuccessRoot')) window.renderOrderSuccess();
+  });
+})();
+/* === END NITA STYLE ORDER EMAIL CUSTOMER-FACING WARNING FIX 2026-06-09 === */
+
+
+/* === NITA STYLE HOMEPAGE WALLPAPERS ADMIN ONLY ADDITION 2026-06-10 ===
+   Adds admin controls for the three homepage wallpaper areas without changing other features. */
+(function(){
+  const WALL_KEY = 'nitaHomepageWallpapers';
+  const DEFAULTS = { shopNow:'', newCollection:'', exploreCollections:'' };
+  function readJSON(key, fallback){ try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch(e){return fallback;} }
+  function writeJSON(key, value){ try{localStorage.setItem(key, JSON.stringify(value));}catch(e){console.warn('Wallpaper local save failed', e);} }
+  function wallpapers(){ return {...DEFAULTS, ...readJSON(WALL_KEY, DEFAULTS)}; }
+  function cssUrl(value){ return value ? `url("${String(value).replace(/"/g,'%22')}")` : ''; }
+  function applyOne(el, value, variable){
+    if(!el) return;
+    if(value){ el.classList.add('nita-wallpaper-applied'); el.style.setProperty(variable, cssUrl(value)); }
+    else { el.classList.remove('nita-wallpaper-applied'); el.style.removeProperty(variable); }
+  }
+  window.nitaApplyHomepageWallpapers = function(){
+    const w = wallpapers();
+    const panels = document.querySelectorAll('.hero.hero-buttons-only .hero-panel');
+    applyOne(panels[0], w.shopNow, '--nita-home-wallpaper');
+    applyOne(panels[1], w.newCollection, '--nita-home-wallpaper');
+    applyOne(document.querySelector('.banner.banner-photo'), w.exploreCollections, '--nita-home-wallpaper');
+  };
+  function previewHtml(label, key, value){
+    const has = !!value;
+    return `<div class="wallpaper-admin-card"><div class="wallpaper-preview ${has?'has-image':''}" style="${has?`background-image:url('${String(value).replace(/'/g,"%27")}')`:''}"></div><div><h3>${label}</h3><p class="muted">Upload the image that appears behind this homepage button.</p><input class="field" type="file" accept="image/*" onchange="nitaPickHomepageWallpaper(event,'${key}')"><div class="admin-actions"><button type="button" class="btn light" onclick="nitaClearHomepageWallpaper('${key}')">REMOVE PHOTO</button></div></div></div>`;
+  }
+  window.nitaRenderHomepageWallpaperAdmin = function(){
+    const root = document.getElementById('homepageWallpapersAdmin');
+    if(!root) return;
+    const w = wallpapers();
+    root.innerHTML = `<div class="admin-toolbar"><div><h2>Homepage wallpapers</h2><p class="muted">Choose the three background images shown behind Shop Now, New Collection, and Explore Collections.</p></div><span class="pill">Homepage</span></div>`+
+      previewHtml('Shop Now wallpaper','shopNow',w.shopNow)+
+      previewHtml('New Collection wallpaper','newCollection',w.newCollection)+
+      previewHtml('Explore Collections wallpaper','exploreCollections',w.exploreCollections)+
+      `<button type="button" class="btn" onclick="nitaSaveHomepageWallpapers()">SAVE HOMEPAGE WALLPAPERS</button><p class="muted small-note">Images are saved to the same global store as your products, so all visitors see the selected wallpapers after saving.</p>`;
+  };
+  window.nitaPickHomepageWallpaper = function(event, key){
+    const file = event && event.target && event.target.files && event.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(){ const w = wallpapers(); w[key] = reader.result; writeJSON(WALL_KEY, w); nitaApplyHomepageWallpapers(); nitaRenderHomepageWallpaperAdmin(); };
+    reader.readAsDataURL(file);
+  };
+  window.nitaClearHomepageWallpaper = function(key){ const w = wallpapers(); w[key] = ''; writeJSON(WALL_KEY, w); nitaApplyHomepageWallpapers(); nitaRenderHomepageWallpaperAdmin(); };
+  window.nitaSaveHomepageWallpapers = async function(){
+    const w = wallpapers();
+    writeJSON(WALL_KEY, w);
+    try{
+      if(typeof window.nitaSaveKeyStrict === 'function') await window.nitaSaveKeyStrict(WALL_KEY, w);
+      else if(typeof saveSharedStore === 'function') await saveSharedStore();
+      if(typeof toast === 'function') toast('Homepage wallpapers saved globally.');
+      if(typeof nitaNotify === 'function') nitaNotify('Homepage wallpapers saved globally.', true);
+    }catch(e){
+      console.error(e);
+      if(typeof nitaNotify === 'function') nitaNotify('Could not save wallpapers globally. Check Netlify store settings.', false, true);
+      else alert('Could not save globally. Check Netlify store settings.');
+    }
+    nitaApplyHomepageWallpapers();
+  };
+  function injectAdminSection(){
+    const side = document.querySelector('.admin-side');
+    const layout = document.querySelector('.admin-layout');
+    if(!side || !layout || document.querySelector('[data-section="home-wallpapers"]')) return;
+    side.insertAdjacentHTML('beforeend', '<button class="admin-nav-button" data-section="home-wallpapers" onclick="showAdminSection(\'home-wallpapers\')">Homepage wallpapers</button>');
+    layout.insertAdjacentHTML('beforeend', '<div class="card admin-section-page" data-section="home-wallpapers"><div id="homepageWallpapersAdmin"></div></div>');
+    nitaRenderHomepageWallpaperAdmin();
+  }
+  const previousRenderAdmin = window.renderAdmin;
+  window.renderAdmin = async function(){
+    if(previousRenderAdmin) await previousRenderAdmin.apply(this, arguments);
+    injectAdminSection();
+  };
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(nitaApplyHomepageWallpapers, 50); setTimeout(injectAdminSection, 250); });
+  window.addEventListener('load', function(){ setTimeout(nitaApplyHomepageWallpapers, 50); setTimeout(injectAdminSection, 250); });
+  window.addEventListener('nita-store-ready', function(){ setTimeout(nitaApplyHomepageWallpapers, 50); });
+})();
+/* === END NITA STYLE HOMEPAGE WALLPAPERS ADMIN ONLY ADDITION === */
+
+
+/* === NITA STYLE PREMIUM AUTH / ADDRESS VALIDATION ONLY 2026-06-11 ===
+   Adds a more premium auth screen, standalone email verification view, address label select,
+   required-field red validation, without changing product/cart/admin logic. */
+(function(){
+  const esc = (v='') => String(v ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+  const norm = (v='') => String(v||'').trim().toLowerCase();
+  const read = (k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f));}catch(e){return f;}};
+  const write = (k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){console.warn(e);}};
+  const users = ()=>read('nitaUsersByEmail',{});
+  const setUsers = async (u)=>{write('nitaUsersByEmail',u); try{ if(typeof window.nitaSaveKeyStrict==='function') await window.nitaSaveKeyStrict('nitaUsersByEmail',u); else if(typeof saveCloudKey==='function') await saveCloudKey('nitaUsersByEmail',u); }catch(e){console.warn('Users saved locally; cloud sync failed.',e);} };
+  const sendEmail = async (payload)=>{ if(typeof window.sendStoreEmail==='function') return window.sendStoreEmail(payload); if(typeof window.emailSend==='function') return window.emailSend(payload); const res=await fetch('/.netlify/functions/send-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload||{})}); let body={}; try{body=await res.json()}catch(e){} if(!res.ok || body.ok===false) throw new Error(body.error||'Email could not be sent.'); return body; };
+  const code = ()=>String(Math.floor(100000+Math.random()*900000));
+  const getPending = ()=>read('nitaPendingSignup',null);
+  const setPending = (p)=>write('nitaPendingSignup',p);
+  const clearPending = ()=>localStorage.removeItem('nitaPendingSignup');
+
+  function authShell(mode='signin'){
+    const isSignup = mode === 'signup';
+    return `<section class="auth-premium-shell">
+      <div class="auth-premium-panel">
+        <div class="auth-copy">
+          <img src="assets/logo-cropped.png" alt="Nita Style" class="auth-logo-premium">
+          <p class="eyebrow">Private customer account</p>
+          <h1>${isSignup?'Create your Nita Style account':'Welcome back'}</h1>
+          <p class="muted">${isSignup?'Create your account to save delivery details, follow your orders, and receive your first-order code.':'Sign in to view your saved addresses, order roadmap, and liked pieces.'}</p>
+          <div class="auth-benefits"><span>Secure email verification</span><span>Saved delivery addresses</span><span>Order tracking</span></div>
+        </div>
+        <div class="auth-card premium-auth-card">
+          <div class="auth-tabs premium-auth-tabs"><button type="button" class="${!isSignup?'active':''}" onclick="switchAuthMode('signin')">SIGN IN</button><button type="button" class="${isSignup?'active':''}" onclick="switchAuthMode('signup')">CREATE ACCOUNT</button></div>
+          <div id="authMessage" class="auth-message"></div>
+          <label>Email address</label><input id="authEmail" class="field" type="email" autocomplete="email" placeholder="you@example.com">
+          <label>Password</label><input id="authPassword" class="field" type="password" autocomplete="${isSignup?'new-password':'current-password'}" placeholder="Password">
+          <div id="signupFields" style="display:${isSignup?'block':'none'}"><div class="form-grid"><div><label>First name</label><input id="authFirst" class="field" placeholder="First name"></div><div><label>Last name</label><input id="authLast" class="field" placeholder="Last name"></div></div><label>Phone number</label><input id="authPhone" class="field" placeholder="Phone number"></div>
+          <button class="btn auth-submit" type="button" onclick="submitAuth()">${isSignup?'CREATE ACCOUNT':'SIGN IN'}</button>
+          <p class="muted mini-note">Your email is your login and cannot be edited from your account page.</p>
+        </div>
+      </div>
+    </section>`;
+  }
+
+  function verificationShell(p){
+    return `<section class="verify-page-shell">
+      <div class="verify-card">
+        <img src="assets/logo-cropped.png" alt="Nita Style" class="verify-logo">
+        <p class="eyebrow">Email verification</p>
+        <h1>Enter your code</h1>
+        <p class="muted">We sent a six-digit verification code to <b>${esc(p?.email||'your email')}</b>. Enter it below to activate your account.</p>
+        <div id="authMessage" class="auth-message"></div>
+        <input id="authCode" class="field verify-code-field" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+        <button class="btn auth-submit" type="button" onclick="submitAuth()">VERIFY & CREATE ACCOUNT</button>
+        <button class="btn light" type="button" onclick="resendVerificationCode()">RESEND CODE</button>
+        <button class="link-button" type="button" onclick="clearPendingSignupAndReturn()">Edit email address</button>
+      </div>
+    </section>`;
+  }
+
+  window.renderLoginPage = function(mode){
+    const root=document.getElementById('loginRoot'); if(!root) return;
+    const pending=getPending();
+    if(pending && pending.awaitingVerification){ root.innerHTML=verificationShell(pending); setTimeout(()=>document.getElementById('authCode')?.focus(),50); return; }
+    root.innerHTML=authShell(mode||'signin');
+  };
+  window.switchAuthMode = function(mode){ clearPending(); renderLoginPage(mode); };
+  window.clearPendingSignupAndReturn = function(){ clearPending(); renderLoginPage('signup'); };
+  window.resendVerificationCode = async function(){
+    const p=getPending(); const msg=document.getElementById('authMessage');
+    if(!p || !p.email){ renderLoginPage('signup'); return; }
+    const fresh=code(); p.code=fresh; p.createdAt=Date.now(); p.awaitingVerification=true; setPending(p);
+    try{ if(msg) msg.textContent='Sending a new code...'; await sendEmail({type:'verification',to:p.email,code:fresh}); if(msg) msg.textContent='A new code has been sent.'; }
+    catch(e){ if(msg) msg.textContent='We could not send the code. Please check your email setup.'; console.error(e); }
+  };
+  window.submitAuth = async function(){
+    const root=document.getElementById('loginRoot'); if(!root) return;
+    const msg=document.getElementById('authMessage');
+    const pending=getPending();
+    if(pending && pending.awaitingVerification){
+      const entered=String(document.getElementById('authCode')?.value||'').trim();
+      if(!entered || entered!==String(pending.code)){ if(msg) msg.textContent='Wrong verification code. Please check your email and try again.'; return; }
+      const all=users(); const email=norm(pending.email);
+      const user={...(all[email]||{}), email, password:pending.password, firstName:pending.firstName||'', lastName:pending.lastName||'', phone:pending.phone||'', addresses:all[email]?.addresses||[], liked:all[email]?.liked||[], isVerified:true, createdAt:all[email]?.createdAt||Date.now()};
+      all[email]=user; await setUsers(all); write('nitaUser',user); localStorage.setItem('nitaSessionEmail',email); clearPending();
+      try{ await sendEmail({type:'discount',to:email,code:'NITA10'}); }catch(e){ console.warn('Welcome code email failed', e); }
+      if(msg) msg.textContent='Account verified. Redirecting...';
+      setTimeout(()=>{ location.href='account.html'; },650); return;
+    }
+    const signupVisible = document.getElementById('signupFields') && document.getElementById('signupFields').style.display !== 'none';
+    const email=norm(document.getElementById('authEmail')?.value); const password=String(document.getElementById('authPassword')?.value||'');
+    if(!email || !/^\S+@\S+\.\S+$/.test(email)){ if(msg) msg.textContent='Please enter a valid email address.'; return; }
+    if(!password){ if(msg) msg.textContent='Please enter your password.'; return; }
+    const all=users();
+    if(!signupVisible){
+      const u=all[email]; if(!u || String(u.password||'')!==password){ if(msg) msg.textContent='Incorrect email or password.'; return; }
+      write('nitaUser',u); localStorage.setItem('nitaSessionEmail',email); if(msg) msg.textContent='Signed in. Redirecting...'; setTimeout(()=>{location.href='account.html'},450); return;
+    }
+    if(all[email]){ if(msg) msg.textContent='An account already exists with this email. Please sign in.'; return; }
+    const first=String(document.getElementById('authFirst')?.value||'').trim(); const last=String(document.getElementById('authLast')?.value||'').trim(); const phone=String(document.getElementById('authPhone')?.value||'').trim();
+    if(!first || !last || !phone){ if(msg) msg.textContent='Please complete your first name, last name, and phone number.'; return; }
+    const c=code(); const p={awaitingVerification:true,email,password,firstName:first,lastName:last,phone,code:c,createdAt:Date.now()}; setPending(p);
+    try{ if(msg) msg.textContent='Sending verification code...'; await sendEmail({type:'verification',to:email,code:c}); root.innerHTML=verificationShell(p); }
+    catch(e){ clearPending(); if(msg) msg.textContent='Email could not be sent. Please try again.'; console.error(e); }
+  };
+
+  const labelSelect = (id, value='')=>`<select class="field address-label-select" id="${id}" required><option value="">Choose address name</option>${['Home','Office','Parents house','Family house','Work','Other'].map(o=>`<option value="${o}" ${String(value||'')===o?'selected':''}>${o}</option>`).join('')}</select>`;
+  function clearFieldError(el){ if(!el) return; el.classList.remove('field-required-error'); const n=el.parentElement?.querySelector(`.field-error-message[data-for="${el.id}"]`); if(n) n.remove(); }
+  function setFieldError(el){ if(!el) return; clearFieldError(el); el.classList.add('field-required-error'); el.insertAdjacentHTML('afterend',`<p class="field-error-message" data-for="${el.id}">This field is required.</p>`); }
+  function requiredAddressFields(prefix){ return ['Label','City','Street','Building','Floor','Apartment'].map(n=>document.getElementById(prefix+n)).filter(Boolean); }
+  window.nitaValidateAddressRequired = function(prefix){ let ok=true; requiredAddressFields(prefix).forEach(el=>{ if(!String(el.value||'').trim()){ setFieldError(el); ok=false; } else clearFieldError(el); }); return ok; };
+  document.addEventListener('input', e=>{ if(e.target?.matches('.field-required-error')) clearFieldError(e.target); });
+  document.addEventListener('change', e=>{ if(e.target?.matches('.field-required-error')) clearFieldError(e.target); });
+
+  const addressFormMarkup = (prefix)=>`<div class="checkout-address-form-holder"><div class="premium-address-form"><div class="form-grid two"><div class="full"><label>Address name</label>${labelSelect(prefix+'Label')}</div><div><label>City</label><input class="field" id="${prefix}City" placeholder="City" required></div><div><label>Street name</label><input class="field" id="${prefix}Street" placeholder="Street name" required></div><div><label>Building</label><input class="field" id="${prefix}Building" placeholder="Building name / number" required></div><div><label>Floor</label><input class="field" id="${prefix}Floor" placeholder="Floor" required></div><div><label>Apartment / door</label><input class="field" id="${prefix}Apartment" placeholder="Apartment / door number" required></div><div><label>Nearby landmark</label><input class="field" id="${prefix}Landmark" placeholder="Optional"></div><div class="full"><label>Delivery notes</label><textarea class="field" id="${prefix}Notes" placeholder="Optional"></textarea></div></div><label class="save-address"><input type="checkbox" id="checkoutSaveAddress" checked> Save this address for future orders</label><div class="address-form-actions"><button class="btn" type="button" onclick="nitaSaveCheckoutAddress()">SAVE DELIVERY ADDRESS</button><button class="btn light" type="button" onclick="nitaCancelCheckoutAddressForm()">CANCEL</button></div></div></div>`;
+  const oldShowAddressForm = window.nitaShowCheckoutAddressForm;
+  window.nitaShowCheckoutAddressForm = function(){ const area=document.getElementById('checkoutAddressArea'); if(!area){ if(oldShowAddressForm) return oldShowAddressForm.apply(this,arguments); return; } window.nitaCheckoutMode='new'; area.querySelector('.checkout-address-form-holder')?.remove(); area.insertAdjacentHTML('beforeend', addressFormMarkup('checkoutAddr')); };
+  const oldSaveAddress = window.nitaSaveCheckoutAddress;
+  window.nitaSaveCheckoutAddress = async function(){ if(!window.nitaValidateAddressRequired('checkoutAddr')) return false; if(oldSaveAddress) return oldSaveAddress.apply(this,arguments); return false; };
+
+  const oldAccountAddressFields = window.accountAddressFields;
+  window.accountAddressFields = function(prefix, addr={}){
+    const html = oldAccountAddressFields ? oldAccountAddressFields(prefix, addr) : '';
+    if(!html) return html;
+    return html.replace(new RegExp(`<input class="field" id="${prefix}Label"[^>]*>`), `<label>Address name</label>${labelSelect(prefix+'Label', addr.label||'')}`);
+  };
+})();
+/* === END NITA STYLE PREMIUM AUTH / ADDRESS VALIDATION ONLY === */
