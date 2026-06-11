@@ -9,10 +9,10 @@ function updateCartCount(){document.querySelectorAll('.cart-count').forEach(e=>e
 function header(){
  const isAdmin = ADMIN_EMAILS.includes(currentUser?.email);
  const admin = isAdmin ? '<a class="admin-link" href="admin.html">ADMIN</a>' : '';
- return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style" decoding="async"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a href="${currentUser?'account.html':'login.html'}">${currentUser?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, tops, pants..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`
+ return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a href="${currentUser?'account.html':'login.html'}">${currentUser?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, tops, pants..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`
 }
 
-function siteFooter(){return `<footer class="footer site-footer"><div><img class="footer-logo-img" src="assets/logo-cropped.png" alt="Nita Style" loading="lazy" decoding="async"><p class="muted">Founded by Nicole and Tania, Nita Style curates Italian-made pieces for women who value clean silhouettes, refined textures, and effortless everyday elegance.</p></div><div><h4>Shop</h4><a href="shop.html">All products</a><a href="collections.html">Collections</a><a href="cart.html">Cart</a><a href="checkout.html">Checkout</a></div><div><h4>Support</h4><a href="contact.html">Contact</a><a href="about.html">About</a><a href="checkout.html">Cash on delivery</a><a href="checkout.html">Online payment coming soon</a><a class="footer-instagram" href="https://www.instagram.com/thenitastyle/" target="_blank" rel="noopener noreferrer" aria-label="Nita Style Instagram"><img class="footer-instagram-icon" src="assets/instagram-icon.webp" alt="Instagram" loading="lazy" decoding="async"><span>thenitastyle</span></a></div><div><h4>Join the list</h4><p class="muted">Receive the first-order code and new drop updates.</p><div class="footer-newsletter"><input placeholder="Email address"><button onclick="toast('Use code NITA10 for 10% off')">SIGN UP</button></div></div></footer><div class="copyright site-footer"><span>© 2026 Nita Style. All rights reserved. <span class="footer-codeviq">Developed by CODEVIQ.</span></span><span class="footer-legal-links"><a href="privacy-policy.html">Privacy Policy</a><span>·</span><a href="terms.html">Terms</a><span>·</span><a href="shipping.html">Shipping</a></span></div>`}
+function siteFooter(){return `<footer class="footer site-footer"><div><img class="footer-logo-img" src="assets/logo-cropped.png" alt="Nita Style"><p class="muted">Founded by Nicole and Tania, Nita Style curates Italian-made pieces for women who value clean silhouettes, refined textures, and effortless everyday elegance.</p></div><div><h4>Shop</h4><a href="shop.html">All products</a><a href="collections.html">Collections</a><a href="cart.html">Cart</a><a href="checkout.html">Checkout</a></div><div><h4>Support</h4><a href="contact.html">Contact</a><a href="about.html">About</a><a href="checkout.html">Cash on delivery</a><a href="checkout.html">Online payment coming soon</a><a class="footer-instagram" href="https://www.instagram.com/thenitastyle/" target="_blank" rel="noopener noreferrer" aria-label="Nita Style Instagram"><img class="footer-instagram-icon" src="assets/instagram-icon.webp" alt="Instagram"><span>thenitastyle</span></a></div><div><h4>Join the list</h4><p class="muted">Receive the first-order code and new drop updates.</p><div class="footer-newsletter"><input placeholder="Email address"><button onclick="toast('Use code NITA10 for 10% off')">SIGN UP</button></div></div></footer><div class="copyright site-footer"><span>© 2026 Nita Style. All rights reserved. <span class="footer-codeviq">Developed by CODEVIQ.</span></span><span class="footer-legal-links"><a href="privacy-policy.html">Privacy Policy</a><span>·</span><a href="terms.html">Terms</a><span>·</span><a href="shipping.html">Shipping</a></span></div>`}
 
 async function init(){
  await loadSharedStore();
@@ -23,7 +23,7 @@ async function init(){
  document.body.classList.add('nita-ready');
  if(showIntro){sessionStorage.setItem('nitaIntroShown','1');setTimeout(()=>document.getElementById('introLoader')?.classList.add('hide'),1250);setTimeout(()=>document.getElementById('introLoader')?.remove(),1900)}
  updateCartCount(); renderCartPanel(); if(!document.querySelector('.site-footer') && !location.pathname.endsWith('admin.html')) document.body.insertAdjacentHTML('beforeend',siteFooter()); if(!localStorage.getItem('nitaPopupSeen'))setTimeout(()=>$('#signupPopup')?.classList.add('show'),1600)}
-function introLoader(){return `<div id="introLoader" class="intro-loader"><img src="assets/logo-cropped.png" alt="Nita Style" decoding="async"></div>`}
+function introLoader(){return `<div id="introLoader" class="intro-loader"><img src="assets/logo-cropped.png" alt="Nita Style"></div>`}
 function openSearch(){const p=$('#searchPanel'); if(p){p.classList.add('open'); document.body.classList.add('panel-open');} renderSearch();setTimeout(()=>$('#searchInput')?.focus(),100)} function closeSearch(){const p=$('#searchPanel'); if(p){p.classList.remove('open');} document.body.classList.remove('panel-open')}
 function openCart(){renderCartPanel();const p=$('#cartPanel'); if(p){p.classList.add('open'); document.body.classList.add('panel-open');}} function closeCart(){const p=$('#cartPanel'); if(p){p.classList.remove('open');} document.body.classList.remove('panel-open')}
 function renderSearch(){let q=($('#searchInput')?.value||'').toLowerCase();let res=getProducts().filter(p=>!q||p.name.toLowerCase().includes(q)||p.category.toLowerCase().includes(q));$('#searchResults').innerHTML=res.map(p=>`<a href="product.html?id=${p.id}" style="display:grid;grid-template-columns:70px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid #eee"><span style="${productMainImage(p).startsWith('data:')?'background-image:url('+productMainImage(p)+')':'background:'+productMainImage(p)};background-size:cover;background-position:center;height:82px"></span><span><b>${p.name}</b><br><span class="muted">${p.category} · ${money(p.price)}</span></span></a>`).join('')}
@@ -1141,7 +1141,7 @@ placeOrder=async function(){
 
   window.renderLoginPage=function(){
     const root=document.getElementById('loginRoot'); if(!root) return;
-    root.innerHTML=`<section class="auth-shell"><div class="auth-brand"><img src="assets/logo-cropped.png" alt="Nita Style" decoding="async"><p>Customer account</p><h1>Sign in or create your account</h1><p class="muted">Save your address, track your orders, and receive your first-order code in a clean boutique account.</p></div><div class="auth-card"><div class="auth-tabs"><button class="active" id="signinTab" onclick="switchAuthMode('signin')">SIGN IN</button><button id="signupTab" onclick="switchAuthMode('signup')">SIGN UP</button></div><div id="authMessage" class="auth-message"></div><label>Email address</label><input id="authEmail" class="field" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" class="field" type="password" autocomplete="current-password" placeholder="Password"><div id="signupFields" style="display:none"><div class="form-grid"><div><label>First name</label><input id="authFirst" class="field" placeholder="First name"></div><div><label>Last name</label><input id="authLast" class="field" placeholder="Last name"></div></div><label>Phone number</label><input id="authPhone" class="field" placeholder="Phone number"></div><button class="btn auth-submit" onclick="submitAuth()">CONTINUE</button><p class="muted mini-note">Your email is your login and cannot be changed from the account page.</p></div></section>`;
+    root.innerHTML=`<section class="auth-shell"><div class="auth-brand"><img src="assets/logo-cropped.png" alt="Nita Style"><p>Customer account</p><h1>Sign in or create your account</h1><p class="muted">Save your address, track your orders, and receive your first-order code in a clean boutique account.</p></div><div class="auth-card"><div class="auth-tabs"><button class="active" id="signinTab" onclick="switchAuthMode('signin')">SIGN IN</button><button id="signupTab" onclick="switchAuthMode('signup')">SIGN UP</button></div><div id="authMessage" class="auth-message"></div><label>Email address</label><input id="authEmail" class="field" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" class="field" type="password" autocomplete="current-password" placeholder="Password"><div id="signupFields" style="display:none"><div class="form-grid"><div><label>First name</label><input id="authFirst" class="field" placeholder="First name"></div><div><label>Last name</label><input id="authLast" class="field" placeholder="Last name"></div></div><label>Phone number</label><input id="authPhone" class="field" placeholder="Phone number"></div><button class="btn auth-submit" onclick="submitAuth()">CONTINUE</button><p class="muted mini-note">Your email is your login and cannot be changed from the account page.</p></div></section>`;
     window.authMode='signin';
   };
   window.switchAuthMode=function(mode){window.authMode=mode; document.getElementById('signinTab')?.classList.toggle('active',mode==='signin'); document.getElementById('signupTab')?.classList.toggle('active',mode==='signup'); const f=document.getElementById('signupFields'); if(f) f.style.display=mode==='signup'?'block':'none'; const msg=document.getElementById('authMessage'); if(msg) msg.textContent='';};
@@ -1746,7 +1746,7 @@ placeOrder=async function(){
     const user = activeUser();
     const isAdmin = ADMIN_EMAILS.includes(String(user?.email||'').toLowerCase());
     const admin = isAdmin ? '<a class="admin-link" href="admin.html">ADMIN</a>' : '';
-    return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style" decoding="async"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a class="account-nav-link" href="${user?'account.html':'login.html'}">${user?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, tops, pants..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`;
+    return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a class="account-nav-link" href="${user?'account.html':'login.html'}">${user?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, tops, pants..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`;
   };
 
   function statusStepClass(orderStatus, step){
@@ -3398,7 +3398,7 @@ placeOrder=async function(){
 
   window.renderLoginPage = function(){
     const root=document.getElementById('loginRoot'); if(!root) return;
-    root.innerHTML=`<section class="auth-shell"><div class="auth-brand"><img src="assets/logo-cropped.png" alt="Nita Style" decoding="async"><p>Customer account</p><h1>Sign in or create your account</h1><p class="muted">Save your addresses, follow your orders, and receive your first-order code in a clean boutique account.</p></div><div class="auth-card"><div class="auth-tabs"><button class="active" id="signinTab" onclick="switchAuthMode('signin')">SIGN IN</button><button id="signupTab" onclick="switchAuthMode('signup')">SIGN UP</button></div><div id="authMessage" class="auth-message"></div><label>Email address</label><input id="authEmail" class="field" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" class="field" type="password" autocomplete="current-password" placeholder="Password"><div id="signupFields" style="display:none"><div class="form-grid"><div><label>First name</label><input id="authFirst" class="field" placeholder="First name"></div><div><label>Last name</label><input id="authLast" class="field" placeholder="Last name"></div></div><label>Phone number</label><input id="authPhone" class="field" placeholder="Phone number"><div id="verifyBox" class="verification-box" style="display:none"><label>Email verification code</label><input id="authCode" class="field" inputmode="numeric" maxlength="6" placeholder="Enter the 6-digit code"><p class="muted mini-note">We sent this code to your email. After verification, your 10% first-order code will be emailed automatically.</p></div></div><button class="btn auth-submit" id="authSubmitBtn" onclick="submitAuth()">CONTINUE</button><p class="muted mini-note">Your email is your login and cannot be changed from the account page.</p></div></section>`;
+    root.innerHTML=`<section class="auth-shell"><div class="auth-brand"><img src="assets/logo-cropped.png" alt="Nita Style"><p>Customer account</p><h1>Sign in or create your account</h1><p class="muted">Save your addresses, follow your orders, and receive your first-order code in a clean boutique account.</p></div><div class="auth-card"><div class="auth-tabs"><button class="active" id="signinTab" onclick="switchAuthMode('signin')">SIGN IN</button><button id="signupTab" onclick="switchAuthMode('signup')">SIGN UP</button></div><div id="authMessage" class="auth-message"></div><label>Email address</label><input id="authEmail" class="field" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" class="field" type="password" autocomplete="current-password" placeholder="Password"><div id="signupFields" style="display:none"><div class="form-grid"><div><label>First name</label><input id="authFirst" class="field" placeholder="First name"></div><div><label>Last name</label><input id="authLast" class="field" placeholder="Last name"></div></div><label>Phone number</label><input id="authPhone" class="field" placeholder="Phone number"><div id="verifyBox" class="verification-box" style="display:none"><label>Email verification code</label><input id="authCode" class="field" inputmode="numeric" maxlength="6" placeholder="Enter the 6-digit code"><p class="muted mini-note">We sent this code to your email. After verification, your 10% first-order code will be emailed automatically.</p></div></div><button class="btn auth-submit" id="authSubmitBtn" onclick="submitAuth()">CONTINUE</button><p class="muted mini-note">Your email is your login and cannot be changed from the account page.</p></div></section>`;
     window.authMode='signin';
   };
 
@@ -3541,7 +3541,7 @@ placeOrder=async function(){
   // Strong sign-up verification flow: account is created only after the 6-digit email code is verified.
   window.renderLoginPage=function(){
     const root=document.getElementById('loginRoot'); if(!root)return;
-    root.innerHTML=`<section class="auth-shell"><div class="auth-brand"><img src="assets/logo-cropped.png" alt="Nita Style" decoding="async"><p>Customer account</p><h1>Sign in or create your account</h1><p class="muted">Save your addresses, follow your orders, and receive your first-order code.</p></div><div class="auth-card"><div class="auth-tabs"><button class="active" id="signinTab" type="button" onclick="switchAuthMode('signin')">SIGN IN</button><button id="signupTab" type="button" onclick="switchAuthMode('signup')">SIGN UP</button></div><div id="authMessage" class="auth-message"></div><label>Email address</label><input id="authEmail" class="field" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" class="field" type="password" autocomplete="current-password" placeholder="Password"><div id="signupFields" style="display:none"><div class="form-grid"><div><label>First name</label><input id="authFirst" class="field" placeholder="First name"></div><div><label>Last name</label><input id="authLast" class="field" placeholder="Last name"></div></div><label>Phone number</label><input id="authPhone" class="field" placeholder="Phone number"><div id="verifyBox" class="verification-box" style="display:none"><h3>One step left</h3><p class="muted">We sent a six-digit verification code to your email. Enter it below to create your account.</p><input id="authCode" class="field verification-code-input" inputmode="numeric" maxlength="6" placeholder="6-digit code"><button type="button" class="btn light" onclick="resendVerificationCode()">RESEND CODE</button></div></div><button class="btn auth-submit" id="authSubmitBtn" type="button" onclick="submitAuth()">CONTINUE</button><p class="muted mini-note">Your account is created only after email verification.</p></div></section>`;
+    root.innerHTML=`<section class="auth-shell"><div class="auth-brand"><img src="assets/logo-cropped.png" alt="Nita Style"><p>Customer account</p><h1>Sign in or create your account</h1><p class="muted">Save your addresses, follow your orders, and receive your first-order code.</p></div><div class="auth-card"><div class="auth-tabs"><button class="active" id="signinTab" type="button" onclick="switchAuthMode('signin')">SIGN IN</button><button id="signupTab" type="button" onclick="switchAuthMode('signup')">SIGN UP</button></div><div id="authMessage" class="auth-message"></div><label>Email address</label><input id="authEmail" class="field" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" class="field" type="password" autocomplete="current-password" placeholder="Password"><div id="signupFields" style="display:none"><div class="form-grid"><div><label>First name</label><input id="authFirst" class="field" placeholder="First name"></div><div><label>Last name</label><input id="authLast" class="field" placeholder="Last name"></div></div><label>Phone number</label><input id="authPhone" class="field" placeholder="Phone number"><div id="verifyBox" class="verification-box" style="display:none"><h3>One step left</h3><p class="muted">We sent a six-digit verification code to your email. Enter it below to create your account.</p><input id="authCode" class="field verification-code-input" inputmode="numeric" maxlength="6" placeholder="6-digit code"><button type="button" class="btn light" onclick="resendVerificationCode()">RESEND CODE</button></div></div><button class="btn auth-submit" id="authSubmitBtn" type="button" onclick="submitAuth()">CONTINUE</button><p class="muted mini-note">Your account is created only after email verification.</p></div></section>`;
     window.authMode='signin'; clearPending();
   };
   window.switchAuthMode=function(mode){
@@ -5052,7 +5052,7 @@ placeOrder=async function(){
   function hasPendingVerification(){ const p=readJSON('nitaPendingSignup',null); return !!(p&&p.awaitingVerification); }
   function premiumLoginShell(mode='signin'){
     const isSignup=mode==='signup';
-    return `<section class="auth-premium-final"><div class="auth-panel-left"><img src="assets/logo-cropped.png" alt="Nita Style" decoding="async"><p class="eyebrow">Private boutique account</p><h1>${isSignup?'Create your Nita Style account':'Welcome back'}</h1><p class="muted">${isSignup?'Create an account to save delivery addresses, follow every order, and receive your first-order code.':'Sign in to manage addresses, track orders, and keep your liked pieces saved.'}</p><div class="auth-benefits"><span>Saved delivery details</span><span>Order tracking</span><span>First-order code</span></div></div><div class="auth-panel-card"><div class="auth-tabs premium-tabs"><button class="${!isSignup?'active':''}" type="button" onclick="switchAuthMode('signin')">SIGN IN</button><button class="${isSignup?'active':''}" type="button" onclick="switchAuthMode('signup')">CREATE ACCOUNT</button></div><div id="authMessage" class="auth-message"></div><div class="premium-auth-fields"><label>Email address</label><input id="authEmail" class="field" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" class="field" type="password" autocomplete="${isSignup?'new-password':'current-password'}" placeholder="Password"><div id="signupFields" style="display:${isSignup?'block':'none'}"><div class="form-grid"><div><label>First name</label><input id="authFirst" class="field" placeholder="First name"></div><div><label>Last name</label><input id="authLast" class="field" placeholder="Last name"></div></div><label>Phone number</label><input id="authPhone" class="field" placeholder="Phone number"></div><button class="btn auth-submit" type="button" onclick="submitAuth()">${isSignup?'CREATE ACCOUNT':'SIGN IN'}</button><p class="muted mini-note">Your email is used only for account access, verification, and order updates.</p></div></div></section>`;
+    return `<section class="auth-premium-final"><div class="auth-panel-left"><img src="assets/logo-cropped.png" alt="Nita Style"><p class="eyebrow">Private boutique account</p><h1>${isSignup?'Create your Nita Style account':'Welcome back'}</h1><p class="muted">${isSignup?'Create an account to save delivery addresses, follow every order, and receive your first-order code.':'Sign in to manage addresses, track orders, and keep your liked pieces saved.'}</p><div class="auth-benefits"><span>Saved delivery details</span><span>Order tracking</span><span>First-order code</span></div></div><div class="auth-panel-card"><div class="auth-tabs premium-tabs"><button class="${!isSignup?'active':''}" type="button" onclick="switchAuthMode('signin')">SIGN IN</button><button class="${isSignup?'active':''}" type="button" onclick="switchAuthMode('signup')">CREATE ACCOUNT</button></div><div id="authMessage" class="auth-message"></div><div class="premium-auth-fields"><label>Email address</label><input id="authEmail" class="field" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" class="field" type="password" autocomplete="${isSignup?'new-password':'current-password'}" placeholder="Password"><div id="signupFields" style="display:${isSignup?'block':'none'}"><div class="form-grid"><div><label>First name</label><input id="authFirst" class="field" placeholder="First name"></div><div><label>Last name</label><input id="authLast" class="field" placeholder="Last name"></div></div><label>Phone number</label><input id="authPhone" class="field" placeholder="Phone number"></div><button class="btn auth-submit" type="button" onclick="submitAuth()">${isSignup?'CREATE ACCOUNT':'SIGN IN'}</button><p class="muted mini-note">Your email is used only for account access, verification, and order updates.</p></div></div></section>`;
   }
   window.renderLoginPage = function(mode){ const root=document.getElementById('loginRoot'); if(!root) return; if(hasPendingVerification() && typeof previousRenderLoginPage==='function') return previousRenderLoginPage(mode); root.innerHTML=premiumLoginShell(mode||'signin'); };
   window.switchAuthMode = function(mode){ try{localStorage.removeItem('nitaPendingSignup');}catch(e){} window.renderLoginPage(mode); };
@@ -5098,7 +5098,7 @@ placeOrder=async function(){
     const isSignup = mode === 'signup';
     return `<section class="auth-premium-final auth-premium-clean">
       <div class="auth-panel-left">
-        <img src="assets/logo-cropped.png" alt="Nita Style" decoding="async">
+        <img src="assets/logo-cropped.png" alt="Nita Style">
         <h1>${isSignup ? 'Create your account' : 'Welcome back'}</h1>
         <p class="muted">${isSignup ? 'Create your Nita Style account to save delivery addresses and follow your orders.' : 'Sign in to manage your addresses, track orders, and keep your liked pieces saved.'}</p>
       </div>
@@ -5265,42 +5265,83 @@ placeOrder=async function(){
 /* === END NITA STYLE ADD PRODUCT FORM ONLY FIX 2026-06-11 === */
 
 
-// === NITA STYLE PERFORMANCE SMOOTHNESS PATCH ===
-// Keeps the same features, but avoids repeating the same cloud database request several times during one page load.
+/* === NITA STYLE ADMIN ORDER ROADMAP ONLY FIX 2026-06-11 ===
+   Adds the same order roadmap visibility to admin dashboard order cards.
+   Does not change order saving, product, checkout, customer account, or email logic. */
 (function(){
-  const KEYS=['nitaProducts','nitaOrders','nitaCoupons','nitaUsersByEmail','nitaDiscountUses','nitaHomepageWallpapers'];
-  let cachedRemote=null;
-  let cachedAt=0;
-  let pending=null;
-  const CACHE_MS=12000;
-  async function fetchStoreOnce(force){
-    const fresh=cachedRemote && (Date.now()-cachedAt<CACHE_MS);
-    if(!force && fresh) return cachedRemote;
-    if(!force && pending) return pending;
-    pending=fetch('/.netlify/functions/store?perfTs='+Date.now(),{cache:'no-store',headers:{'Cache-Control':'no-cache'}})
-      .then(async res=>{ if(!res.ok) throw new Error('Live database returned '+res.status); return res.json(); })
-      .then(data=>{ cachedRemote=data||{}; cachedAt=Date.now(); return cachedRemote; })
-      .finally(()=>{ pending=null; });
-    return pending;
+  const ADMIN_ROADMAP_STEPS = ['Order submitted','Confirmed','Packing','Out for delivery','Delivered'];
+  function escAdminRoadmap(v){
+    return String(v ?? '').replace(/[&<>"']/g, function(ch){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+    });
   }
-  window.loadSharedStore=async function(options){
-    const force=!!(options&&options.force);
-    try{
-      const remote=await fetchStoreOnce(force);
-      KEYS.forEach(k=>{ if(Object.prototype.hasOwnProperty.call(remote,k)) localStorage.setItem(k,JSON.stringify(remote[k])); });
-      window.nitaBackendOnline=true;
-      document.body?.classList.add('cloud-online');
-      document.body?.classList.remove('cloud-offline');
-      return remote;
-    }catch(err){
-      window.nitaBackendOnline=false;
-      document.body?.classList.add('cloud-offline');
-      document.body?.classList.remove('cloud-online');
-      console.warn('Nita cloud database unavailable during fast load:',err);
-      return null;
+  function normalizeAdminStatus(status){
+    const s = String(status || 'Order submitted').trim();
+    if(/^new order$/i.test(s)) return 'Order submitted';
+    if(/^preparing$/i.test(s)) return 'Packing';
+    return s || 'Order submitted';
+  }
+  function adminRoadmapHtml(status){
+    const current = normalizeAdminStatus(status);
+    if(/^cancelled$/i.test(current)){
+      return '<div class="admin-order-roadmap"><span class="admin-road-step cancelled">Cancelled</span></div>';
     }
+    let idx = ADMIN_ROADMAP_STEPS.findIndex(function(s){ return s.toLowerCase() === current.toLowerCase(); });
+    if(idx < 0) idx = 0;
+    return '<div class="admin-order-roadmap" aria-label="Order roadmap">' + ADMIN_ROADMAP_STEPS.map(function(step, i){
+      const cls = i < idx ? 'done' : (i === idx ? 'active' : '');
+      return '<span class="admin-road-step '+cls+'">' + escAdminRoadmap(step) + '</span>';
+    }).join('') + '</div>';
+  }
+  window.nitaAdminRoadmapHtml = adminRoadmapHtml;
+  function getAdminOrders(){
+    try{
+      if(typeof getJSON === 'function') return getJSON('nitaOrders', []) || [];
+      return JSON.parse(localStorage.getItem('nitaOrders') || '[]');
+    }catch(e){ return []; }
+  }
+  function applyAdminRoadmaps(){
+    if(!/admin\.html$/i.test(location.pathname)) return;
+    const orders = getAdminOrders();
+    const cards = Array.from(document.querySelectorAll('.admin-section-page[data-section="orders"] .admin-list-card'));
+    cards.forEach(function(card, index){
+      if(card.querySelector('.admin-order-roadmap')) return;
+      const order = orders[index];
+      if(!order) return;
+      const firstColumn = card.querySelector('div');
+      if(firstColumn){
+        const anchor = firstColumn.querySelector('p');
+        if(anchor) anchor.insertAdjacentHTML('afterend', adminRoadmapHtml(order.status));
+        else firstColumn.insertAdjacentHTML('beforeend', adminRoadmapHtml(order.status));
+      }
+    });
+    const rows = Array.from(document.querySelectorAll('tr.admin-order-row'));
+    rows.forEach(function(row, index){
+      if(row.querySelector('.admin-order-roadmap')) return;
+      const order = orders[index];
+      const cell = row.querySelector('td');
+      if(cell && order) cell.insertAdjacentHTML('beforeend', adminRoadmapHtml(order.status));
+    });
+  }
+  const previousRenderAdminForRoadmaps = window.renderAdmin;
+  window.renderAdmin = async function(){
+    if(typeof previousRenderAdminForRoadmaps === 'function'){
+      await previousRenderAdminForRoadmaps.apply(this, arguments);
+    }
+    applyAdminRoadmaps();
   };
-  window.nitaRefreshSharedStore=function(){return window.loadSharedStore({force:true});};
-  document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('nita-fast-ready');},{once:true});
+  const previousShowAdminSectionForRoadmaps = window.showAdminSection;
+  window.showAdminSection = function(section){
+    const result = previousShowAdminSectionForRoadmaps ? previousShowAdminSectionForRoadmaps.apply(this, arguments) : undefined;
+    if(section === 'orders') setTimeout(applyAdminRoadmaps, 0);
+    return result;
+  };
+  const previousUpdateOrderForRoadmaps = window.updateOrder;
+  window.updateOrder = async function(index, status){
+    const result = previousUpdateOrderForRoadmaps ? await previousUpdateOrderForRoadmaps.apply(this, arguments) : undefined;
+    setTimeout(applyAdminRoadmaps, 0);
+    return result;
+  };
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(applyAdminRoadmaps, 300); });
 })();
-// === END NITA STYLE PERFORMANCE SMOOTHNESS PATCH ===
+/* === END NITA STYLE ADMIN ORDER ROADMAP ONLY FIX === */
