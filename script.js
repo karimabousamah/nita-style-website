@@ -1746,7 +1746,7 @@ placeOrder=async function(){
     const user = activeUser();
     const isAdmin = ADMIN_EMAILS.includes(String(user?.email||'').toLowerCase());
     const admin = isAdmin ? '<a class="admin-link" href="admin.html">ADMIN</a>' : '';
-    return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a class="account-nav-link" href="account.html">${user?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, tops, pants..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`;
+    return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a class="account-nav-link" href="${user?'account.html':'login.html'}">${user?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, tops, pants..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`;
   };
 
   function statusStepClass(orderStatus, step){
@@ -5058,3 +5058,132 @@ placeOrder=async function(){
   window.switchAuthMode = function(mode){ try{localStorage.removeItem('nitaPendingSignup');}catch(e){} window.renderLoginPage(mode); };
 })();
 /* === END NITA STYLE TARGETED FIX === */
+
+
+/* === NITA STYLE TARGETED AUTH ENTRY + DELETE ACCOUNT CONFIRM ONLY 2026-06-11 ===
+   Only changes: top SIGN IN goes directly to premium login, removes auth badges/eyebrow,
+   and adds safe permanent account deletion confirmation. */
+(function(){
+  const esc = (v='') => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const readJSON = (k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d));}catch(e){return d;}};
+  const writeJSON = (k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){console.warn(e);}};
+  const norm = (v='')=>String(v||'').trim().toLowerCase();
+  const getCurrentEmail = ()=>norm((window.currentUser&&window.currentUser.email)||localStorage.getItem('nitaSessionEmail')||(readJSON('nitaUser',{})||{}).email||'');
+
+  const previousHeaderForDirectLogin = window.header;
+  window.header = function(){
+    let html = previousHeaderForDirectLogin ? previousHeaderForDirectLogin.apply(this, arguments) : '';
+    if(!getCurrentEmail()){
+      html = html.replace(/<a class="account-nav-link" href="account\.html">SIGN IN<\/a>/g, '<a class="account-nav-link" href="login.html">SIGN IN</a>');
+      html = html.replace(/<a href="account\.html">SIGN IN<\/a>/g, '<a href="login.html">SIGN IN</a>');
+    }
+    return html;
+  };
+
+  const previousRenderAccountForAuthEntry = window.renderAccount;
+  window.renderAccount = async function(){
+    if(!getCurrentEmail()){
+      window.location.href = 'login.html';
+      return;
+    }
+    if(previousRenderAccountForAuthEntry) return previousRenderAccountForAuthEntry.apply(this, arguments);
+  };
+
+  const previousRenderLoginForVerification = window.renderLoginPage;
+  function hasPendingVerification(){
+    const p = readJSON('nitaPendingSignup', null);
+    return !!(p && p.awaitingVerification);
+  }
+  function premiumAuthClean(mode='signin'){
+    const isSignup = mode === 'signup';
+    return `<section class="auth-premium-final auth-premium-clean">
+      <div class="auth-panel-left">
+        <img src="assets/logo-cropped.png" alt="Nita Style">
+        <h1>${isSignup ? 'Create your account' : 'Welcome back'}</h1>
+        <p class="muted">${isSignup ? 'Create your Nita Style account to save delivery addresses and follow your orders.' : 'Sign in to manage your addresses, track orders, and keep your liked pieces saved.'}</p>
+      </div>
+      <div class="auth-panel-card">
+        <div class="auth-tabs premium-tabs">
+          <button class="${!isSignup?'active':''}" type="button" onclick="switchAuthMode('signin')">SIGN IN</button>
+          <button class="${isSignup?'active':''}" type="button" onclick="switchAuthMode('signup')">CREATE ACCOUNT</button>
+        </div>
+        <div id="authMessage" class="auth-message"></div>
+        <div class="premium-auth-fields">
+          <label>Email address</label>
+          <input id="authEmail" class="field" type="email" autocomplete="email" placeholder="you@example.com">
+          <label>Password</label>
+          <input id="authPassword" class="field" type="password" autocomplete="${isSignup?'new-password':'current-password'}" placeholder="Password">
+          <div id="signupFields" style="display:${isSignup?'block':'none'}">
+            <div class="form-grid"><div><label>First name</label><input id="authFirst" class="field" placeholder="First name"></div><div><label>Last name</label><input id="authLast" class="field" placeholder="Last name"></div></div>
+            <label>Phone number</label><input id="authPhone" class="field" placeholder="Phone number">
+          </div>
+          <button class="btn auth-submit" type="button" onclick="submitAuth()">${isSignup?'CREATE ACCOUNT':'SIGN IN'}</button>
+          <p class="muted mini-note">Your email is used for account access, verification, and order updates.</p>
+        </div>
+      </div>
+    </section>`;
+  }
+  window.renderLoginPage = function(mode){
+    const root = document.getElementById('loginRoot');
+    if(!root) return;
+    if(hasPendingVerification() && typeof previousRenderLoginForVerification === 'function'){
+      return previousRenderLoginForVerification.apply(this, arguments);
+    }
+    root.innerHTML = premiumAuthClean(mode || 'signin');
+  };
+  window.switchAuthMode = function(mode){
+    try{ localStorage.removeItem('nitaPendingSignup'); }catch(e){}
+    window.renderLoginPage(mode || 'signin');
+  };
+
+  function removeLocalAccountKeys(email){
+    try{
+      localStorage.removeItem('nitaUser');
+      localStorage.removeItem('nitaSessionEmail');
+      localStorage.removeItem('nitaPendingSignup');
+      Array.from({length: localStorage.length}, (_,i)=>localStorage.key(i)).filter(Boolean).forEach(k=>{
+        const low = k.toLowerCase();
+        if(email && (low.includes(email) || low.includes(email.replace(/[^a-z0-9]/g,'_')))) localStorage.removeItem(k);
+      });
+    }catch(e){console.warn(e);}
+  }
+  async function persistUsersAfterDelete(users){
+    writeJSON('nitaUsersByEmail', users);
+    if(typeof window.saveCloudKey === 'function') return window.saveCloudKey('nitaUsersByEmail', users);
+    if(typeof window.nitaSaveKeyStrict === 'function') return window.nitaSaveKeyStrict('nitaUsersByEmail', users);
+    if(typeof window.saveUsers === 'function') return window.saveUsers(users);
+  }
+  function showDeleteConfirm(){
+    return new Promise(resolve=>{
+      const old = document.getElementById('deleteAccountConfirmModal');
+      if(old) old.remove();
+      document.body.insertAdjacentHTML('beforeend', `<div id="deleteAccountConfirmModal" class="delete-account-modal-backdrop">
+        <div class="delete-account-modal">
+          <p class="eyebrow">Account deletion</p>
+          <h2>Are you sure you want to delete your account?</h2>
+          <p class="muted">This will permanently remove your saved customer profile, email address, phone number, and saved delivery information from this website database.</p>
+          <div class="delete-account-actions">
+            <button class="btn light" type="button" id="deleteNoBtn">NO, KEEP ACCOUNT</button>
+            <button class="btn danger" type="button" id="deleteYesBtn">YES, DELETE ACCOUNT</button>
+          </div>
+        </div>
+      </div>`);
+      document.getElementById('deleteNoBtn')?.addEventListener('click',()=>{document.getElementById('deleteAccountConfirmModal')?.remove(); resolve(false);});
+      document.getElementById('deleteYesBtn')?.addEventListener('click',()=>{document.getElementById('deleteAccountConfirmModal')?.remove(); resolve(true);});
+    });
+  }
+  window.deleteAccount = async function(){
+    const email = getCurrentEmail();
+    if(!email) { window.location.href='login.html'; return; }
+    const ok = await showDeleteConfirm();
+    if(!ok) return;
+    const users = readJSON('nitaUsersByEmail', {});
+    delete users[email];
+    try{ await persistUsersAfterDelete(users); }catch(e){ console.warn('Cloud delete sync failed; local deletion completed.', e); }
+    removeLocalAccountKeys(email);
+    try{ window.currentUser = null; }catch(e){}
+    try{ if(typeof toast==='function') toast('Your account has been deleted.'); }catch(e){}
+    window.location.href = 'login.html';
+  };
+})();
+/* === END NITA STYLE TARGETED AUTH ENTRY + DELETE ACCOUNT CONFIRM ONLY === */
