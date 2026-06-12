@@ -4740,7 +4740,7 @@ placeOrder=async function(){
     window.quickSelectedSize=firstAvailable;
     const sizesHtml=sizes.map(s=>{
       const oos=isOut(p,s); const active=!oos && key(s)===key(firstAvailable);
-      return `<button type="button" data-size="${esc(s)}" class="size ${active?'active':''} ${oos?'size-disabled':''}" ${oos?'disabled aria-disabled="true" title="Out of stock"':`onclick="quickSelectedSize='${esc(s)}';this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')"`}>${esc(s)}${oos?'<span class="size-oos-text">Out of stock</span>':''}</button>`;
+      return `<button type="button" data-size="${esc(s)}" class="size ${active?'active':''} ${oos?'size-disabled':''}" ${oos?'disabled aria-disabled="true" title="Out of stock"':`onclick="quickSelectedSize='${esc(s)}';this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')"`}>${esc(s)}</button>`;
     }).join('');
     const status=p.status||(p.soldOut?'out-of-stock':'in-stock');
     const canBuy=status==='in-stock' && !!firstAvailable;
@@ -5903,3 +5903,38 @@ placeOrder=async function(){
   };
 })();
 /* === END NITA STYLE PRODUCT ADD + AUTH HOME REDIRECT ONLY FIX 2026-06-12 === */
+
+
+/* === NITA STYLE FINAL: SIZE OOS TEXT REMOVED + FOOTER LABEL DIRECT FIX ONLY 2026-06-12 === */
+(function(){
+  function removeOosText(root){
+    (root||document).querySelectorAll('.size-oos-text').forEach(function(el){ el.remove(); });
+    (root||document).querySelectorAll('.size.size-disabled').forEach(function(btn){
+      btn.childNodes.forEach(function(n){ if(n.nodeType===3) n.nodeValue = n.nodeValue.replace(/out\s*of\s*stock/ig,'').trim(); });
+    });
+  }
+  function termsAndConditionsFooter(){
+    document.querySelectorAll('a[href="terms.html"]').forEach(function(a){
+      if(/^terms$/i.test((a.textContent||'').trim())) a.textContent = 'Terms and Conditions';
+    });
+  }
+  const oldOpenQuickView = window.openQuickView;
+  if(typeof oldOpenQuickView === 'function'){
+    window.openQuickView = function(){
+      const r = oldOpenQuickView.apply(this, arguments);
+      setTimeout(function(){ removeOosText(document.getElementById('quickContent')||document); }, 0);
+      return r;
+    };
+  }
+  const oldProductPage = window.productPage;
+  if(typeof oldProductPage === 'function'){
+    window.productPage = function(){
+      const r = oldProductPage.apply(this, arguments);
+      setTimeout(function(){ removeOosText(document.getElementById('detail')||document); }, 0);
+      return r;
+    };
+  }
+  document.addEventListener('DOMContentLoaded', function(){ removeOosText(document); termsAndConditionsFooter(); });
+  window.addEventListener('load', function(){ removeOosText(document); termsAndConditionsFooter(); });
+})();
+/* === END FINAL SIZE OOS TEXT REMOVED + FOOTER LABEL DIRECT FIX ONLY === */

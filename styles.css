@@ -2279,3 +2279,6 @@ img{content-visibility:auto;}
   .trending-scroll .product > .quick-view-btn,
   .new-arrivals-scroll .product > .quick-view-btn{top:155px!important;}
 }
+
+/* FINAL hide out of stock size text only */
+.size .size-oos-text{display:none!important;}
