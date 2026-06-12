@@ -9,7 +9,7 @@ function updateCartCount(){document.querySelectorAll('.cart-count').forEach(e=>e
 function header(){
  const isAdmin = ADMIN_EMAILS.includes(currentUser?.email);
  const admin = isAdmin ? '<a class="admin-link" href="admin.html">ADMIN</a>' : '';
- return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a href="${currentUser?'account.html':'login.html'}">${currentUser?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, tops, pants..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`
+ return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Skirts">Skirts</a><a href="shop.html?cat=T-Shirts">T-Shirts</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Bags">Bags</a><a href="shop.html?cat=Scarves">Scarves</a><a href="shop.html?cat=Overalls">Overalls</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a href="${currentUser?'account.html':'login.html'}">${currentUser?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, skirts, t-shirts, tops, bags..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`
 }
 
 function siteFooter(){return `<footer class="footer site-footer"><div><img class="footer-logo-img" src="assets/logo-cropped.png" alt="Nita Style"><p class="muted">Founded by Nicole and Tania, Nita Style curates Italian-made pieces for women who value clean silhouettes, refined textures, and effortless everyday elegance.</p></div><div><h4>Shop</h4><a href="shop.html">All products</a><a href="collections.html">Collections</a><a href="cart.html">Cart</a><a href="checkout.html">Checkout</a></div><div><h4>Support</h4><a href="contact.html">Contact</a><a href="about.html">About</a><a href="checkout.html">Cash on delivery</a><a href="checkout.html">Online payment coming soon</a><a class="footer-instagram" href="https://www.instagram.com/thenitastyle/" target="_blank" rel="noopener noreferrer" aria-label="Nita Style Instagram"><img class="footer-instagram-icon" src="assets/instagram-icon.webp" alt="Instagram"><span>thenitastyle</span></a></div><div><h4>Join the list</h4><p class="muted">Receive the first-order code and new drop updates.</p><div class="footer-newsletter"><input placeholder="Email address"><button onclick="toast('Use code NITA10 for 10% off')">SIGN UP</button></div></div></footer><div class="copyright site-footer"><span>© 2026 Nita Style. All rights reserved. <span class="footer-codeviq">Developed by CODEVIQ.</span></span><span class="footer-legal-links"><a href="privacy-policy.html">Privacy Policy</a><span>·</span><a href="terms.html">Terms and Conditions</a><span>·</span><a href="shipping.html">Shipping</a></span></div>`}
@@ -46,7 +46,7 @@ function removeProduct(id){saveProducts(getProducts().filter(p=>p.id!==id));rend
 // --- Professional admin product management v3: photos + full editor ---
 let pendingAdminPhotos=[];
 let editingPhotoBuffers={};
-const ADMIN_CATEGORIES=['Dresses','Tops','Pants','Jackets','Accessories','Essentials','Evening','Sale'];
+const ADMIN_CATEGORIES=['Dresses','Skirts','T-Shirts','Tops','Bags','Scarves','Overalls'];
 const ADMIN_COLLECTIONS=['New Arrivals','Everyday Edit','Summer Pieces','Minimal Essentials','Accessories','Sale'];
 const ADMIN_SIZES=['XS','S','M','L','XL','One Size'];
 function renderOptions(list,current){return list.map(x=>`<option ${x===current?'selected':''}>${x}</option>`).join('')}
@@ -1712,7 +1712,7 @@ placeOrder=async function(){
   };
 
   // Make sure admin forms always have dropdown category / color / style / homepage section controls.
-  window.NITA_ADMIN_CATEGORY_OPTIONS = ['Dresses','Tops','Pants','Jackets','Accessories'];
+  window.NITA_ADMIN_CATEGORY_OPTIONS = ['Dresses','Skirts','T-Shirts','Tops','Bags','Scarves','Overalls'];
   window.NITA_ADMIN_COLLECTION_OPTIONS = ['Everyday Edit','Minimal Essentials','Evening Pieces','Accessories','Price Drops'];
   window.NITA_COLOR_OPTIONS = ['Black','White','Beige','Cream','Grey','Brown','Navy','Blue','Red','Pink','Green','Yellow','Print / Pattern','Multi-color'];
   window.NITA_STYLE_OPTIONS = ['Clean everyday piece','Elegant evening piece','Minimal essential','Soft feminine silhouette','Relaxed boutique fit','Premium casual look','Statement piece','Light summer piece','Structured tailored style'];
@@ -1746,7 +1746,7 @@ placeOrder=async function(){
     const user = activeUser();
     const isAdmin = ADMIN_EMAILS.includes(String(user?.email||'').toLowerCase());
     const admin = isAdmin ? '<a class="admin-link" href="admin.html">ADMIN</a>' : '';
-    return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a class="account-nav-link" href="${user?'account.html':'login.html'}">${user?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, tops, pants..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`;
+    return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Skirts">Skirts</a><a href="shop.html?cat=T-Shirts">T-Shirts</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Bags">Bags</a><a href="shop.html?cat=Scarves">Scarves</a><a href="shop.html?cat=Overalls">Overalls</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a class="account-nav-link" href="${user?'account.html':'login.html'}">${user?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, skirts, t-shirts, tops, bags..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`;
   };
 
   function statusStepClass(orderStatus, step){
@@ -2036,7 +2036,7 @@ placeOrder=async function(){
       <div><label>Product name</label><input class="field edit-name" value="${esc(p.name||'')}"></div>
       <div><label>Regular price</label><input class="field edit-price" type="number" step="0.01" value="${Number(p.price||0)}"></div>
       <div><label>Sale / price-drop price</label><input class="field edit-sale" type="number" step="0.01" value="${p.salePrice||''}" placeholder="Optional"></div>
-      <div><label>Product category</label><select class="field edit-category">${opts(window.ADMIN_CATEGORIES||['Dresses','Tops','Pants','Jackets','Accessories'],p.category)}</select></div>
+      <div><label>Product category</label><select class="field edit-category">${opts(window.ADMIN_CATEGORIES||['Dresses','Skirts','T-Shirts','Tops','Bags','Scarves','Overalls'],p.category)}</select></div>
       <div><label>Collection</label><select class="field edit-collection">${opts(window.ADMIN_COLLECTIONS||['Everyday Edit','Minimal Essentials','Evening Pieces','Accessories','Price Drops'],p.collection)}</select></div>
       <div><label>Color</label><select class="field edit-color">${opts(COLORS,note.color)}</select></div>
       <div><label>Style note</label><select class="field edit-style">${opts(STYLES,note.style)}</select></div>
@@ -2181,7 +2181,7 @@ placeOrder=async function(){
       <div><label>Regular price</label><input class="field edit-price" type="number" step="0.01" value="${Number(p.price || 0)}"></div>
       <div><label>Sale / price-drop price</label><input class="field edit-sale" type="number" step="0.01" value="${p.salePrice || ''}" placeholder="Optional"></div>
       <div><label>Availability status</label><select class="field edit-status"><option value="in-stock" ${p.status==='in-stock'?'selected':''}>In stock</option><option value="coming-soon" ${p.status==='coming-soon'?'selected':''}>Coming soon</option><option value="out-of-stock" ${p.status==='out-of-stock'?'selected':''}>Out of stock</option></select></div>
-      <div><label>Product category</label><select class="field edit-category">${opts(['Dresses','Tops','Pants','Jackets','Accessories'], p.category || 'Tops')}</select></div>
+      <div><label>Product category</label><select class="field edit-category">${opts(['Dresses','Skirts','T-Shirts','Tops','Bags','Scarves','Overalls'], p.category || 'Tops')}</select></div>
       <div><label>Collection</label><select class="field edit-collection">${opts(['Everyday Edit','Minimal Essentials','Evening Pieces','Accessories','Price Drops','New Arrivals'], p.collection || 'Everyday Edit')}</select></div>
       <div><label>Homepage display section</label><select class="field edit-home-section">${opts([['trending-now','Trending Now'],['new-arrivals','New Arrivals']], home)}</select></div>
       <div><label>Color</label><select class="field edit-color">${opts(['Black','White','Beige','Cream','Grey','Brown','Navy','Blue','Red','Pink','Green','Yellow','Print / Pattern','Multi-color'], (p.note||'').split(' · ')[0] || 'Black')}</select></div>
@@ -4821,10 +4821,10 @@ placeOrder=async function(){
 
 
 /* === NITA STYLE HOMEPAGE WALLPAPERS ADMIN ONLY ADDITION 2026-06-10 ===
-   Adds admin controls for the three homepage wallpaper areas without changing other features. */
+   Admin controls for the two homepage wallpaper areas: Shop Now and Explore Collections. */
 (function(){
   const WALL_KEY = 'nitaHomepageWallpapers';
-  const DEFAULTS = { shopNow:'', newCollection:'', exploreCollections:'' };
+  const DEFAULTS = { shopNow:'', exploreCollections:'' };
   function readJSON(key, fallback){ try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch(e){return fallback;} }
   function writeJSON(key, value){ try{localStorage.setItem(key, JSON.stringify(value));}catch(e){console.warn('Wallpaper local save failed', e);} }
   function wallpapers(){ return {...DEFAULTS, ...readJSON(WALL_KEY, DEFAULTS)}; }
@@ -4838,7 +4838,6 @@ placeOrder=async function(){
     const w = wallpapers();
     const panels = document.querySelectorAll('.hero.hero-buttons-only .hero-panel');
     applyOne(panels[0], w.shopNow, '--nita-home-wallpaper');
-    applyOne(panels[1], w.newCollection, '--nita-home-wallpaper');
     applyOne(document.querySelector('.banner.banner-photo'), w.exploreCollections, '--nita-home-wallpaper');
   };
   function previewHtml(label, key, value){
@@ -4849,9 +4848,8 @@ placeOrder=async function(){
     const root = document.getElementById('homepageWallpapersAdmin');
     if(!root) return;
     const w = wallpapers();
-    root.innerHTML = `<div class="admin-toolbar"><div><h2>Homepage wallpapers</h2><p class="muted">Choose the three background images shown behind Shop Now, New Collection, and Explore Collections.</p></div><span class="pill">Homepage</span></div>`+
+    root.innerHTML = `<div class="admin-toolbar"><div><h2>Homepage wallpapers</h2><p class="muted">Choose the two background images shown behind Shop Now and Explore Collections.</p></div><span class="pill">Homepage</span></div>`+
       previewHtml('Shop Now wallpaper','shopNow',w.shopNow)+
-      previewHtml('New Collection wallpaper','newCollection',w.newCollection)+
       previewHtml('Explore Collections wallpaper','exploreCollections',w.exploreCollections)+
       `<button type="button" class="btn" onclick="nitaSaveHomepageWallpapers()">SAVE HOMEPAGE WALLPAPERS</button><p class="muted small-note">Images are saved to the same global store as your products, so all visitors see the selected wallpapers after saving.</p>`;
   };
@@ -5205,7 +5203,7 @@ placeOrder=async function(){
     return values.map(function(v){return '<button type="button" class="pill '+(selected.includes(String(v))?'on':'')+'" onclick="this.classList.toggle(\'on\')">'+esc(v)+'</button>';}).join('');
   }
   function addProductFormHTML(){
-    var cats = window.ADMIN_CATEGORIES || ['Dresses','Tops','Pants','Jackets','Accessories','Essentials','Evening','Sale'];
+    var cats = window.ADMIN_CATEGORIES || ['Dresses','Skirts','T-Shirts','Tops','Bags','Scarves','Overalls'];
     var cols = window.ADMIN_COLLECTIONS || ['New Arrivals','Everyday Edit','Summer Pieces','Minimal Essentials','Accessories','Sale'];
     var colors = window.NITA_COLOR_OPTIONS || ['Black','White','Beige','Cream','Grey','Brown','Navy','Blue','Red','Pink','Green','Yellow','Print / Pattern','Multi-color'];
     var styles = window.NITA_STYLE_OPTIONS || ['Clean everyday piece','Elegant evening piece','Minimal essential','Soft feminine silhouette','Relaxed boutique fit','Premium casual look','Statement piece','Light summer piece','Structured tailored style'];
@@ -6291,3 +6289,37 @@ placeOrder=async function(){
   window.addEventListener('load', () => setTimeout(renderOrderRoadmaps, 800));
 })();
 /* === END NITA STYLE ORDER STATUS INSTANT SAVE + EMAIL FIX ONLY === */
+
+/* === NITA STYLE HOMEPAGE FINAL POLISH ONLY: stable duplicate marquee after render === */
+(function(){
+  function stableMarquee(id){
+    var track=document.getElementById(id);
+    if(!track) return;
+    var cards=[].slice.call(track.children).filter(function(el){return el.classList && el.classList.contains('product');});
+    if(!cards.length) return;
+    track.classList.remove('nita-js-marquee','nita-premium-auto','nita-force-marquee','nita-new-arrivals-only-scroll');
+    track.classList.add('nita-smooth-css-marquee');
+    // Do not duplicate forever. Rebuild from the first real set when this runs again.
+    if(track.dataset.nitaOriginalHtml){ track.innerHTML=track.dataset.nitaOriginalHtml; cards=[].slice.call(track.children).filter(function(el){return el.classList && el.classList.contains('product');}); }
+    else { track.dataset.nitaOriginalHtml=track.innerHTML; }
+    var base=track.innerHTML;
+    var neededWidth=Math.max(window.innerWidth*2.8, 2200);
+    var safety=0;
+    while(track.scrollWidth < neededWidth && safety < 8){ track.insertAdjacentHTML('beforeend', base); safety++; }
+    // Always have exactly at least two cycles for -50% movement.
+    if(track.children.length < cards.length*2){ track.insertAdjacentHTML('beforeend', base); }
+  }
+  function polishHome(){ stableMarquee('trendingMarquee'); stableMarquee('newArrivalsMarquee'); }
+  var oldRender=window.renderHomeSections;
+  window.renderHomeSections=function(){
+    var out=oldRender ? oldRender.apply(this, arguments) : undefined;
+    setTimeout(polishHome,80); setTimeout(polishHome,600); setTimeout(polishHome,1400);
+    return out;
+  };
+  window.addEventListener('load',function(){setTimeout(polishHome,400);setTimeout(polishHome,1500);},{once:true});
+  window.addEventListener('resize',function(){setTimeout(function(){
+    ['trendingMarquee','newArrivalsMarquee'].forEach(function(id){var t=document.getElementById(id); if(t){t.dataset.nitaOriginalHtml='';}});
+    polishHome();
+  },160);},{passive:true});
+})();
+/* === END NITA STYLE HOMEPAGE FINAL POLISH ONLY === */

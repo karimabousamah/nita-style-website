@@ -2328,3 +2328,183 @@ tr.admin-order-row .admin-premium-roadmap .order-roadmap span.done:before{backgr
   .admin-list-card .admin-premium-roadmap .order-roadmap span:before,
   tr.admin-order-row .admin-premium-roadmap .order-roadmap span:before{width:18px!important;height:18px!important;border-width:3px!important;}
 }
+
+/* === NITA STYLE HOMEPAGE SINGLE SHOP HERO + SMOOTH MARQUEE + PREMIUM VIEW ALL ONLY === */
+/* Remove the split Shop/New Collection homepage layout. Keep one clean full-width hero like Explore Collections. */
+.hero.nita-single-shop-hero,
+.hero-buttons-only.nita-single-shop-hero{
+  display:flex!important;
+  width:100%!important;
+  min-height:70vh!important;
+  height:70vh!important;
+  grid-template-columns:1fr!important;
+  margin:0!important;
+  overflow:hidden!important;
+  background:linear-gradient(120deg,#f6f6f6 0%,#ffffff 48%,#eeeeee 100%)!important;
+}
+.nita-single-shop-hero .hero-panel{
+  width:100%!important;
+  flex:1 1 100%!important;
+  min-height:70vh!important;
+  height:70vh!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  position:relative!important;
+  background:linear-gradient(120deg,#f4f4f4,#fff)!important;
+}
+.nita-single-shop-hero .hero-panel:before{
+  content:""!important;
+  position:absolute!important;
+  inset:0!important;
+  background:
+    radial-gradient(circle at 22% 18%,rgba(255,255,255,.95),transparent 35%),
+    radial-gradient(circle at 82% 16%,rgba(255,255,255,.7),transparent 32%),
+    linear-gradient(120deg,#f1f1f1 0%,#ffffff 50%,#eeeeee 100%)!important;
+  z-index:0!important;
+}
+.nita-single-shop-hero .hero-content{
+  position:relative!important;
+  inset:auto!important;
+  z-index:2!important;
+  width:100%!important;
+  height:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+.nita-single-shop-hero .btn{
+  position:relative!important;
+  z-index:3!important;
+  min-width:150px!important;
+  text-align:center!important;
+}
+@media(max-width:850px){
+  .hero.nita-single-shop-hero,.hero-buttons-only.nita-single-shop-hero,.nita-single-shop-hero .hero-panel{min-height:58vh!important;height:58vh!important;}
+}
+
+/* Premium View all buttons for Trending now and New arrivals */
+.trending-head a,.new-arrivals-head a{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:42px!important;
+  padding:12px 20px!important;
+  border:1px solid #111!important;
+  background:#fff!important;
+  color:#111!important;
+  text-transform:uppercase!important;
+  letter-spacing:.08em!important;
+  font-size:12px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  box-shadow:0 14px 34px rgba(0,0,0,.035)!important;
+  transition:background .25s ease,color .25s ease,transform .25s ease,box-shadow .25s ease!important;
+}
+.trending-head a:after,.new-arrivals-head a:after{content:"→";margin-left:10px;transition:transform .25s ease;}
+.trending-head a:hover,.new-arrivals-head a:hover,
+.trending-head a:focus,.new-arrivals-head a:focus{
+  background:#111!important;color:#fff!important;transform:translateY(-2px)!important;box-shadow:0 18px 44px rgba(0,0,0,.12)!important;
+}
+.trending-head a:hover:after,.new-arrivals-head a:hover:after{transform:translateX(4px);}
+
+/* Final smoother auto-scroll override: GPU-only animation, stable widths, no JS frame loop needed. */
+.trending-scroll,.new-arrivals-scroll{
+  overflow:hidden!important;
+  contain:layout paint!important;
+  transform:translateZ(0)!important;
+}
+.trending-scroll .product-marquee,
+.new-arrivals-scroll .product-marquee,
+.trending-scroll .product-marquee.nita-smooth-css-marquee,
+.new-arrivals-scroll .product-marquee.nita-smooth-css-marquee{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  gap:28px!important;
+  width:max-content!important;
+  min-width:max-content!important;
+  padding:0 5vw 12px!important;
+  overflow:visible!important;
+  will-change:transform!important;
+  backface-visibility:hidden!important;
+  transform:translate3d(0,0,0)!important;
+  animation:nitaHomepagePremiumScroll var(--nita-scroll-time,44s) linear infinite!important;
+}
+.trending-scroll .product-marquee{--nita-scroll-time:46s;}
+.new-arrivals-scroll .product-marquee{--nita-scroll-time:42s;}
+.trending-scroll .product-marquee:hover,
+.new-arrivals-scroll .product-marquee:hover{animation-play-state:running!important;}
+.trending-scroll .product-marquee .product,
+.new-arrivals-scroll .product-marquee .product{
+  flex:0 0 260px!important;
+  width:260px!important;
+  min-width:260px!important;
+  max-width:260px!important;
+  transform:translateZ(0)!important;
+}
+@keyframes nitaHomepagePremiumScroll{
+  from{transform:translate3d(0,0,0)!important;}
+  to{transform:translate3d(-50%,0,0)!important;}
+}
+@media(max-width:760px){
+  .trending-scroll .product-marquee,.new-arrivals-scroll .product-marquee{gap:20px!important;padding:0 24px 10px!important;--nita-scroll-time:34s;}
+  .trending-scroll .product-marquee .product,.new-arrivals-scroll .product-marquee .product{flex-basis:210px!important;width:210px!important;min-width:210px!important;max-width:210px!important;}
+  .trending-head a,.new-arrivals-head a{min-height:38px!important;padding:11px 16px!important;font-size:11px!important;}
+}
+@media(prefers-reduced-motion:reduce){.trending-scroll .product-marquee,.new-arrivals-scroll .product-marquee{animation-duration:90s!important;}}
+/* === END NITA STYLE HOMEPAGE SINGLE SHOP HERO + SMOOTH MARQUEE + PREMIUM VIEW ALL ONLY === */
+
+/* === NITA STYLE CATEGORY STRIP UPDATE 2026-06-12 === */
+.category-strip.category-icons.nita-category-edit-v2{
+  justify-content:center!important;
+  gap:clamp(28px,5vw,74px)!important;
+  padding:28px 4vw 30px!important;
+  overflow-x:auto!important;
+  scroll-behavior:smooth;
+}
+.category-strip.category-icons.nita-category-edit-v2 .cat{
+  min-width:88px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  gap:10px!important;
+  transition:transform .28s ease, opacity .28s ease;
+}
+.category-strip.category-icons.nita-category-edit-v2 .cat:hover{
+  transform:translateY(-3px);
+}
+.category-strip.category-icons.nita-category-edit-v2 .cat-bubble.cat-icon{
+  width:56px!important;
+  height:56px!important;
+  background:transparent!important;
+  border-radius:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  margin:0 auto!important;
+}
+.category-strip.category-icons.nita-category-edit-v2 .cat-icon svg{
+  width:42px!important;
+  height:42px!important;
+  fill:none!important;
+  stroke:#080808!important;
+  stroke-width:2.1!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+  transition:transform .28s ease, stroke-width .28s ease;
+}
+.category-strip.category-icons.nita-category-edit-v2 .cat:hover .cat-icon svg{
+  transform:scale(1.07);
+  stroke-width:2.35!important;
+}
+.category-strip.category-icons.nita-category-edit-v2 .cat span{
+  margin-top:0!important;
+  font-size:12px!important;
+  letter-spacing:.03em!important;
+  white-space:nowrap!important;
+}
+@media(max-width:850px){
+  .category-strip.category-icons.nita-category-edit-v2{justify-content:flex-start!important;gap:24px!important;padding:24px 18px!important;}
+  .category-strip.category-icons.nita-category-edit-v2 .cat{min-width:82px!important;}
+}
