@@ -5903,3 +5903,218 @@ placeOrder=async function(){
   };
 })();
 /* === END NITA STYLE PRODUCT ADD + AUTH HOME REDIRECT ONLY FIX 2026-06-12 === */
+
+
+/* === NITA STYLE FINAL SAFE FIX: TERMS LABEL + PRODUCT SAVE + AUTH HOME REDIRECT 2026-06-12 ===
+   This block only fixes: footer Terms label, admin Add Product saving, and sign-in/sign-up redirect to homepage. */
+(function(){
+  const esc = (v='') => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const norm = (v='') => String(v || '').trim().toLowerCase();
+  const readJSON = (k,f)=>{ try{ const raw=localStorage.getItem(k); return raw ? JSON.parse(raw) : f; }catch(e){ return f; } };
+  const writeJSON = (k,v)=>{ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){ console.warn('Local save failed', e); } };
+  const notifyUser = (text, ok=true)=>{ try{ if(typeof window.nitaNotify==='function') return window.nitaNotify(text, ok, !ok); }catch(e){} try{ if(typeof notify==='function') return notify(text, ok, !ok); }catch(e){} try{ if(typeof toast==='function') return toast(text); }catch(e){} console[ok?'log':'error'](text); };
+
+  function forceTermsAndConditions(){
+    try{
+      document.querySelectorAll('a[href="terms.html"], a[href$="/terms.html"]').forEach(a=>{
+        if((a.textContent||'').trim().toLowerCase() !== 'terms and conditions') a.textContent = 'Terms and Conditions';
+        a.setAttribute('aria-label','Terms and Conditions');
+      });
+      document.querySelectorAll('.footer-legal-links').forEach(box=>{
+        box.innerHTML = '<a href="privacy-policy.html">Privacy Policy</a><span>·</span><a href="terms.html">Terms and Conditions</a><span>·</span><a href="shipping.html">Shipping</a>';
+      });
+    }catch(e){ console.warn(e); }
+  }
+  const previousSiteFooter = window.siteFooter || (typeof siteFooter === 'function' ? siteFooter : null);
+  if(previousSiteFooter){
+    window.siteFooter = function(){
+      return String(previousSiteFooter.apply(this, arguments)).replace(/>\s*Terms\s*<\/a>/gi, '>Terms and Conditions</a>');
+    };
+    try{ siteFooter = window.siteFooter; }catch(e){}
+  }
+  document.addEventListener('DOMContentLoaded', forceTermsAndConditions);
+  window.addEventListener('load', ()=>{ forceTermsAndConditions(); setTimeout(forceTermsAndConditions,300); setTimeout(forceTermsAndConditions,1200); });
+  try{ new MutationObserver(forceTermsAndConditions).observe(document.documentElement,{childList:true,subtree:true}); }catch(e){}
+
+  async function resizeDataUrl(dataUrl, max=900, quality=.70){
+    if(!dataUrl || !String(dataUrl).startsWith('data:image/')) return dataUrl;
+    return await new Promise(resolve=>{
+      try{
+        const img = new Image();
+        img.onload = function(){
+          try{
+            const scale = Math.min(1, max / Math.max(img.width || max, img.height || max));
+            const w = Math.max(1, Math.round((img.width || max) * scale));
+            const h = Math.max(1, Math.round((img.height || max) * scale));
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h);
+            ctx.drawImage(img,0,0,w,h);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          }catch(e){ resolve(dataUrl); }
+        };
+        img.onerror = ()=>resolve(dataUrl);
+        img.src = dataUrl;
+      }catch(e){ resolve(dataUrl); }
+    });
+  }
+  async function compressPhotos(list){
+    const arr = Array.isArray(list) ? list.filter(Boolean) : [];
+    const out = [];
+    for(const item of arr){ out.push(await resizeDataUrl(item)); }
+    return out;
+  }
+  function selectedSizes(selector){
+    const out=[];
+    document.querySelectorAll(selector).forEach(el=>{
+      const active = el.classList.contains('on') || el.classList.contains('active') || el.checked;
+      if(active){ const v=String(el.dataset.size || el.value || el.textContent || '').trim(); if(v && !out.includes(v)) out.push(v); }
+    });
+    return out;
+  }
+  function getField(id, fallback='') { const el=document.getElementById(id); return el ? el.value : fallback; }
+  function localProducts(){
+    try{ if(typeof getProducts==='function') return getProducts().slice(); }catch(e){}
+    return readJSON('nitaProducts', []);
+  }
+  async function fetchStore(){
+    const res = await fetch('/.netlify/functions/store?ts=' + Date.now(), {headers:{'Cache-Control':'no-cache'}});
+    if(!res.ok) throw new Error(await res.text().catch(()=>('Store GET failed '+res.status)));
+    return await res.json();
+  }
+  async function postStoreKey(key, value){
+    const res = await fetch('/.netlify/functions/store', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Cache-Control':'no-cache'},
+      body:JSON.stringify({key, value})
+    });
+    const txt = await res.text();
+    let body={}; try{ body=JSON.parse(txt); }catch(e){}
+    if(!res.ok || body.ok===false) throw new Error(body.error || txt || ('Store POST failed '+res.status));
+    return body;
+  }
+  async function saveProductsGuaranteed(products, newId){
+    const clean = (Array.isArray(products)?products:[]).map(p=>{
+      try{ return typeof normalizeProductStatus==='function' ? normalizeProductStatus({...p}) : {...p}; }catch(e){ return {...p}; }
+    });
+    writeJSON('nitaProducts', clean);
+    try{ localStorage.removeItem('nitaStoreSessionCache'); localStorage.removeItem('nitaStoreCache'); }catch(e){}
+    await postStoreKey('nitaProducts', clean);
+    const after = await fetchStore();
+    const cloudProducts = Array.isArray(after.nitaProducts) ? after.nitaProducts : [];
+    if(newId && !cloudProducts.some(p=>String(p.id)===String(newId))) throw new Error('The product did not appear in the cloud database after saving.');
+    writeJSON('nitaProducts', cloudProducts);
+    try{ window.nitaBackendOnline=true; window.nitaStoreLoaded=true; }catch(e){}
+    return cloudProducts;
+  }
+
+  // Make product photo uploads append instead of replacing, and compress them before saving.
+  window.pendingAdminPhotos = Array.isArray(window.pendingAdminPhotos) ? window.pendingAdminPhotos : [];
+  window.pendingAdminMainIndex = Number(window.pendingAdminMainIndex || 0);
+  window.setPendingMainPhoto = function(i){ window.pendingAdminMainIndex = Number(i)||0; renderAdminPhotoPreview(); };
+  function renderAdminPhotoPreview(){
+    const box=document.getElementById('photoPreview'); if(!box) return;
+    const photos = Array.isArray(window.pendingAdminPhotos) ? window.pendingAdminPhotos : [];
+    const main = Math.max(0, Math.min(Number(window.pendingAdminMainIndex||0), Math.max(photos.length-1,0)));
+    box.innerHTML = photos.map((url,i)=>'<button type="button" class="admin-thumb selectable-thumb '+(i===main?'selected-main':'')+'" onclick="setPendingMainPhoto('+i+')"><img src="'+esc(url)+'" alt="Product photo"><span>'+(i===main?'Main photo':'Photo '+(i+1))+'</span></button>').join('');
+  }
+  window.previewAdminPhotos = async function(e){
+    const files = Array.from(e?.target?.files || []);
+    if(!files.length) return;
+    const urls = await Promise.all(files.map(file=>new Promise(resolve=>{
+      const r=new FileReader(); r.onload=()=>resolve(String(r.result||'')); r.onerror=()=>resolve(''); r.readAsDataURL(file);
+    })));
+    const compressed = await compressPhotos(urls.filter(Boolean));
+    window.pendingAdminPhotos = (Array.isArray(window.pendingAdminPhotos)?window.pendingAdminPhotos:[]).concat(compressed).slice(0,8);
+    if(window.pendingAdminPhotos.length===compressed.length) window.pendingAdminMainIndex=0;
+    renderAdminPhotoPreview();
+    if(e?.target) e.target.value='';
+  };
+
+  window.addProductAdmin = async function(){
+    const name=String(getField('pname','')).trim();
+    const price=Number(String(getField('pprice','')).trim());
+    if(!name){ notifyUser('Please enter a product name.', false); return false; }
+    if(!price || price<=0){ notifyUser('Please enter a valid product price.', false); return false; }
+    notifyUser('Saving product globally...', true);
+    try{
+      let cloud = {};
+      try{ cloud = await fetchStore(); }catch(e){ console.warn('Could not fetch cloud before save, using local products:', e); }
+      const base = Array.isArray(cloud.nitaProducts) ? cloud.nitaProducts : localProducts();
+      const photos = await compressPhotos(Array.isArray(window.pendingAdminPhotos) ? window.pendingAdminPhotos : []);
+      const mainIndex = Math.max(0, Math.min(Number(window.pendingAdminMainIndex||0), Math.max(photos.length-1,0)));
+      const available = selectedSizes('#sizePicker .pill.on,#sizePicker .pill.active,#sizePicker input:checked');
+      const out = selectedSizes('#sizeOutPicker .pill.on,#sizeOutPicker .pill.active,#sizeOutPicker input:checked');
+      const sizes = Array.from(new Set([...(available.length?available:[]), ...out]));
+      const quantityRaw=String(getField('pquantity','')).trim();
+      const saleRaw=String(getField('psale','')).trim();
+      const homeSection=String(getField('phome','trending-now')||'trending-now');
+      const id='p'+Date.now();
+      const product={
+        id,
+        name,
+        price,
+        salePrice: saleRaw==='' ? '' : Number(saleRaw),
+        status: String(getField('pstatus','in-stock')||'in-stock'),
+        category: String(getField('pcat','Tops')||'Tops'),
+        collection: String(getField('pcollection','Everyday Edit')||'Everyday Edit'),
+        displaySection: homeSection,
+        homeSection,
+        note: [getField('pcolor',''), getField('pstyle','')].filter(Boolean).join(' · '),
+        sizes: sizes.length ? sizes : ['One Size'],
+        outOfStockSizes: out,
+        quantity: quantityRaw==='' ? '' : Math.max(0, Number(quantityRaw)),
+        initialQuantity: quantityRaw==='' ? '' : Math.max(0, Number(quantityRaw)),
+        photos,
+        mainPhotoIndex: mainIndex,
+        img: photos[mainIndex] || photos[0] || 'linear-gradient(135deg,#fff,#ddd)',
+        desc: String(getField('pdesc','')).trim() || 'A carefully selected piece for a clean, feminine wardrobe.'
+      };
+      let normalized = product;
+      try{ if(typeof normalizeProductStatus==='function') normalized = normalizeProductStatus(product); }catch(e){}
+      const next = base.filter(p=>String(p.id)!==String(id)).concat([normalized]);
+      await saveProductsGuaranteed(next, id);
+      window.pendingAdminPhotos=[]; window.pendingAdminMainIndex=0;
+      ['pname','pprice','psale','pdesc','pquantity'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+      const input=document.getElementById('pphotos'); if(input) input.value='';
+      const prev=document.getElementById('photoPreview'); if(prev) prev.innerHTML='';
+      document.querySelectorAll('#sizePicker .pill.on,#sizePicker .pill.active,#sizeOutPicker .pill.on,#sizeOutPicker .pill.active').forEach(el=>el.classList.remove('on','active'));
+      try{ if(typeof window.loadSharedStore==='function') await window.loadSharedStore(); }catch(e){}
+      try{ if(typeof window.renderAdmin==='function') await window.renderAdmin(); }catch(e){}
+      notifyUser('Product added to the website globally.', true);
+      return true;
+    }catch(err){
+      console.error('Final add product save failed:', err);
+      notifyUser('Product was not saved: '+(err.message||err), false);
+      return false;
+    }
+  };
+
+  // After successful sign-in or verified sign-up, go to homepage.
+  const previousSubmitAuth = window.submitAuth;
+  if(typeof previousSubmitAuth === 'function'){
+    window.submitAuth = async function(){
+      const before = localStorage.getItem('nitaUser');
+      const result = await previousSubmitAuth.apply(this, arguments);
+      setTimeout(()=>{
+        try{
+          const after = localStorage.getItem('nitaUser');
+          const pending = readJSON('nitaPendingSignup', null);
+          const text = String(document.getElementById('authMessage')?.textContent || '').toLowerCase();
+          if(after && after !== before && !pending && /signed in|verified|redirecting|account verified/.test(text)) location.href = 'index.html';
+        }catch(e){}
+      }, 80);
+      setTimeout(()=>{
+        try{
+          const after = localStorage.getItem('nitaUser');
+          const pending = readJSON('nitaPendingSignup', null);
+          const text = String(document.getElementById('authMessage')?.textContent || '').toLowerCase();
+          if(after && !pending && /signed in|verified|redirecting|account verified/.test(text) && !location.pathname.endsWith('/index.html') && !location.pathname.endsWith('/')) location.href = 'index.html';
+        }catch(e){}
+      }, 420);
+      return result;
+    };
+  }
+})();
+/* === END NITA STYLE FINAL SAFE FIX 2026-06-12 === */
