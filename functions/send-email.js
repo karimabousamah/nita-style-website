@@ -73,24 +73,29 @@ exports.handler = async function(event) {
     const steps = ['Order submitted','Confirmed','Packing','Out for delivery','Delivered'];
     const current = normalize(status);
     if (/^cancelled$/i.test(current)) {
-      return `<div style="margin:26px 0 18px;padding:18px;border:1px solid #111;background:#fafafa;text-align:center;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;color:#111">Cancelled</div>`;
+      return `<div style="margin:28px 0 20px;padding:18px;border:1px solid #111;background:#fafafa;text-align:center;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;color:#111">Cancelled</div>`;
     }
 
     let index = steps.findIndex(step => step.toLowerCase() === current.toLowerCase());
     if (index < 0) index = 0;
 
     const dot = (done) => done
-      ? `<span style="display:block;width:20px;height:20px;border-radius:50%;background:#111;border:3px solid #111;box-sizing:border-box;margin:-12px auto 0;line-height:20px;font-size:0">&nbsp;</span>`
-      : `<span style="display:block;width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid #d8d8d8;box-sizing:border-box;margin:-12px auto 0;line-height:20px;font-size:0">&nbsp;</span>`;
+      ? `<div style="width:24px;height:24px;border-radius:50%;background:#111;border:3px solid #111;box-sizing:border-box;margin:0 auto;font-size:0;line-height:0">&nbsp;</div>`
+      : `<div style="width:24px;height:24px;border-radius:50%;background:#fff;border:4px solid #d6d6d6;box-sizing:border-box;margin:0 auto;font-size:0;line-height:0">&nbsp;</div>`;
+
+    const segment = `<td style="vertical-align:middle;padding:0"><div style="height:0;line-height:0;border-top:3px solid #dedede;font-size:0">&nbsp;</div></td>`;
+    const dotCell = (done) => `<td style="width:28px;vertical-align:middle;text-align:center;padding:0">${dot(done)}</td>`;
 
     return `
-      <div style="margin:30px 0 22px;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;min-width:560px;border-collapse:collapse;table-layout:fixed;margin:0 auto">
+      <div style="margin:32px 0 26px;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;min-width:610px;border-collapse:collapse;table-layout:fixed;margin:0 auto">
           <tr>
-            ${steps.map((step, i) => `<td style="width:20%;border-top:2px solid #e4e4e4;text-align:center;padding:0 6px 0">${dot(i <= index)}</td>`).join('')}
+            ${segment}${steps.map((step, i) => `${dotCell(i <= index)}${i === steps.length - 1 ? segment : segment}`).join('')}
           </tr>
+        </table>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;min-width:610px;border-collapse:collapse;table-layout:fixed;margin:8px auto 0">
           <tr>
-            ${steps.map((step, i) => `<td style="width:20%;text-align:center;padding:14px 6px 0;font-size:13px;line-height:1.15;font-weight:900;letter-spacing:.35px;text-transform:uppercase;color:${i <= index ? '#111' : '#9a9a9a'};font-family:Arial,Helvetica,sans-serif">${esc(step)}</td>`).join('')}
+            ${steps.map((step, i) => `<td style="width:20%;text-align:center;padding:10px 4px 0;font-size:14px;line-height:1.08;font-weight:900;letter-spacing:.15px;text-transform:uppercase;color:${i <= index ? '#111' : '#9d9d9d'};font-family:Arial,Helvetica,sans-serif">${esc(step).replace(/ /g, '<br>')}</td>`).join('')}
           </tr>
         </table>
       </div>`;
