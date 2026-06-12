@@ -1,4 +1,4 @@
-/* === NITA STYLE AI ASSISTANT ONLY - PREMIUM V4 === */
+/* === NITA STYLE AI ASSISTANT ONLY - PREMIUM V5 PRODUCT CARDS FIX === */
 (function(){
   const STEPS=['order submitted','confirmed','packing','out for delivery','delivered'];
   const QUICK=['Track my order','Gift under $100','Gift under $200','New arrivals','Show dresses','Show tops','Show pants','Shipping & delivery','Size help','Return policy'];
@@ -166,35 +166,53 @@
   function productDesc(p){ return p.desc||p.description||'Carefully selected Italian-made piece from Nita Style.'; }
   function productImage(p){
     const candidates=[];
-    if(Array.isArray(p.photos)) candidates.push(...p.photos);
+    try{ if(typeof productMainImage==='function') candidates.push(productMainImage(p)); }catch{}
+    if(Array.isArray(p.photos)){
+      const main=Number(p.mainPhotoIndex||0);
+      if(p.photos[main]) candidates.push(p.photos[main]);
+      candidates.push(...p.photos);
+    }
     if(Array.isArray(p.images)) candidates.push(...p.images);
     candidates.push(p.image,p.img,p.photo,p.thumbnail);
-    const src=String(candidates.find(Boolean)||'');
+    let src=String(candidates.find(Boolean)||'').trim();
     if(!src) return {type:'none',src:''};
     if(src.startsWith('linear-gradient')||src.startsWith('radial-gradient')) return {type:'bg',src};
-    if(src.startsWith('data:')||/^https?:\/\//i.test(src)||/\.(png|jpe?g|webp|gif|avif)(\?.*)?$/i.test(src)) return {type:'img',src};
-    return {type:'none',src:''};
+    if(src.startsWith('blob:')||src.startsWith('data:')||/^https?:\/\//i.test(src)||/^assets\//i.test(src)||/\.(png|jpe?g|webp|gif|avif)(\?.*)?$/i.test(src)) return {type:'img',src};
+    return {type:'bg',src:'linear-gradient(135deg,#fafafa,#ececec)'};
   }
   function productUrl(p){ return `product.html?id=${encodeURIComponent(p.id||p.slug||productTitle(p))}`; }
   function renderProducts(list){
+    const holder=document.createElement('div');
+    holder.className='nita-ai-product-list';
     list.forEach(p=>{
       const media=productImage(p), title=productTitle(p), url=productUrl(p);
-      const mediaHtml=media.type==='img'
-        ? `<div class="nita-ai-product-media"><img src="${esc(media.src)}" alt="${esc(title)}" loading="lazy"></div>`
-        : media.type==='bg'
-          ? `<div class="nita-ai-product-media nita-ai-product-bg" style="background:${esc(media.src)}"><span>Nita Style</span></div>`
-          : `<div class="nita-ai-product-media no-photo"><span>Nita Style</span></div>`;
-      body().insertAdjacentHTML('beforeend',`
-        <a class="nita-ai-product" href="${esc(url)}" aria-label="Open ${esc(title)}">
-          ${mediaHtml}
-          <div class="nita-ai-product-info">
-            <div class="nita-ai-product-top"><strong>${esc(title)}</strong><span>${money(priceOf(p))}</span></div>
-            <div class="nita-ai-product-meta">${esc(p.category||'Collection')} · ${esc(p.collection||'Nita Style')}</div>
-            <p>${esc(productDesc(p))}</p>
-            <span class="nita-ai-product-cta">Open product</span>
-          </div>
-        </a>`);
+      const card=document.createElement('a');
+      card.className='nita-ai-product-card';
+      card.href=url;
+      card.setAttribute('aria-label','Open '+title);
+      const mediaBox=document.createElement('div');
+      mediaBox.className='nita-ai-product-thumb';
+      if(media.type==='img'){
+        const img=document.createElement('img');
+        img.src=media.src;
+        img.alt=title;
+        img.loading='lazy';
+        img.onerror=()=>{ mediaBox.classList.add('no-photo'); mediaBox.innerHTML='<span>Nita Style</span>'; };
+        mediaBox.appendChild(img);
+      }else if(media.type==='bg'){
+        mediaBox.style.background=media.src;
+        mediaBox.classList.add('no-photo');
+        mediaBox.innerHTML='<span>Nita Style</span>';
+      }else{
+        mediaBox.classList.add('no-photo');
+        mediaBox.innerHTML='<span>Nita Style</span>';
+      }
+      const info=document.createElement('div');
+      info.className='nita-ai-product-details';
+      info.innerHTML=`<div class="nita-ai-product-minimal"><strong>${esc(title)}</strong><b>${money(priceOf(p))}</b></div>`;
+      card.appendChild(mediaBox); card.appendChild(info); holder.appendChild(card);
     });
+    body().appendChild(holder);
     scroll();
   }
   function scoreProduct(p,words,q,opts={}){
@@ -211,4 +229,4 @@
   }
   document.addEventListener('DOMContentLoaded',create);
 })();
-/* === END NITA STYLE AI ASSISTANT ONLY - PREMIUM V4 === */
+/* === END NITA STYLE AI ASSISTANT ONLY - PREMIUM V5 PRODUCT CARDS FIX === */
