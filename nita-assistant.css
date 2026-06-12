@@ -40,3 +40,106 @@
 .nita-ai-product-minimal b{display:block!important;color:#111!important;font-size:14px!important;font-weight:900!important;letter-spacing:.02em!important}
 .nita-ai-product-row,.nita-ai-product-meta,.nita-ai-product-details p,.nita-ai-product-open{display:none!important}
 @media(max-width:640px){.nita-ai-product-card{grid-template-columns:108px minmax(0,1fr)!important;min-height:132px!important}.nita-ai-product-thumb{width:108px!important;min-height:132px!important}.nita-ai-product-thumb img{min-height:132px!important}.nita-ai-product-details{padding:16px!important}.nita-ai-product-minimal strong{font-size:14px!important}.nita-ai-product-minimal b{font-size:13.5px!important}}
+
+
+/* V6 final: premium vertical product cards inspired by marketplace assistants */
+.nita-ai-product-list,
+.nita-ai-product-card{display:none!important}
+.nita-ai-product-grid{
+  width:100%!important;
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:14px!important;
+  margin:2px 0 8px!important;
+  flex:0 0 auto!important;
+}
+.nita-ai-shop-card{
+  display:block!important;
+  min-width:0!important;
+  background:#111!important;
+  color:#fff!important;
+  border:1px solid #222!important;
+  border-radius:18px!important;
+  overflow:hidden!important;
+  text-decoration:none!important;
+  box-shadow:0 18px 42px rgba(0,0,0,.12)!important;
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease!important;
+}
+.nita-ai-shop-card:hover{
+  transform:translateY(-3px)!important;
+  box-shadow:0 24px 64px rgba(0,0,0,.18)!important;
+  border-color:#111!important;
+}
+.nita-ai-shop-photo{
+  width:100%!important;
+  aspect-ratio:1 / 1.15!important;
+  background:#f7f7f7!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  overflow:hidden!important;
+}
+.nita-ai-shop-photo img{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center!important;
+  border:0!important;
+}
+.nita-ai-shop-photo.no-photo{
+  background:linear-gradient(135deg,#f7f7f7,#e9e9e9)!important;
+}
+.nita-ai-shop-photo.no-photo span{
+  color:#777!important;
+  font-size:10px!important;
+  font-weight:900!important;
+  letter-spacing:.14em!important;
+  text-transform:uppercase!important;
+}
+.nita-ai-shop-info{
+  padding:12px 13px 13px!important;
+  background:#111!important;
+  color:#fff!important;
+  min-height:72px!important;
+}
+.nita-ai-shop-info strong{
+  display:block!important;
+  color:#fff!important;
+  font-size:13px!important;
+  line-height:1.2!important;
+  font-weight:900!important;
+  letter-spacing:.03em!important;
+  text-transform:uppercase!important;
+  margin:0 0 7px!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.nita-ai-shop-info span{
+  display:block!important;
+  color:#fff!important;
+  font-size:14px!important;
+  line-height:1!important;
+  font-weight:900!important;
+  letter-spacing:.02em!important;
+}
+@media(max-width:640px){
+  .nita-ai-product-grid{gap:12px!important}
+  .nita-ai-shop-card{border-radius:16px!important}
+  .nita-ai-shop-info{padding:11px 12px 12px!important;min-height:68px!important}
+  .nita-ai-shop-info strong{font-size:12px!important}
+  .nita-ai-shop-info span{font-size:13px!important}
+}
+
+
+/* V7 real product card fix: clean assistant product cards, visible and clickable */
+#nitaAiBody .nita-ai-clean-product-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important;width:100%!important;margin:4px 0 8px!important;align-self:stretch!important;}
+#nitaAiBody .nita-ai-clean-product-card{display:block!important;text-decoration:none!important;background:#111!important;color:#fff!important;border-radius:18px!important;overflow:hidden!important;border:1px solid #111!important;box-shadow:0 18px 44px rgba(0,0,0,.14)!important;min-width:0!important;}
+#nitaAiBody .nita-ai-clean-product-card:hover{transform:translateY(-3px)!important;box-shadow:0 24px 62px rgba(0,0,0,.20)!important;}
+#nitaAiBody .nita-ai-clean-product-photo{width:100%!important;height:170px!important;background:#f6f6f6!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important;}
+#nitaAiBody .nita-ai-clean-product-photo img{display:block!important;max-width:none!important;}
+#nitaAiBody .nita-ai-clean-product-info{padding:12px 13px 13px!important;background:#111!important;color:#fff!important;min-height:72px!important;}
+#nitaAiBody .nita-ai-clean-product-info strong{display:block!important;color:#fff!important;font-size:13px!important;line-height:1.2!important;font-weight:900!important;letter-spacing:.03em!important;text-transform:uppercase!important;margin:0 0 8px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+#nitaAiBody .nita-ai-clean-product-info span{display:block!important;color:#fff!important;font-size:14px!important;line-height:1!important;font-weight:900!important;letter-spacing:.02em!important;}
+@media(max-width:640px){#nitaAiBody .nita-ai-clean-product-grid{gap:12px!important;}#nitaAiBody .nita-ai-clean-product-photo{height:155px!important;}#nitaAiBody .nita-ai-clean-product-card{border-radius:16px!important;}#nitaAiBody .nita-ai-clean-product-info{padding:11px 12px 12px!important;min-height:66px!important;}#nitaAiBody .nita-ai-clean-product-info strong{font-size:12px!important;}#nitaAiBody .nita-ai-clean-product-info span{font-size:13px!important;}}

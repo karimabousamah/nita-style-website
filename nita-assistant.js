@@ -1,4 +1,4 @@
-/* === NITA STYLE AI ASSISTANT ONLY - PREMIUM V5 PRODUCT CARDS FIX === */
+/* === NITA STYLE AI ASSISTANT ONLY - PREMIUM V6 VERTICAL PRODUCT CARDS === */
 (function(){
   const STEPS=['order submitted','confirmed','packing','out for delivery','delivered'];
   const QUICK=['Track my order','Gift under $100','Gift under $200','New arrivals','Show dresses','Show tops','Show pants','Shipping & delivery','Size help','Return policy'];
@@ -164,53 +164,81 @@
   function priceOf(p){ return Number(p.salePrice||p.price||0); }
   function productTitle(p){ return p.name||p.title||p.productName||'Nita Style item'; }
   function productDesc(p){ return p.desc||p.description||'Carefully selected Italian-made piece from Nita Style.'; }
+  function cleanImageSrc(value){
+    let src=String(value||'').trim();
+    if(!src) return '';
+    const urlMatch=src.match(/url\((['"]?)(.*?)\1\)/i);
+    if(urlMatch) src=urlMatch[2].trim();
+    src=src.replace(/^['"]|['"]$/g,'').trim();
+    return src;
+  }
   function productImage(p){
     const candidates=[];
-    try{ if(typeof productMainImage==='function') candidates.push(productMainImage(p)); }catch{}
     if(Array.isArray(p.photos)){
       const main=Number(p.mainPhotoIndex||0);
       if(p.photos[main]) candidates.push(p.photos[main]);
       candidates.push(...p.photos);
     }
     if(Array.isArray(p.images)) candidates.push(...p.images);
-    candidates.push(p.image,p.img,p.photo,p.thumbnail);
-    let src=String(candidates.find(Boolean)||'').trim();
-    if(!src) return {type:'none',src:''};
-    if(src.startsWith('linear-gradient')||src.startsWith('radial-gradient')) return {type:'bg',src};
-    if(src.startsWith('blob:')||src.startsWith('data:')||/^https?:\/\//i.test(src)||/^assets\//i.test(src)||/\.(png|jpe?g|webp|gif|avif)(\?.*)?$/i.test(src)) return {type:'img',src};
-    return {type:'bg',src:'linear-gradient(135deg,#fafafa,#ececec)'};
+    candidates.push(p.image,p.img,p.photo,p.thumbnail,p.photoUrl,p.imageUrl);
+    try{ if(typeof productMainImage==='function') candidates.push(productMainImage(p)); }catch{}
+    for(const raw of candidates){
+      const src=cleanImageSrc(raw);
+      if(!src) continue;
+      if(src.startsWith('linear-gradient')||src.startsWith('radial-gradient')) return {type:'bg',src};
+      if(src.startsWith('blob:')||src.startsWith('data:')||/^https?:\/\//i.test(src)||/^assets\//i.test(src)||/\.(png|jpe?g|webp|gif|avif)(\?.*)?$/i.test(src)) return {type:'img',src};
+    }
+    return {type:'none',src:''};
   }
   function productUrl(p){ return `product.html?id=${encodeURIComponent(p.id||p.slug||productTitle(p))}`; }
   function renderProducts(list){
     const holder=document.createElement('div');
-    holder.className='nita-ai-product-list';
-    list.forEach(p=>{
+    holder.className='nita-ai-clean-product-grid';
+    holder.setAttribute('role','list');
+    holder.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:100%;margin:4px 0 8px;align-self:stretch;';
+
+    list.slice(0,4).forEach(p=>{
       const media=productImage(p), title=productTitle(p), url=productUrl(p);
       const card=document.createElement('a');
-      card.className='nita-ai-product-card';
       card.href=url;
+      card.className='nita-ai-clean-product-card';
+      card.setAttribute('role','listitem');
       card.setAttribute('aria-label','Open '+title);
-      const mediaBox=document.createElement('div');
-      mediaBox.className='nita-ai-product-thumb';
+      card.style.cssText='display:block;text-decoration:none;background:#111;color:#fff;border-radius:18px;overflow:hidden;border:1px solid #111;box-shadow:0 18px 44px rgba(0,0,0,.14);min-width:0;transition:transform .18s ease,box-shadow .18s ease;';
+
+      const photo=document.createElement('div');
+      photo.className='nita-ai-clean-product-photo';
+      photo.style.cssText='width:100%;height:170px;background:#f6f6f6;display:flex;align-items:center;justify-content:center;overflow:hidden;';
       if(media.type==='img'){
         const img=document.createElement('img');
         img.src=media.src;
         img.alt=title;
         img.loading='lazy';
-        img.onerror=()=>{ mediaBox.classList.add('no-photo'); mediaBox.innerHTML='<span>Nita Style</span>'; };
-        mediaBox.appendChild(img);
+        img.decoding='async';
+        img.style.cssText='display:block;width:100%;height:100%;object-fit:cover;object-position:center;border:0;';
+        img.onerror=()=>{ photo.innerHTML=''; const logo=document.createElement('img'); logo.src='assets/logo-cropped.png'; logo.alt='Nita Style'; logo.style.cssText='width:62%;height:auto;object-fit:contain;opacity:.85;'; photo.appendChild(logo); };
+        photo.appendChild(img);
       }else if(media.type==='bg'){
-        mediaBox.style.background=media.src;
-        mediaBox.classList.add('no-photo');
-        mediaBox.innerHTML='<span>Nita Style</span>';
+        photo.style.background=media.src;
+        const logo=document.createElement('img'); logo.src='assets/logo-cropped.png'; logo.alt='Nita Style'; logo.style.cssText='width:58%;height:auto;object-fit:contain;opacity:.72;'; photo.appendChild(logo);
       }else{
-        mediaBox.classList.add('no-photo');
-        mediaBox.innerHTML='<span>Nita Style</span>';
+        const logo=document.createElement('img'); logo.src='assets/logo-cropped.png'; logo.alt='Nita Style'; logo.style.cssText='width:58%;height:auto;object-fit:contain;opacity:.72;'; photo.appendChild(logo);
       }
+
       const info=document.createElement('div');
-      info.className='nita-ai-product-details';
-      info.innerHTML=`<div class="nita-ai-product-minimal"><strong>${esc(title)}</strong><b>${money(priceOf(p))}</b></div>`;
-      card.appendChild(mediaBox); card.appendChild(info); holder.appendChild(card);
+      info.className='nita-ai-clean-product-info';
+      info.style.cssText='padding:12px 13px 13px;background:#111;color:#fff;min-height:72px;';
+      const nameEl=document.createElement('strong');
+      nameEl.textContent=title;
+      nameEl.style.cssText='display:block;color:#fff;font-size:13px;line-height:1.2;font-weight:900;letter-spacing:.03em;text-transform:uppercase;margin:0 0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+      const priceEl=document.createElement('span');
+      priceEl.textContent=money(priceOf(p));
+      priceEl.style.cssText='display:block;color:#fff;font-size:14px;line-height:1;font-weight:900;letter-spacing:.02em;';
+      info.appendChild(nameEl); info.appendChild(priceEl);
+      card.appendChild(photo); card.appendChild(info);
+      card.addEventListener('mouseenter',()=>{card.style.transform='translateY(-3px)';card.style.boxShadow='0 24px 62px rgba(0,0,0,.20)';});
+      card.addEventListener('mouseleave',()=>{card.style.transform='translateY(0)';card.style.boxShadow='0 18px 44px rgba(0,0,0,.14)';});
+      holder.appendChild(card);
     });
     body().appendChild(holder);
     scroll();
@@ -229,4 +257,4 @@
   }
   document.addEventListener('DOMContentLoaded',create);
 })();
-/* === END NITA STYLE AI ASSISTANT ONLY - PREMIUM V5 PRODUCT CARDS FIX === */
+/* === END NITA STYLE AI ASSISTANT ONLY - PREMIUM V6 VERTICAL PRODUCT CARDS === */
