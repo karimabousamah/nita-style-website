@@ -1,70 +1,91 @@
 /* === NITA STYLE AI ASSISTANT ONLY === */
 (function(){
   const STEPS=['order submitted','confirmed','packing','out for delivery','delivered'];
-  const quick=['Track my order','Find a product','Gift under $100','Gift under $200','New arrivals','Shipping & delivery','Size help','Return policy'];
+  const quick=['Track my order','Gift under $100','Gift under $200','New arrivals','Show dresses','Show tops','Shipping & delivery','Size help','Return policy'];
   const $=(s,r=document)=>r.querySelector(s);
   const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   function read(key, fallback){try{return JSON.parse(localStorage.getItem(key)||'null')??fallback}catch{return fallback}}
   function products(){try{return (typeof getProducts==='function'?getProducts():read('nitaProducts',[]))||[]}catch{return read('nitaProducts',[])}}
   function user(){return read('nitaUser',null)||window.currentUser||null}
+  function users(){return read('nitaUsersByEmail',{})||{}}
   function orders(){return read('nitaOrders',[])}
   function money(v){return '$'+Number(v||0).toFixed(2)}
+  function firstName(){
+    const u=user(); if(!u) return '';
+    const full=(u.firstName||u.name||u.fullName||'').trim();
+    if(full) return full.split(/\s+/)[0];
+    const record=users()[String(u.email||'').toLowerCase()]||{};
+    const rec=(record.firstName||record.name||record.fullName||'').trim();
+    return rec?rec.split(/\s+/)[0]:'';
+  }
   function create(){
     if($('#nitaAiShell'))return;
     document.body.insertAdjacentHTML('beforeend',`<button class="nita-ai-launcher" id="nitaAiLauncher" aria-label="Open Nita Style assistant"><span class="nita-ai-launcher-dot"></span><span>AI Assistant</span></button><section class="nita-ai-shell" id="nitaAiShell" aria-label="Nita Style assistant"><div class="nita-ai-head"><div class="nita-ai-brand"><div class="nita-ai-logo"><img src="assets/logo-cropped.png" alt="Nita Style"></div><div><div class="nita-ai-title">Nita Style Assistant</div><div class="nita-ai-sub">Automated styling & order help</div></div></div><button class="nita-ai-close" id="nitaAiClose" aria-label="Close assistant">×</button></div><div class="nita-ai-body" id="nitaAiBody"></div><form class="nita-ai-foot" id="nitaAiForm"><input class="nita-ai-input" id="nitaAiInput" autocomplete="off" placeholder="Ask about gifts, budgets, sizes, products..."><button class="nita-ai-send">Send</button></form><div class="nita-ai-mini">Replies are automated. For special requests, contact the Nita Style team.</div></section>`);
     $('#nitaAiLauncher').onclick=open;
     $('#nitaAiClose').onclick=close;
     $('#nitaAiForm').onsubmit=e=>{e.preventDefault(); const input=$('#nitaAiInput'); const text=input.value.trim(); if(!text)return; input.value=''; ask(text)};
-    bot('Hello, I’m the Nita Style assistant. Tell me your budget, style, occasion, or size, and I’ll suggest pieces from Nita Style. I can also help with orders, delivery, returns, and contact information.');
-    chips(quick);
+    const name=firstName();
+    bot(`${name?`Hey ${name}, `:'Hello, '}I’m the Nita Style assistant. Tell me your budget, style, occasion, or size, and I’ll suggest pieces from Nita Style. I can also help with orders, delivery, returns, and contact information.`);
+    suggestions();
     revealAfterIntro();
   }
   function revealAfterIntro(){
     const show=()=>document.body.classList.add('nita-ai-ready');
-    const intro=$('#introLoader');
-    if(!intro){ setTimeout(show,350); return; }
-    const obs=new MutationObserver(()=>{ if(!document.body.contains(intro)){ obs.disconnect(); setTimeout(show,180); }});
-    obs.observe(document.body,{childList:true,subtree:false});
-    setTimeout(()=>{ if(!document.body.contains(intro)) show(); },2300);
+    const onHome=/\/index\.html?$|\/$/.test(location.pathname) || location.pathname==='' || location.pathname.endsWith('/');
+    const intro=()=>$('#introLoader');
+    if(!onHome){ setTimeout(show,450); return; }
+    const startWatching=()=>{
+      if(!intro()){
+        setTimeout(()=>{ if(!intro()) show(); },2300);
+        return;
+      }
+      const obs=new MutationObserver(()=>{ if(!intro()){ obs.disconnect(); setTimeout(show,300); }});
+      obs.observe(document.body,{childList:true,subtree:true});
+      setTimeout(()=>{ if(!intro()) show(); },4200);
+    };
+    if(document.readyState==='complete') startWatching();
+    else window.addEventListener('load',()=>setTimeout(startWatching,80),{once:true});
   }
-  function open(){ $('#nitaAiShell')?.classList.add('open'); setTimeout(()=>$('#nitaAiInput')?.focus(),120)}
+  function open(){ $('#nitaAiShell')?.classList.add('open'); setTimeout(()=>$('#nitaAiInput')?.focus(),140)}
   function close(){ $('#nitaAiShell')?.classList.remove('open')}
   function body(){return $('#nitaAiBody')}
   function scroll(){const b=body(); if(b)b.scrollTop=b.scrollHeight}
   function msg(text,who='bot'){body().insertAdjacentHTML('beforeend',`<div class="nita-ai-msg ${who}">${esc(text)}</div>`); scroll()}
   function bot(text){msg(text,'bot')}
-  function chips(items){
-    const html=items.map(x=>`<button type="button" class="nita-ai-chip" data-q="${esc(x)}">${esc(x)}</button>`).join('');
-    body().insertAdjacentHTML('beforeend',`<div class="nita-ai-suggestion-box"><button type="button" class="nita-ai-suggestion-toggle"><span>Suggested questions</span><small>tap to open</small><span class="mark">+</span></button><div class="nita-ai-suggestions">${html}</div></div>`);
-    const box=body().lastElementChild;
+  function suggestions(){
+    if($('#nitaAiSuggestionsBox')) return;
+    const html=quick.map(x=>`<button type="button" class="nita-ai-chip" data-q="${esc(x)}">${esc(x)}</button>`).join('');
+    body().insertAdjacentHTML('beforeend',`<div class="nita-ai-suggestion-box" id="nitaAiSuggestionsBox"><button type="button" class="nita-ai-suggestion-toggle"><span>Suggested questions</span><small>tap to open</small><span class="mark">+</span></button><div class="nita-ai-suggestions">${html}</div></div>`);
+    const box=$('#nitaAiSuggestionsBox');
     const toggle=box.querySelector('.nita-ai-suggestion-toggle');
-    toggle.onclick=()=>{box.classList.toggle('open');toggle.querySelector('small').textContent=box.classList.contains('open')?'tap to close':'tap to open';toggle.querySelector('.mark').textContent=box.classList.contains('open')?'−':'+';scroll()};
+    toggle.onclick=()=>{box.classList.toggle('open');toggle.querySelector('small').textContent=box.classList.contains('open')?'tap to close':'tap to open';toggle.querySelector('.mark').textContent=box.classList.contains('open')?'−':'+'};
     box.querySelectorAll('.nita-ai-chip[data-q]').forEach(b=>b.onclick=()=>ask(b.dataset.q));
-    scroll();
   }
   function typing(){body().insertAdjacentHTML('beforeend',`<div class="nita-ai-msg bot" id="nitaAiTyping"><span class="nita-ai-typing"><span></span><span></span><span></span></span></div>`); scroll()}
   function untyping(){ $('#nitaAiTyping')?.remove() }
-  function ask(text){msg(text,'user'); typing(); setTimeout(()=>{untyping(); answer(text)},280)}
+  function ask(text){msg(text,'user'); typing(); setTimeout(()=>{untyping(); answer(text)},260)}
 
   function answer(raw){
     const q=raw.toLowerCase();
     const budget=getBudget(q);
     if(/track|order|status|roadmap/.test(q)&&!/shipping|deliver/.test(q))return orderHelp();
-    if(/ship|deliver|delivery|arrive|how long|how many day|how much day|time/.test(q))return bot('Delivery usually takes 2 to 4 working days after the order is confirmed. At checkout, please enter your city, street, building/floor, phone number, and any optional delivery notes. After ordering, you can follow the roadmap from your account.');
+    if(/ship|deliver|delivery|arrive|how long|how many day|how much day|time/.test(q))return bot('Delivery usually takes 2 to 4 working days after the order is confirmed. At checkout, enter your city, street, building/floor, phone number, and any delivery notes. You can then follow the order roadmap from your account.');
+    if(/most expensive|highest price|priciest|luxury/.test(q)) return productHelp(q,{sort:'expensive'});
+    if(/cheapest|lowest price|least expensive/.test(q)) return productHelp(q,{sort:'cheap'});
+    if(/new|latest|arrival|drop|collection|latest job|newest/.test(q))return productHelp(q,{collection:'new arrivals'});
     if(/gift|present|birthday|budget|under|less than|maximum|max|recommend|consider|suggest|choose|outfit|style|occasion/.test(q) || budget) return productHelp(q,{budget, gift:/gift|present|birthday/.test(q)});
-    if(/new|latest|arrival|drop|collection|latest job/.test(q))return productHelp(q,{collection:'new arrivals'});
-    if(/return|refund|exchange/.test(q))return bot('For returns or exchanges, contact Nita Style as soon as possible with your order number and item details. The team will review the request based on the item condition and order information.');
+    if(/return|refund|exchange/.test(q))return bot('For returns or exchanges, contact Nita Style as soon as possible with your order number and item details. The team will review the request based on item condition and order information.');
     if(/size|fit|xs|small|medium|large|measure/.test(q))return bot('For sizing, choose your usual size for fitted pieces. For a more relaxed look, size up. If you are between sizes, send your measurements to Nita Style before ordering.');
     if(/contact|instagram|whatsapp|phone|support/.test(q))return bot('You can contact Nita Style through the Contact page or Instagram. For order help, include your order number, email, and phone number so the team can find your order quickly.');
     if(/discount|coupon|code|promo|10/.test(q))return bot('If there is an active sign-up discount or coupon, enter the code at checkout. Some codes are one-time use and may have start/end dates.');
     if(/dress|top|pants|jacket|bag|accessor|product|shop|find|search|price|shirt|linen|knit/.test(q))return productHelp(q,{});
-    if(/hello|hi|hey|bonjour|salut/.test(q)){bot('Hi! I can help you find the right product by budget, gift idea, category, size, or order status. What are you looking for?'); return chips(quick)}
-    bot('I can help you choose products by budget, gift idea, occasion, category, or size. You can also ask me about orders, shipping, returns, discounts, and contact details.'); chips(quick);
+    if(/hello|hi|hey|bonjour|salut/.test(q)){const n=firstName(); return bot(`${n?`Hey ${n}`:'Hi'} — I can help you find the right product by budget, gift idea, category, size, or order status. What are you looking for?`)}
+    bot('I can help you choose products by budget, gift idea, occasion, category, or size. You can also ask me about orders, shipping, returns, discounts, and contact details.');
   }
 
   function orderHelp(){
     const u=user();
-    if(!u?.email){bot('To follow your order, please sign in with the same email used at checkout. Then open Account to see the roadmap.'); chips(['Sign in','Contact Nita Style']); return;}
+    if(!u?.email){bot('To follow your order, please sign in with the same email used at checkout. Then open Account to see the roadmap.'); return;}
     const mine=orders().filter(o=>String(o.email||'').toLowerCase()===String(u.email).toLowerCase()).sort((a,b)=>String(b.id||'').localeCompare(String(a.id||'')));
     if(!mine.length){bot('I do not see an order connected to this signed-in email on this device yet. Please make sure you used the same email at checkout, or contact Nita Style with your order number.'); return;}
     const o=mine[0]; const st=String(o.status||'Order submitted'); const i=Math.max(0,STEPS.indexOf(st.toLowerCase()));
@@ -80,23 +101,27 @@
   function productHelp(q,opts={}){
     const ps=products().filter(Boolean);
     if(!ps.length){bot('I could not find products yet. Please check the Shop page.'); return;}
-    const words=q.split(/[^a-z0-9]+/).filter(w=>w.length>2&&!['product','search','find','shop','price','collection','want','with','what','recommend','suggest','budget','under','less','than','gift','present','show'].includes(w));
-    let list=ps.map(p=>({p,score:scoreProduct(p,words,q,opts)}));
+    const words=q.split(/[^a-z0-9]+/).filter(w=>w.length>2&&!['product','search','find','shop','price','collection','want','with','what','recommend','suggest','budget','under','less','than','gift','present','show','most','expensive'].includes(w));
+    let list=ps.map((p,idx)=>({p,idx,score:scoreProduct(p,words,q,opts)}));
     if(opts.budget) list=list.filter(x=>Number(x.p.salePrice||x.p.price||0)<=opts.budget);
     if(opts.collection) list=list.filter(x=>String(x.p.collection||'').toLowerCase().includes(opts.collection));
-    list=list.sort((a,b)=>b.score-a.score || Number(b.p.price||0)-Number(a.p.price||0)).slice(0,4).map(x=>x.p);
+    if(opts.sort==='expensive') list=list.sort((a,b)=>Number(b.p.salePrice||b.p.price||0)-Number(a.p.salePrice||a.p.price||0));
+    else if(opts.sort==='cheap') list=list.sort((a,b)=>Number(a.p.salePrice||a.p.price||0)-Number(b.p.salePrice||b.p.price||0));
+    else list=list.sort((a,b)=>b.score-a.score || Number(b.p.salePrice||b.p.price||0)-Number(a.p.salePrice||a.p.price||0));
+    list=list.slice(0,opts.sort?3:4).map(x=>x.p);
     if(!list.length && opts.budget){
-      const cheapest=ps.slice().sort((a,b)=>Number(a.price||0)-Number(b.price||0)).slice(0,4);
+      const cheapest=ps.slice().sort((a,b)=>Number(a.salePrice||a.price||0)-Number(b.salePrice||b.price||0)).slice(0,4);
       bot(`I did not find exact matches under ${money(opts.budget)}, but here are the closest lower-price options available:`);
       return renderProducts(cheapest);
     }
     if(!list.length) list=ps.slice(0,4);
-    if(opts.budget && opts.gift) bot(`For a gift under ${money(opts.budget)}, I would recommend these pieces:`);
+    if(opts.sort==='expensive') bot('Here are the highest-priced Nita Style pieces available now:');
+    else if(opts.sort==='cheap') bot('Here are the lowest-priced Nita Style pieces available now:');
+    else if(opts.budget && opts.gift) bot(`For a gift under ${money(opts.budget)}, I would recommend these pieces:`);
     else if(opts.budget) bot(`Here are Nita Style pieces within your ${money(opts.budget)} budget:`);
     else if(opts.collection) bot('Here are the latest/new arrival pieces:');
     else bot('Here are pieces that match what you asked for:');
     renderProducts(list);
-    chips(['Gift under $100','Gift under $200','Show dresses','Show tops','Show pants','New arrivals']);
   }
   function productImage(p){
     const src=(Array.isArray(p.photos)&&p.photos.length?p.photos[Number(p.mainPhotoIndex||0)]||p.photos[0]:p.img)||'';
@@ -107,8 +132,9 @@
   function renderProducts(list){
     list.forEach(p=>{
       const media=productImage(p);
-      const mediaHtml=media.type==='img'?`<div class="nita-ai-product-media"><img src="${esc(media.src)}" alt="${esc(p.name||'Nita Style item')}"></div>`:media.type==='bg'?`<div class="nita-ai-product-media no-photo" style="background:${esc(media.src)}"></div>`:`<div class="nita-ai-product-media no-photo"></div>`;
-      body().insertAdjacentHTML('beforeend',`<article class="nita-ai-product">${mediaHtml}<div class="nita-ai-product-info"><div class="nita-ai-product-top"><strong>${esc(p.name||'Nita Style item')}</strong><span>${money(p.salePrice||p.price)}</span></div><div class="nita-ai-product-meta">${esc(p.category||'Collection')} · ${esc(p.collection||'Nita Style')}</div><p>${esc(p.desc||'Selected Nita Style piece.')}</p><a href="product.html?id=${encodeURIComponent(p.id||'')}">Open product</a></div></article>`)
+      const url=`product.html?id=${encodeURIComponent(p.id||'')}`;
+      const mediaHtml=media.type==='img'?`<div class="nita-ai-product-media"><img src="${esc(media.src)}" alt="${esc(p.name||'Nita Style item')}"></div>`:media.type==='bg'?`<div class="nita-ai-product-media no-photo" style="background:${esc(media.src)}"></div>`:`<div class="nita-ai-product-media no-photo"><span>Nita Style</span></div>`;
+      body().insertAdjacentHTML('beforeend',`<a class="nita-ai-product" href="${url}">${mediaHtml}<div class="nita-ai-product-info"><div class="nita-ai-product-top"><strong>${esc(p.name||'Nita Style item')}</strong><span>${money(p.salePrice||p.price)}</span></div><div class="nita-ai-product-meta">${esc(p.category||'Collection')} · ${esc(p.collection||'Nita Style')}</div><p>${esc(p.desc||'Selected Nita Style piece.')}</p><span class="nita-ai-product-cta">Open product</span></div></a>`)
     });
     scroll();
   }
