@@ -5904,169 +5904,160 @@ placeOrder=async function(){
 })();
 /* === END NITA STYLE PRODUCT ADD + AUTH HOME REDIRECT ONLY FIX 2026-06-12 === */
 
-/* === NITA STYLE FINAL SERIOUS FIX: TERMS LABEL + GLOBAL ADD PRODUCT + AUTH HOME REDIRECT ===
-   Changes only the requested items:
-   1) Footer label Terms -> Terms and Conditions.
-   2) Admin Add Product saves to global Netlify store and appears on site.
-   3) Successful sign-in / verified sign-up redirects to homepage.
-*/
+
+/* === NITA STYLE REAL FINAL REPAIR: TERMS LABEL + VERIFIED ADD PRODUCT SAVE + AUTH HOME REDIRECT ===
+   Only changes requested items: footer label, admin Add Product save reliability, and auth redirect. */
 (function(){
-  const STORE_URL = '/.netlify/functions/store';
-  const PRODUCTS_KEY = 'nitaProducts';
-  const CACHE_KEY = 'nitaStoreFastCache_v2';
-  function safeText(v){ return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
-  function readJSON(key, fallback){ try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }catch(e){ return fallback; } }
-  function writeJSON(key, value){ try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){ console.warn(e); } }
-  function unique(arr){ const out=[]; (arr||[]).forEach(v=>{ v=String(v||'').trim(); if(v && !out.some(x=>x.toLowerCase()===v.toLowerCase())) out.push(v); }); return out; }
-  function notifyFinal(text, ok=true, sticky=false){
-    try{ if(typeof window.nitaNotify === 'function') return window.nitaNotify(text, ok, sticky); }catch(e){}
-    try{ if(typeof window.notify === 'function') return window.notify(text, ok, sticky); }catch(e){}
-    try{ if(typeof window.toast === 'function') return window.toast(text); }catch(e){}
-    console[ok ? 'log' : 'error'](text);
+  const STORE_URL='/.netlify/functions/store';
+  const CACHE_KEYS=['nitaStoreFastCache_v2','nitaStoreSessionCache','nitaStoreCache','nitaProductsCache'];
+  const esc=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const read=(k,f)=>{try{const r=localStorage.getItem(k);return r?JSON.parse(r):f;}catch(e){return f;}};
+  const write=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){console.warn(e);}};
+  const clearCaches=()=>{CACHE_KEYS.forEach(k=>{try{localStorage.removeItem(k);sessionStorage.removeItem(k);}catch(e){}});};
+  const unique=a=>{const out=[];(a||[]).forEach(v=>{v=String(v||'').trim();if(v&&!out.some(x=>x.toLowerCase()===v.toLowerCase()))out.push(v)});return out;};
+  function notify(text, ok=true, sticky=false){
+    try{ if(typeof window.nitaNotify==='function') return window.nitaNotify(text,ok,sticky); }catch(e){}
+    try{ if(typeof window.notify==='function') return window.notify(text,ok,sticky); }catch(e){}
+    try{ if(typeof window.toast==='function') return window.toast(text); }catch(e){}
+    console[ok?'log':'error'](text);
   }
-  function normalizeProductFinal(p){
-    try{ if(typeof window.normalizeProduct === 'function') return window.normalizeProduct(p); }catch(e){}
-    try{ if(typeof window.normalizeProductStatus === 'function') return window.normalizeProductStatus(p); }catch(e){}
+  function normalizeProduct(p){
+    try{ if(typeof window.normalizeProductStatus==='function') return window.normalizeProductStatus(p); }catch(e){}
+    try{ if(typeof window.normalizeProduct==='function') return window.normalizeProduct(p); }catch(e){}
     return p;
   }
-  function selectedSizes(selector){
-    return unique(Array.from(document.querySelectorAll(selector)).filter(el=>el.classList.contains('on') || el.classList.contains('active') || el.checked).map(el=>el.dataset.size || el.value || el.textContent));
+  async function fetchStore(){
+    const res=await fetch(STORE_URL+'?t='+Date.now(),{cache:'no-store',headers:{'Cache-Control':'no-cache'}});
+    if(!res.ok) throw new Error('Cloud database returned '+res.status+' — make sure the netlify/functions folder and package.json are uploaded.');
+    return await res.json();
   }
-  function collectAddProduct(){
-    const name = String(document.getElementById('pname')?.value || '').trim();
-    const price = Number(String(document.getElementById('pprice')?.value || '').trim());
-    if(!name) throw new Error('Please enter a product name.');
-    if(!price || price <= 0) throw new Error('Please enter a valid product price.');
-    const photos = Array.isArray(window.pendingAdminPhotos) ? window.pendingAdminPhotos.filter(Boolean) : [];
-    const mainIndex = Math.max(0, Math.min(Number(window.pendingAdminMainIndex || 0), Math.max(photos.length - 1, 0)));
-    const available = selectedSizes('#sizePicker .pill.on, #sizePicker .pill.active, #sizePicker input:checked');
-    const out = selectedSizes('#sizeOutPicker .pill.on, #sizeOutPicker .pill.active, #sizeOutPicker input:checked');
-    const sizes = unique([...(available.length ? available : []), ...out]);
-    const qtyRaw = String(document.getElementById('pquantity')?.value || '').trim();
-    const qty = qtyRaw === '' ? '' : Math.max(0, Number(qtyRaw));
-    const saleRaw = String(document.getElementById('psale')?.value || '').trim();
-    const color = document.getElementById('pcolor')?.value || 'Black';
-    const style = document.getElementById('pstyle')?.value || 'Clean everyday piece';
-    const section = document.getElementById('phome')?.value || 'trending-now';
-    return normalizeProductFinal({
-      id: 'p' + Date.now(),
-      name,
-      price,
-      salePrice: saleRaw === '' ? '' : Number(saleRaw),
-      status: document.getElementById('pstatus')?.value || 'in-stock',
-      category: document.getElementById('pcat')?.value || 'Tops',
-      collection: document.getElementById('pcollection')?.value || 'Everyday Edit',
-      displaySection: section,
-      homeSection: section,
-      note: color + ' · ' + style,
-      sizes: sizes.length ? sizes : ['One Size'],
-      outOfStockSizes: out,
-      quantity: qty,
-      initialQuantity: qty,
-      photos,
-      mainPhotoIndex: mainIndex,
-      img: photos[mainIndex] || photos[0] || 'linear-gradient(135deg,#fff,#ddd)',
-      desc: String(document.getElementById('pdesc')?.value || '').trim() || 'A carefully selected piece for a clean, feminine wardrobe.'
+  async function saveProductsToCloud(list, productId){
+    const clean=(Array.isArray(list)?list:[]).map(p=>normalizeProduct({...p}));
+    const res=await fetch(STORE_URL+'?t='+Date.now(),{
+      method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','Cache-Control':'no-cache'},body:JSON.stringify({key:'nitaProducts',value:clean})
     });
-  }
-  async function fetchStoreStrict(){
-    const res = await fetch(STORE_URL + '?t=' + Date.now(), { headers:{ 'Cache-Control':'no-cache' } });
-    if(!res.ok) throw new Error('Cloud database error ' + res.status + ': ' + (await res.text().catch(()=>'')));
-    const data = await res.json();
-    return data && typeof data === 'object' ? data : {};
-  }
-  async function saveProductsStrict(nextProducts){
-    const clean = (Array.isArray(nextProducts) ? nextProducts : []).map(p => normalizeProductFinal({...p}));
-    const res = await fetch(STORE_URL, {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json', 'Cache-Control':'no-cache' },
-      body: JSON.stringify({ key: PRODUCTS_KEY, value: clean })
-    });
-    let body={}; try{ body = await res.json(); }catch(e){}
-    if(!res.ok || body.ok === false) throw new Error(body.error || ('Cloud save failed ' + res.status));
-    writeJSON(PRODUCTS_KEY, clean);
-    try{
-      const store = await fetchStoreStrict();
-      store.nitaProducts = clean;
-      sessionStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), data: store }));
-    }catch(e){
-      try{ sessionStorage.removeItem(CACHE_KEY); }catch(_){}
+    let body={}; try{body=await res.json();}catch(e){}
+    if(!res.ok || body.ok===false) throw new Error(body.error||('Cloud product save failed '+res.status));
+    const after=await fetchStore();
+    const remote=Array.isArray(after.nitaProducts)?after.nitaProducts:[];
+    if(productId && !remote.some(p=>String(p.id)===String(productId))){
+      throw new Error('Cloud saved, but the product was not found after verification. Please try once more.');
     }
-    try{ localStorage.removeItem('nitaStoreSessionCache'); localStorage.removeItem('nitaStoreCache'); }catch(e){}
-    try{ window.dispatchEvent(new Event('nita-store-ready')); }catch(e){}
-    return clean;
+    write('nitaProducts', remote.length?remote:clean);
+    clearCaches();
+    try{sessionStorage.setItem('nitaStoreFastCache_v2',JSON.stringify({time:Date.now(),data:{...after,nitaProducts:remote.length?remote:clean}}));}catch(e){}
+    try{window.dispatchEvent(new Event('nita-store-ready'));}catch(e){}
+    return remote.length?remote:clean;
   }
-  function clearAddProductForm(){
-    window.pendingAdminPhotos = [];
-    window.pendingAdminMainIndex = 0;
-    ['pname','pprice','psale','pdesc','pquantity'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-    document.querySelectorAll('#sizePicker .pill.on,#sizePicker .pill.active,#sizeOutPicker .pill.on,#sizeOutPicker .pill.active').forEach(el=>el.classList.remove('on','active'));
-    const input = document.getElementById('pphotos'); if(input) input.value = '';
-    const prev = document.getElementById('photoPreview'); if(prev) prev.innerHTML = '';
-  }
-  window.addProductAdmin = async function(){
-    let product;
-    try{ product = collectAddProduct(); }
-    catch(err){ notifyFinal(err.message || String(err), false, true); return false; }
-    notifyFinal('Saving product to the website...', true, false);
+  // Smaller admin photo compression to make new products save reliably in Netlify Blobs.
+  async function compressPhoto(file){
+    const data=await new Promise(resolve=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>resolve('');r.readAsDataURL(file);});
+    if(!data) return '';
     try{
-      let store = {};
-      try{ store = await fetchStoreStrict(); }
-      catch(fetchErr){ console.warn('Could not fetch cloud before save, using local product list only:', fetchErr); }
-      const remoteList = Array.isArray(store.nitaProducts) ? store.nitaProducts : [];
-      const localList = readJSON(PRODUCTS_KEY, []);
-      const base = remoteList.length ? remoteList : (Array.isArray(localList) ? localList : []);
-      const next = base.filter(p => String(p.id) !== String(product.id));
-      next.push(product);
-      await saveProductsStrict(next);
-      clearAddProductForm();
-      notifyFinal('Product added to the website globally.', true);
-      try{ if(typeof window.renderAdmin === 'function') await window.renderAdmin(); }catch(e){ console.warn(e); }
-      try{ if(typeof window.renderHomeSections === 'function') window.renderHomeSections(); }catch(e){ console.warn(e); }
-      return true;
-    }catch(err){
-      console.error('Final add product save failed:', err);
-      notifyFinal('Product was NOT added: ' + (err.message || err) + '. Please check Netlify Functions/Blobs and try again.', false, true);
-      return false;
-    }
+      const img=await new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=data;});
+      const max=850; let w=img.width,h=img.height; if(Math.max(w,h)>max){const ratio=max/Math.max(w,h);w=Math.round(w*ratio);h=Math.round(h*ratio);}
+      const canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
+      const ctx=canvas.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h);
+      return canvas.toDataURL('image/jpeg',0.62);
+    }catch(e){return data;}
+  }
+  window.fileListToDataUrls=function(files,cb){
+    const arr=[...(files||[])].slice(0,10);
+    if(!arr.length){cb([]);return;}
+    Promise.all(arr.map(compressPhoto)).then(urls=>cb(urls.filter(Boolean))).catch(()=>cb([]));
   };
-  // Force footer wording on every rendered page.
-  function fixFooterTermsLabel(){
-    document.querySelectorAll('.footer-legal-links a, .copyright a').forEach(a=>{
-      const txt = (a.textContent || '').trim().toLowerCase();
-      const href = (a.getAttribute('href') || '').toLowerCase();
-      if(txt === 'terms' || href.includes('terms.html')) a.textContent = 'Terms and Conditions';
+  function renderPhotoPreview(){
+    const box=document.getElementById('photoPreview'); if(!box)return;
+    const photos=Array.isArray(window.pendingAdminPhotos)?window.pendingAdminPhotos:[];
+    const main=Math.max(0,Math.min(Number(window.pendingAdminMainIndex||0),Math.max(photos.length-1,0)));
+    box.innerHTML=photos.map((url,i)=>`<button type="button" class="admin-thumb selectable-thumb ${i===main?'selected-main':''}" onclick="setPendingMainPhoto(${i})"><img src="${esc(url)}" alt="Product photo ${i+1}"><span>${i===main?'Main photo':'Photo '+(i+1)}</span></button>`).join('') + (photos.length?'<p class="muted admin-photo-note">Photos are ready. Click a photo to choose the main image.</p>':'');
+  }
+  window.setPendingMainPhoto=function(i){window.pendingAdminMainIndex=Number(i)||0;renderPhotoPreview();};
+  window.previewAdminPhotos=function(event){
+    const input=event&&event.target;
+    window.fileListToDataUrls(input?input.files:[], urls=>{
+      window.pendingAdminPhotos=Array.isArray(window.pendingAdminPhotos)?window.pendingAdminPhotos:[];
+      window.pendingAdminPhotos=window.pendingAdminPhotos.concat(urls).slice(0,10);
+      if(!Number.isFinite(Number(window.pendingAdminMainIndex))) window.pendingAdminMainIndex=0;
+      renderPhotoPreview();
+      if(input) input.value='';
+    });
+  };
+  document.addEventListener('change',e=>{const input=e.target&&e.target.closest&&e.target.closest('#pphotos');if(input){e.stopPropagation();window.previewAdminPhotos({target:input});}},true);
+  function selectedSizes(selector){return unique(Array.from(document.querySelectorAll(selector)).filter(el=>el.classList.contains('on')||el.classList.contains('active')||el.checked).map(el=>el.dataset.size||el.value||el.textContent));}
+  function collectProduct(){
+    const name=String(document.getElementById('pname')?.value||'').trim();
+    const price=Number(String(document.getElementById('pprice')?.value||'').trim());
+    if(!name) throw new Error('Please enter a product name.');
+    if(!price||price<=0) throw new Error('Please enter a valid product price.');
+    const photos=Array.isArray(window.pendingAdminPhotos)?window.pendingAdminPhotos.filter(Boolean):[];
+    const main=Math.max(0,Math.min(Number(window.pendingAdminMainIndex||0),Math.max(photos.length-1,0)));
+    const available=selectedSizes('#sizePicker .pill.on,#sizePicker .pill.active,#sizePicker input:checked');
+    const out=selectedSizes('#sizeOutPicker .pill.on,#sizeOutPicker .pill.active,#sizeOutPicker input:checked');
+    const saleRaw=String(document.getElementById('psale')?.value||'').trim();
+    const qtyRaw=String(document.getElementById('pquantity')?.value||'').trim();
+    const section=document.getElementById('phome')?.value||'trending-now';
+    const color=document.getElementById('pcolor')?.value||'Black';
+    const style=document.getElementById('pstyle')?.value||'Clean everyday piece';
+    return normalizeProduct({
+      id:'p'+Date.now(), name, price, salePrice:saleRaw===''?'':Number(saleRaw),
+      status:document.getElementById('pstatus')?.value||'in-stock', category:document.getElementById('pcat')?.value||'Tops',
+      collection:document.getElementById('pcollection')?.value||'Everyday Edit', displaySection:section, homeSection:section,
+      note:color+' · '+style, sizes:unique([...(available.length?available:['S','M','L']),...out]), outOfStockSizes:out,
+      quantity:qtyRaw===''?'':Math.max(0,Number(qtyRaw)), initialQuantity:qtyRaw===''?'':Math.max(0,Number(qtyRaw)),
+      photos, mainPhotoIndex:main, img:photos[main]||photos[0]||'linear-gradient(135deg,#fff,#ddd)',
+      desc:String(document.getElementById('pdesc')?.value||'').trim()||'A carefully selected Nita Style piece.'
     });
   }
-  const previousSiteFooter = window.siteFooter;
-  if(typeof previousSiteFooter === 'function'){
-    window.siteFooter = function(){
-      return String(previousSiteFooter.apply(this, arguments)).replace(/>Terms</g, '>Terms and Conditions<').replace(/Terms\s*·\s*Shipping/g, 'Terms and Conditions · Shipping');
-    };
+  window.addProductAdmin=async function(){
+    let product;
+    try{product=collectProduct();}catch(e){notify(e.message||String(e),false,true);return false;}
+    notify('Saving product to the live website...',true,false);
+    try{
+      let store={}; try{store=await fetchStore();}catch(e){console.warn('Could not fetch current cloud products before save:',e);}
+      const remote=Array.isArray(store.nitaProducts)?store.nitaProducts:[];
+      const local=read('nitaProducts',[]);
+      const base=remote.length?remote:(Array.isArray(local)?local:[]);
+      const next=base.filter(p=>String(p.id)!==String(product.id)); next.push(product);
+      const saved=await saveProductsToCloud(next, product.id);
+      write('nitaProducts', saved); clearCaches();
+      window.pendingAdminPhotos=[]; window.pendingAdminMainIndex=0;
+      ['pname','pprice','psale','pdesc','pquantity'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+      document.querySelectorAll('#sizePicker .pill.on,#sizePicker .pill.active,#sizeOutPicker .pill.on,#sizeOutPicker .pill.active').forEach(el=>el.classList.remove('on','active'));
+      const input=document.getElementById('pphotos'); if(input)input.value=''; const prev=document.getElementById('photoPreview'); if(prev)prev.innerHTML='';
+      try{ if(typeof window.renderAdmin==='function') await window.renderAdmin(); }catch(e){console.warn(e);}
+      try{ if(typeof window.renderHomeSections==='function') window.renderHomeSections(); }catch(e){console.warn(e);}
+      notify('Product added to the live website.',true,false);
+      return true;
+    }catch(e){console.error('Add product failed:',e);notify('Product was not added: '+(e.message||e),false,true);return false;}
+  };
+  // Make sure homepage loads real cloud products on first open, not an old empty cache.
+  async function refreshProductsFromCloud(){
+    try{
+      const store=await fetchStore();
+      if(Array.isArray(store.nitaProducts)){
+        write('nitaProducts',store.nitaProducts); clearCaches();
+        if(typeof window.renderHomeSections==='function') window.renderHomeSections();
+        if(typeof window.renderProducts==='function') window.renderProducts('#products',store.nitaProducts);
+      }
+    }catch(e){console.warn('Product cloud refresh skipped:',e);}
   }
-  document.addEventListener('DOMContentLoaded', fixFooterTermsLabel);
-  window.addEventListener('load', fixFooterTermsLabel);
-  window.addEventListener('nita-store-ready', fixFooterTermsLabel);
-  setInterval(fixFooterTermsLabel, 1500);
-
-  // Safety redirect: after successful sign-in or verified sign-up, leave login.html for homepage.
-  function shouldRedirectAfterAuth(){
-    const path = location.pathname.toLowerCase();
-    if(!path.endsWith('/login.html') && !path.endsWith('login.html')) return false;
-    const user = readJSON('nitaUser', null);
-    const pending = readJSON('nitaPendingSignup', null);
-    return !!(user && user.email && !(pending && pending.awaitingVerification));
+  if(document.getElementById('trendingMarquee')||document.getElementById('newArrivalsMarquee')){
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshProductsFromCloud,200));
+    window.addEventListener('load',()=>setTimeout(refreshProductsFromCloud,450));
   }
-  function authRedirectCheck(){ if(shouldRedirectAfterAuth()) setTimeout(()=>{ location.href = 'index.html'; }, 250); }
-  const previousSubmitAuth = window.submitAuth;
-  if(typeof previousSubmitAuth === 'function'){
-    window.submitAuth = async function(){
-      const result = await previousSubmitAuth.apply(this, arguments);
-      setTimeout(authRedirectCheck, 650);
-      setTimeout(authRedirectCheck, 1500);
-      return result;
-    };
+  // Footer: force visible label and generated footer HTML.
+  function legalFooter(){return `<footer class="footer site-footer"><div><img class="footer-logo-img" src="assets/logo-cropped.png" alt="Nita Style"><p class="muted">Founded by Nicole and Tania, Nita Style curates Italian-made pieces for women who value clean silhouettes, refined textures, and effortless everyday elegance.</p></div><div><h4>Shop</h4><a href="shop.html">All products</a><a href="collections.html">Collections</a><a href="cart.html">Cart</a><a href="checkout.html">Checkout</a></div><div><h4>Support</h4><a href="contact.html">Contact</a><a href="about.html">About</a><a href="checkout.html">Cash on delivery</a><a href="checkout.html">Online payment coming soon</a><a class="footer-instagram" href="https://www.instagram.com/thenitastyle/" target="_blank" rel="noopener noreferrer" aria-label="Nita Style Instagram"><img class="footer-instagram-icon" src="assets/instagram-icon.webp" alt="Instagram"><span>thenitastyle</span></a></div><div><h4>Join the list</h4><p class="muted">Receive the first-order code and new drop updates.</p><div class="footer-newsletter"><input placeholder="Email address"><button onclick="toast('Use code NITA10 for 10% off')">SIGN UP</button></div></div></footer><div class="copyright site-footer"><span>© 2026 Nita Style. All rights reserved. <span class="footer-codeviq">Developed by CODEVIQ.</span></span><span class="footer-legal-links"><a href="privacy-policy.html">Privacy Policy</a><span>·</span><a href="terms.html">Terms and Conditions</a><span>·</span><a href="shipping.html">Shipping</a></span></div>`;}
+  window.siteFooter=legalFooter;
+  function fixTerms(){
+    document.querySelectorAll('.footer-legal-links a,.copyright a').forEach(a=>{const href=(a.getAttribute('href')||'').toLowerCase();const txt=(a.textContent||'').trim().toLowerCase();if(href.includes('terms.html')||txt==='terms')a.textContent='Terms and Conditions';});
   }
-  document.addEventListener('DOMContentLoaded', authRedirectCheck);
+  document.addEventListener('DOMContentLoaded',fixTerms); window.addEventListener('load',fixTerms); setInterval(fixTerms,600);
+  try{new MutationObserver(fixTerms).observe(document.documentElement,{subtree:true,childList:true,characterData:true});}catch(e){}
+  // Auth redirect safeguard.
+  const oldSubmit=window.submitAuth;
+  if(typeof oldSubmit==='function'){
+    window.submitAuth=async function(){const r=await oldSubmit.apply(this,arguments);setTimeout(()=>{const user=read('nitaUser',null);const pending=read('nitaPendingSignup',null);if(location.pathname.toLowerCase().endsWith('login.html')&&user&&user.email&&!(pending&&pending.awaitingVerification))location.href='index.html';},500);return r;};
+  }
 })();
-/* === END NITA STYLE FINAL SERIOUS FIX === */
+/* === END REAL FINAL REPAIR === */
