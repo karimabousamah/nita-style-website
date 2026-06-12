@@ -2247,3 +2247,35 @@ img{content-visibility:auto;}
 /* === NITA STYLE SECOND PHOTO HOVER + ADMIN PHOTO APPEND POLISH ONLY 2026-06-11 === */
 .admin-photo-note{grid-column:1/-1;margin:6px 0 0;font-size:12px;text-align:left}.photo-preview .selectable-thumb{cursor:pointer}.photo-preview .selectable-thumb.selected-main{border-color:#111!important;box-shadow:0 0 0 2px #111 inset}.product-img-primary,.product-img-secondary{backface-visibility:hidden;transform:translateZ(0)}@media (hover:hover) and (pointer:fine){.product.has-second-photo:hover .product-img-primary{opacity:0!important;transform:scale(1.025)!important}.product.has-second-photo:hover .product-img-secondary{opacity:1!important;transform:scale(1.035)!important}.product.has-second-photo .product-img-secondary{opacity:0!important}.product.has-second-photo .product-img-primary{opacity:1!important}}
 /* === END NITA STYLE SECOND PHOTO HOVER + ADMIN PHOTO APPEND POLISH ONLY === */
+
+
+/* --- Quick View Center Position Only Fix ---
+/* The button is outside .product-img in the HTML, so center it using the image height, not the full product card height. */
+.product > .quick-view-btn{
+  left:50%!important;
+  top:180px!important;
+  bottom:auto!important;
+  transform:translate(-50%,-50%) scale(.96)!important;
+  z-index:12!important;
+}
+.product:hover > .quick-view-btn,.product:focus-within > .quick-view-btn{
+  opacity:1!important;
+  transform:translate(-50%,-50%) scale(1)!important;
+}
+.product-marquee .product > .quick-view-btn,
+.trending-scroll .product > .quick-view-btn,
+.new-arrivals-scroll .product > .quick-view-btn{
+  top:165px!important;
+}
+@media(max-width:900px){
+  .product > .quick-view-btn{top:118px!important;}
+  .product-marquee .product > .quick-view-btn,
+  .trending-scroll .product > .quick-view-btn,
+  .new-arrivals-scroll .product > .quick-view-btn{top:119px!important;}
+}
+@media(min-width:901px) and (max-width:1200px){
+  .product > .quick-view-btn{top:155px!important;}
+  .product-marquee .product > .quick-view-btn,
+  .trending-scroll .product > .quick-view-btn,
+  .new-arrivals-scroll .product > .quick-view-btn{top:155px!important;}
+}
