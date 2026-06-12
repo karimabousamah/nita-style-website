@@ -63,6 +63,23 @@ exports.handler = async function(event) {
   const codeBox = (code) => `<div style="border:1px solid #111;background:#fbfaf8;text-align:center;padding:22px 14px;font-size:36px;font-weight:900;letter-spacing:9px;margin:26px 0;color:#111">${esc(code)}</div>`;
   const orderRows = (items=[]) => items.map(item => `<tr><td style="padding:14px 0;border-bottom:1px solid #eee"><b>${esc(item.name || 'Product')}</b><br><span style="color:#777">${esc(item.size || 'One Size')} × ${Number(item.qty || 1)}</span></td><td style="padding:14px 0;border-bottom:1px solid #eee;text-align:right"><b>${money(item.total || (Number(item.price||0)*Number(item.qty||1)))}</b></td></tr>`).join('');
 
+  function roadmapEmailHtml(status) {
+    const normalize = (value='') => {
+      const text = String(value || 'Order submitted').trim();
+      if (/^new order$/i.test(text)) return 'Order submitted';
+      if (/^preparing$/i.test(text)) return 'Packing';
+      return text || 'Order submitted';
+    };
+    const steps = ['Order submitted','Confirmed','Packing','Out for delivery','Delivered'];
+    const current = normalize(status);
+    if (/^cancelled$/i.test(current)) {
+      return `<div style="margin:22px 0;padding:16px;border:1px solid #111;background:#fafafa;text-align:center;font-weight:900;text-transform:uppercase;letter-spacing:1.5px">Cancelled</div>`;
+    }
+    let index = steps.findIndex(step => step.toLowerCase() === current.toLowerCase());
+    if (index < 0) index = 0;
+    return `<div style="margin:22px 0;padding:18px;border:1px solid #e7e2da;background:#fbfaf8">${steps.map((step, i) => `<span style="display:inline-block;margin:4px 6px 4px 0;padding:9px 11px;border-radius:999px;border:1px solid ${i <= index ? '#111' : '#ddd'};background:${i <= index ? '#111' : '#fff'};color:${i <= index ? '#fff' : '#777'};font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.8px">${esc(step)}</span>`).join('')}</div>`;
+  }
+
   try {
     let subject='', html='', recipient = to;
 

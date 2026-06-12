@@ -6153,3 +6153,141 @@ placeOrder=async function(){
   window.addEventListener('load',()=>setTimeout(apply,800));
 })();
 /* === END NITA STYLE ADMIN ROADMAP + STATUS EMAIL PREMIUM ONLY FIX === */
+
+
+/* === NITA STYLE ORDER STATUS INSTANT SAVE + EMAIL FIX ONLY 2026-06-12 ===
+   Scope: admin order status saving, UI refresh, account roadmap sync through shared orders, and status email trigger only. */
+(function(){
+  const STEPS = ['Order submitted','Confirmed','Packing','Out for delivery','Delivered'];
+  const STATUSES = STEPS.concat(['Cancelled']);
+  const esc = (v='') => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const read = (k,d) => { try { return JSON.parse(localStorage.getItem(k) || JSON.stringify(d)); } catch(e) { return d; } };
+  const write = (k,v) => { localStorage.setItem(k, JSON.stringify(v)); };
+  const moneySafe = (n) => { try { return typeof money === 'function' ? money(n) : '$' + Number(n || 0).toFixed(2); } catch(e) { return '$' + Number(n || 0).toFixed(2); } };
+  const notify = (text, ok=true) => { try { if (typeof toast === 'function') toast(text); else if (typeof msg === 'function') msg(text); else console[ok?'log':'warn'](text); } catch(e) { console[ok?'log':'warn'](text); } };
+  function normStatus(status){ const s=String(status || 'Order submitted').trim(); if(/^new order$/i.test(s)) return 'Order submitted'; if(/^preparing$/i.test(s)) return 'Packing'; return s || 'Order submitted'; }
+  function roadmap(status){
+    const current = normStatus(status);
+    if(/^cancelled$/i.test(current)) return '<div class="order-roadmap-wrap admin-premium-roadmap"><div class="order-roadmap"><span class="done">Cancelled</span></div></div>';
+    let idx = STEPS.findIndex(s => s.toLowerCase() === current.toLowerCase()); if(idx < 0) idx = 0;
+    return '<div class="order-roadmap-wrap admin-premium-roadmap"><div class="order-roadmap">' + STEPS.map((step,i)=>'<span class="'+(i<=idx?'done':'')+'">'+esc(step)+'</span>').join('') + '</div></div>';
+  }
+  function statusSelect(o,i){ const current=normStatus(o.status); return '<select class="field admin-order-status" data-order-index="'+i+'" onchange="updateOrder('+i+',this.value)">' + STATUSES.map(s => '<option value="'+esc(s)+'" '+(current===s?'selected':'')+'>'+esc(s)+'</option>').join('') + '</select><span class="admin-status-save" data-order-save="'+i+'"></span>'; }
+  async function fetchRemoteOrders(){
+    try{
+      const res = await fetch('/.netlify/functions/store?ts=' + Date.now(), {cache:'no-store', headers:{'Cache-Control':'no-cache'}});
+      if(!res.ok) return null;
+      const data = await res.json();
+      if(Array.isArray(data.nitaOrders)){ write('nitaOrders', data.nitaOrders); return data.nitaOrders; }
+    }catch(e){ console.warn('Order refresh skipped:', e); }
+    return null;
+  }
+  async function saveOrdersStrict(orders){
+    write('nitaOrders', orders);
+    if(typeof window.nitaSaveKeyStrict === 'function') return await window.nitaSaveKeyStrict('nitaOrders', orders);
+    if(typeof window.saveCloudKey === 'function') return await window.saveCloudKey('nitaOrders', orders);
+    if(typeof window.saveSharedKeyNow === 'function') return await window.saveSharedKeyNow('nitaOrders', orders);
+    const res = await fetch('/.netlify/functions/store', {method:'POST', headers:{'Content-Type':'application/json','Cache-Control':'no-cache'}, body:JSON.stringify({key:'nitaOrders', value:orders})});
+    let body={}; try{ body=await res.json(); }catch(e){ body={error:await res.text()}; }
+    if(!res.ok || body.ok===false) throw new Error(body.error || 'Order save failed');
+    return body;
+  }
+  async function sendStatusEmail(order){
+    if(!order || !/^\S+@\S+\.\S+$/.test(String(order.email||''))) return {skipped:true};
+    const payload = {type:'order_status', to:String(order.email).trim().toLowerCase(), order};
+    const res = await fetch('/.netlify/functions/send-email', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    let body={}; try{ body=await res.json(); }catch(e){ body={error:await res.text()}; }
+    if(!res.ok || body.ok===false) throw new Error(body.error || 'Status email failed');
+    return body;
+  }
+  function updateVisibleOrder(index, status, stateText){
+    document.querySelectorAll('[data-order-save="'+index+'"]').forEach(el => { el.textContent = stateText || ''; el.classList.toggle('saving', /Saving/i.test(stateText||'')); });
+    document.querySelectorAll('select[data-order-index="'+index+'"]').forEach(sel => { sel.value = normStatus(status); });
+    const cards = Array.from(document.querySelectorAll('.admin-section-page[data-section="orders"] .admin-list-card'));
+    const card = cards[index];
+    if(card){
+      const p = Array.from(card.querySelectorAll('p')).find(x => /\$|USD|Order submitted|Confirmed|Packing|Out for delivery|Delivered|Cancelled|New order|Preparing/i.test(x.textContent || ''));
+      if(p){ const total = (read('nitaOrders',[])[index] || {}).total || 0; p.innerHTML = '<b>'+moneySafe(total)+'</b> · '+esc(normStatus(status)); }
+      card.querySelectorAll('.admin-order-roadmap,.admin-premium-roadmap').forEach(el => el.remove());
+      const textCol=card.querySelector('div'); if(textCol) textCol.insertAdjacentHTML('beforeend', roadmap(status));
+    }
+    const rows = Array.from(document.querySelectorAll('tr.admin-order-row'));
+    const row = rows[index];
+    if(row){ row.querySelectorAll('.admin-order-roadmap,.admin-premium-roadmap').forEach(el=>el.remove()); const cell=row.querySelector('td'); if(cell) cell.insertAdjacentHTML('beforeend', roadmap(status)); }
+  }
+  function renderOrderRoadmaps(){
+    const orders = read('nitaOrders', []);
+    document.querySelectorAll('.admin-order-roadmap,.admin-premium-roadmap').forEach(el=>el.remove());
+    Array.from(document.querySelectorAll('.admin-section-page[data-section="orders"] .admin-list-card')).forEach((card,i)=>{ const o=orders[i]; if(!o)return; const textCol=card.querySelector('div'); if(textCol) textCol.insertAdjacentHTML('beforeend', roadmap(o.status)); });
+    Array.from(document.querySelectorAll('tr.admin-order-row')).forEach((row,i)=>{ const o=orders[i]; const cell=row.querySelector('td'); if(o&&cell) cell.insertAdjacentHTML('beforeend', roadmap(o.status)); });
+  }
+  const previousRenderAdmin = window.renderAdmin;
+  window.renderAdmin = async function(){
+    let result;
+    if(typeof previousRenderAdmin === 'function') result = await previousRenderAdmin.apply(this, arguments);
+    try{
+      const page = document.querySelector('.admin-page');
+      const orderSection = document.querySelector('.admin-section-page[data-section="orders"]');
+      if(page && orderSection){
+        const os = read('nitaOrders', []);
+        const toolbar = orderSection.querySelector('.admin-toolbar')?.outerHTML || '<div class="admin-toolbar"><h2>Orders</h2><span class="pill">'+os.length+' total</span></div>';
+        orderSection.innerHTML = toolbar + (os.length ? os.map((o,i)=>'<article class="admin-list-card"><div><h3>'+esc(o.id)+'</h3><p class="muted">'+esc(o.customer||'-')+' · '+esc(o.email||'')+' · '+esc(o.phone||'')+'</p><p><b>'+moneySafe(o.total||0)+'</b> · '+esc(normStatus(o.status))+'</p>'+roadmap(o.status)+'</div><div class="admin-actions">'+statusSelect(o,i)+'<button class="btn danger" onclick="deleteOrderAdmin('+i+')">DELETE</button></div></article>').join('') : '<p class="muted">No orders yet.</p>');
+      } else renderOrderRoadmaps();
+    }catch(e){ console.warn('Admin order render patch skipped:', e); }
+    return result;
+  };
+  window.updateOrder = async function(index, status){
+    status = normStatus(status);
+    let orders = read('nitaOrders', []);
+    const original = orders[index];
+    if(!original) return;
+    const orderId = original.id;
+    const oldStatus = normStatus(original.status);
+    if(status === oldStatus){ updateVisibleOrder(index, status, ''); return; }
+    updateVisibleOrder(index, status, 'Saving...');
+    const previousOrder = {...original};
+    orders[index] = {...original, status, statusUpdatedAt:new Date().toISOString()};
+    write('nitaOrders', orders);
+    try{
+      const remote = await fetchRemoteOrders();
+      if(remote){
+        orders = remote;
+        const remoteIndex = orders.findIndex(o => String(o.id) === String(orderId));
+        if(remoteIndex >= 0) index = remoteIndex;
+      }
+      const currentOld = normStatus(orders[index]?.status || oldStatus);
+      if(status === currentOld){ updateVisibleOrder(index, status, ''); return; }
+      orders[index] = {...orders[index], status, statusUpdatedAt:new Date().toISOString()};
+      await saveOrdersStrict(orders);
+      write('nitaOrders', orders);
+      updateVisibleOrder(index, status, 'Saved');
+      let emailSent = false;
+      try{
+        if(orders[index].email && orders[index].lastStatusEmail !== status){
+          await sendStatusEmail(orders[index]);
+          orders[index].lastStatusEmail = status;
+          orders[index].lastStatusEmailAt = new Date().toISOString();
+          await saveOrdersStrict(orders);
+          emailSent = true;
+        }
+        notify(emailSent ? 'Order status updated and customer email sent.' : 'Order status updated.');
+      }catch(emailError){
+        console.warn('Order status email failed:', emailError);
+        notify('Order status saved, but the customer email failed. Check RESEND_API_KEY / FROM_EMAIL in Netlify.', false);
+      }
+      setTimeout(()=>updateVisibleOrder(index, status, ''), 1600);
+      try{ renderOrderRoadmaps(); }catch(e){}
+    }catch(error){
+      console.error('Order status update failed:', error);
+      let latest = read('nitaOrders', []);
+      const revertIndex = latest.findIndex(o => String(o.id) === String(orderId));
+      if(revertIndex >= 0){ latest[revertIndex] = previousOrder; write('nitaOrders', latest); updateVisibleOrder(revertIndex, oldStatus, 'Save failed'); }
+      notify('Order status could not be saved. Please try again.', false);
+    }
+  };
+  const previousShow = window.showAdminSection;
+  window.showAdminSection = function(section){ const result = previousShow ? previousShow.apply(this, arguments) : undefined; if(section === 'orders') setTimeout(renderOrderRoadmaps, 0); return result; };
+  document.addEventListener('DOMContentLoaded', () => setTimeout(renderOrderRoadmaps, 500));
+  window.addEventListener('load', () => setTimeout(renderOrderRoadmaps, 800));
+})();
+/* === END NITA STYLE ORDER STATUS INSTANT SAVE + EMAIL FIX ONLY === */
