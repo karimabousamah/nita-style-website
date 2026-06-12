@@ -12,7 +12,7 @@ function header(){
  return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Jackets">Jackets</a><a href="shop.html?cat=Accessories">Accessories</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a href="${currentUser?'account.html':'login.html'}">${currentUser?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, tops, pants..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`
 }
 
-function siteFooter(){return `<footer class="footer site-footer"><div><img class="footer-logo-img" src="assets/logo-cropped.png" alt="Nita Style"><p class="muted">Founded by Nicole and Tania, Nita Style curates Italian-made pieces for women who value clean silhouettes, refined textures, and effortless everyday elegance.</p></div><div><h4>Shop</h4><a href="shop.html">All products</a><a href="collections.html">Collections</a><a href="cart.html">Cart</a><a href="checkout.html">Checkout</a></div><div><h4>Support</h4><a href="contact.html">Contact</a><a href="about.html">About</a><a href="checkout.html">Cash on delivery</a><a href="checkout.html">Online payment coming soon</a><a class="footer-instagram" href="https://www.instagram.com/thenitastyle/" target="_blank" rel="noopener noreferrer" aria-label="Nita Style Instagram"><img class="footer-instagram-icon" src="assets/instagram-icon.webp" alt="Instagram"><span>thenitastyle</span></a></div><div><h4>Join the list</h4><p class="muted">Receive the first-order code and new drop updates.</p><div class="footer-newsletter"><input placeholder="Email address"><button onclick="toast('Use code NITA10 for 10% off')">SIGN UP</button></div></div></footer><div class="copyright site-footer"><span>© 2026 Nita Style. All rights reserved. <span class="footer-codeviq">Developed by CODEVIQ.</span></span><span class="footer-legal-links"><a href="privacy-policy.html">Privacy Policy</a><span>·</span><a href="terms.html">Terms</a><span>·</span><a href="shipping.html">Shipping</a></span></div>`}
+function siteFooter(){return `<footer class="footer site-footer"><div><img class="footer-logo-img" src="assets/logo-cropped.png" alt="Nita Style"><p class="muted">Founded by Nicole and Tania, Nita Style curates Italian-made pieces for women who value clean silhouettes, refined textures, and effortless everyday elegance.</p></div><div><h4>Shop</h4><a href="shop.html">All products</a><a href="collections.html">Collections</a><a href="cart.html">Cart</a><a href="checkout.html">Checkout</a></div><div><h4>Support</h4><a href="contact.html">Contact</a><a href="about.html">About</a><a href="checkout.html">Cash on delivery</a><a href="checkout.html">Online payment coming soon</a><a class="footer-instagram" href="https://www.instagram.com/thenitastyle/" target="_blank" rel="noopener noreferrer" aria-label="Nita Style Instagram"><img class="footer-instagram-icon" src="assets/instagram-icon.webp" alt="Instagram"><span>thenitastyle</span></a></div><div><h4>Join the list</h4><p class="muted">Receive the first-order code and new drop updates.</p><div class="footer-newsletter"><input placeholder="Email address"><button onclick="toast('Use code NITA10 for 10% off')">SIGN UP</button></div></div></footer><div class="copyright site-footer"><span>© 2026 Nita Style. All rights reserved. <span class="footer-codeviq">Developed by CODEVIQ.</span></span><span class="footer-legal-links"><a href="privacy-policy.html">Privacy Policy</a><span>·</span><a href="terms.html">Terms and Conditions</a><span>·</span><a href="shipping.html">Shipping</a></span></div>`}
 
 async function init(){
  await loadSharedStore();
@@ -2318,9 +2318,9 @@ placeOrder=async function(){
 })();
 /* === END FINAL CRITICAL FIX === */
 
-/* === FINAL FIX: reliable homepage auto-scroll, product deletion, and $7 Aramex delivery === */
+/* === FINAL FIX: reliable homepage auto-scroll, product deletion, and $5 Wakilni delivery === */
 (function(){
-  const DELIVERY_FEE = 7;
+  const DELIVERY_FEE = 5;
   const DEFAULTS = (typeof defaultProducts !== 'undefined' && Array.isArray(defaultProducts)) ? defaultProducts : [];
   const safeJSON = (key, fallback) => {
     const raw = localStorage.getItem(key);
@@ -2468,7 +2468,7 @@ placeOrder=async function(){
     }).join('') : '<p class="muted">Your cart is empty.</p>';
     const c = couponState(subtotal);
     const total = Math.max(0, subtotal - c.discount) + DELIVERY_FEE;
-    box.innerHTML = items + '<hr>' + line('Subtotal', subtotal) + c.message + line('Aramex delivery fee', DELIVERY_FEE) + `<p class="delivery-note">Delivery all over Lebanon in 2–3 business days.</p>` + line('Total', total, 'summary-total');
+    box.innerHTML = items + '<hr>' + line('Subtotal', subtotal) + c.message + line('Wakilni delivery fee', DELIVERY_FEE) + `<p class="delivery-note">Delivery all over Lebanon in 2-4 working days.</p>` + line('Total', total, 'summary-total');
   };
 
   const oldApplyCoupon = window.applyCouponCode;
@@ -2496,7 +2496,7 @@ placeOrder=async function(){
     const order = {
       id:'NS'+Date.now(), date:new Date().toLocaleString(), customer:form.get('name'), email:form.get('email'), phone:form.get('phone'),
       address:{city:form.get('city'),street:form.get('street'),building:form.get('building'),floor:form.get('floor'),apartment:form.get('apartment'),landmark:form.get('landmark'),preferredTime:form.get('preferredTime'),notes:form.get('notes')},
-      payment:'Cash on delivery', deliveryMethod:'Aramex', deliveryFee:DELIVERY_FEE, deliveryTime:'2–3 business days across Lebanon', status:'Order submitted', items, subtotal, discount:c.discount, total
+      payment:'Cash on delivery', deliveryMethod:'Wakilni', deliveryFee:DELIVERY_FEE, deliveryTime:'2-4 working days across Lebanon', status:'Order submitted', items, subtotal, discount:c.discount, total
     };
     orders.push(order);
     localStorage.setItem('nitaOrders', JSON.stringify(orders));
@@ -2511,7 +2511,7 @@ placeOrder=async function(){
     if (!document.querySelector('.delivery-mini-note')) {
       const note = document.createElement('p');
       note.className = 'delivery-mini-note muted';
-      note.textContent = 'Aramex delivery across Lebanon · $7 delivery fee · 2–3 business days.';
+      note.textContent = 'Wakilni delivery across Lebanon · $5 delivery fee · 2-4 working days.';
       form.querySelector('h3')?.insertAdjacentElement('afterend', note);
     }
     renderCheckoutSummary();
@@ -2523,7 +2523,7 @@ placeOrder=async function(){
 
 /* === CART QUANTITY + INVENTORY + ORDER ROADMAP FINAL PATCH === */
 (function(){
-  const DELIVERY_FEE_FINAL = 7;
+  const DELIVERY_FEE_FINAL = 5;
   const moneyFinal = (n)=> (typeof money==='function'?money(n):('$'+Number(n||0).toFixed(2)));
   const read = (k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f))}catch(e){return f}};
   const write = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
@@ -2600,7 +2600,7 @@ placeOrder=async function(){
     let discount=0, msg='';
     try{const c=typeof couponState==='function'?couponState(subtotal):{discount:0,message:''}; discount=Number(c.discount||0); msg=c.message||'';}catch(e){}
     const total=Math.max(0,subtotal-discount)+DELIVERY_FEE_FINAL;
-    box.innerHTML = rows + '<hr>' + `<div class="summary-line"><span>Subtotal</span><b>${moneyFinal(subtotal)}</b></div>` + msg + `<div class="summary-line"><span>Aramex delivery fee</span><b>${moneyFinal(DELIVERY_FEE_FINAL)}</b></div><p class="delivery-note">Delivery all over Lebanon in 2–3 business days.</p><div class="summary-line summary-total"><span>Total</span><b>${moneyFinal(total)}</b></div>`;
+    box.innerHTML = rows + '<hr>' + `<div class="summary-line"><span>Subtotal</span><b>${moneyFinal(subtotal)}</b></div>` + msg + `<div class="summary-line"><span>Wakilni delivery fee</span><b>${moneyFinal(DELIVERY_FEE_FINAL)}</b></div><p class="delivery-note">Delivery all over Lebanon in 2-4 working days.</p><div class="summary-line summary-total"><span>Total</span><b>${moneyFinal(total)}</b></div>`;
   };
 
   window.placeOrder = async function(){
@@ -2617,7 +2617,7 @@ placeOrder=async function(){
       const unit=unitPrice(p,i); subtotal+=unit*qty; items.push({id:p.id,name:p.name,size:i.size,qty,price:unit,total:unit*qty});
     }
     let discount=0; try{discount=Number((typeof couponState==='function'?couponState(subtotal):{}).discount||0)}catch(e){}
-    const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:form.get('name'),email:String(form.get('email')||'').toLowerCase(),phone:form.get('phone'),address:{city:form.get('city'),street:form.get('street'),building:form.get('building'),floor:form.get('floor'),apartment:form.get('apartment'),landmark:form.get('landmark'),preferredTime:form.get('preferredTime'),notes:form.get('notes')},payment:'Cash on delivery',deliveryMethod:'Aramex',deliveryFee:DELIVERY_FEE_FINAL,deliveryTime:'2–3 business days across Lebanon',status:'Order submitted',items,subtotal,discount,total:Math.max(0,subtotal-discount)+DELIVERY_FEE_FINAL};
+    const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:form.get('name'),email:String(form.get('email')||'').toLowerCase(),phone:form.get('phone'),address:{city:form.get('city'),street:form.get('street'),building:form.get('building'),floor:form.get('floor'),apartment:form.get('apartment'),landmark:form.get('landmark'),preferredTime:form.get('preferredTime'),notes:form.get('notes')},payment:'Cash on delivery',deliveryMethod:'Wakilni',deliveryFee:DELIVERY_FEE_FINAL,deliveryTime:'2-4 working days across Lebanon',status:'Order submitted',items,subtotal,discount,total:Math.max(0,subtotal-discount)+DELIVERY_FEE_FINAL};
     const orders=read('nitaOrders',[]); orders.push(order); write('nitaOrders',orders);
     // decrease private admin stock quantity after order submission
     for(const item of items){
@@ -2854,7 +2854,7 @@ placeOrder=async function(){
 
 /* === FINAL PATCH: empty cart checkout guard + saved address selector + professional delivery box === */
 (function(){
-  const DELIVERY_FEE_NITA=7;
+  const DELIVERY_FEE_NITA=5;
   const read=(k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f))}catch(e){return f}};
   const write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
   const esc=(s)=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -2918,7 +2918,7 @@ placeOrder=async function(){
     const form=document.getElementById('checkoutForm'); if(!form || document.getElementById('deliveryInfoBox'))return;
     const payment=form.querySelector('h3:nth-of-type(2)') || form.querySelector('.payment-option');
     const box=document.createElement('div'); box.id='deliveryInfoBox'; box.className='delivery-info-box';
-    box.innerHTML='<div><b>Aramex delivery across Lebanon</b><span>Estimated delivery: 2–3 business days.</span></div><strong>$7 delivery fee</strong>';
+    box.innerHTML='<div><b>Wakilni delivery across Lebanon</b><span>Estimated delivery: 2-4 working days.</span></div><strong>$5 delivery fee</strong>';
     if(payment) form.insertBefore(box,payment); else form.appendChild(box);
   }
   function disableCheckoutIfEmpty(){
@@ -2948,9 +2948,9 @@ placeOrder=async function(){
     if(oldRenderSummary) oldRenderSummary();
     const box=document.getElementById('checkoutSummary'); if(!box)return;
     const cart=read('nitaCart',[]);
-    if(!cart.length){box.innerHTML='<p class="muted">Your cart is empty.</p><hr><div class="summary-line"><span>Subtotal</span><b>$0.00</b></div><div class="summary-line"><span>Aramex delivery fee</span><b>$0.00</b></div><div class="summary-line summary-total"><span>Total</span><b>$0.00</b></div>';}
+    if(!cart.length){box.innerHTML='<p class="muted">Your cart is empty.</p><hr><div class="summary-line"><span>Subtotal</span><b>$0.00</b></div><div class="summary-line"><span>Wakilni delivery fee</span><b>$0.00</b></div><div class="summary-line summary-total"><span>Total</span><b>$0.00</b></div>';}
     else if(!box.querySelector('.delivery-note')){
-      const total=box.querySelector('.summary-total'); const p=document.createElement('p'); p.className='delivery-note'; p.textContent='Delivery all over Lebanon in 2–3 business days.'; if(total) box.insertBefore(p,total);
+      const total=box.querySelector('.summary-total'); const p=document.createElement('p'); p.className='delivery-note'; p.textContent='Delivery all over Lebanon in 2-4 working days.'; if(total) box.insertBefore(p,total);
     }
     disableCheckoutIfEmpty();
   };
@@ -2969,7 +2969,7 @@ placeOrder=async function(){
 /* === NITA STYLE PREMIUM ADDRESS + CHECKOUT FINAL SAFE PATCH === */
 (function(){
   const DELIVERY_THRESHOLD = 150;
-  const DELIVERY_FEE = 7;
+  const DELIVERY_FEE = 5;
   const ORDER_STEPS = ['Order submitted','Confirmed','Packing','Out for delivery','Delivered'];
   const esc = (v)=>String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const read = (k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f));}catch(e){return f;}};
@@ -3093,7 +3093,7 @@ placeOrder=async function(){
     const cart=currentCart(); const ps=productList(); let subtotal=0;
     const rows=cart.length?cart.map(item=>{const p=ps.find(x=>String(x.id)===String(item.id)); const qty=Number(item.qty||1); const price=Number(p?.salePrice||p?.price||item.price||0); subtotal+=price*qty; return `<div class="premium-summary-item"><span><b>${esc(p?.name||item.name||'Product')}</b><small>${esc(item.size||'')} × ${qty}</small></span><strong>${moneySafe(price*qty)}</strong></div>`;}).join(''):'<p class="muted">Your cart is empty.</p>';
     const discount=couponDiscount(subtotal); const fee=deliveryFee(subtotal); const total=Math.max(0,subtotal-discount)+fee;
-    box.innerHTML=`${rows}<hr><div class="summary-line"><span>Subtotal</span><b>${moneySafe(subtotal)}</b></div>${discount>0?`<div class="summary-line discount-line"><span>Discount</span><b>-${moneySafe(discount)}</b></div>`:''}<div class="summary-line"><span>Aramex delivery</span><b>${fee?moneySafe(fee):'Free'}</b></div><p class="delivery-note">Aramex delivery across Lebanon. $7 for orders under $150. Estimated delivery: 2–3 business days.</p><div class="summary-line summary-total"><span>Total</span><b>${moneySafe(total)}</b></div>`;
+    box.innerHTML=`${rows}<hr><div class="summary-line"><span>Subtotal</span><b>${moneySafe(subtotal)}</b></div>${discount>0?`<div class="summary-line discount-line"><span>Discount</span><b>-${moneySafe(discount)}</b></div>`:''}<div class="summary-line"><span>Wakilni delivery</span><b>${fee?moneySafe(fee):'Free'}</b></div><p class="delivery-note">Wakilni delivery across Lebanon. $5 for orders under $150. Estimated delivery: 2-4 working days.</p><div class="summary-line summary-total"><span>Total</span><b>${moneySafe(total)}</b></div>`;
     const submit=document.querySelector('.complete-order-btn'); if(submit){ submit.disabled=!cart.length; submit.classList.toggle('disabled',!cart.length); submit.textContent=cart.length?'COMPLETE ORDER':'CART IS EMPTY'; }
   };
 
@@ -3119,7 +3119,7 @@ placeOrder=async function(){
       area.innerHTML=`<p class="muted">No saved delivery address yet. Add a new delivery address to continue.</p><button class="btn" type="button" onclick="nitaShowCheckoutAddressForm()">ADD NEW DELIVERY ADDRESS</button>`;
       setTimeout(()=>{ if(!document.querySelector('.checkout-address-form-holder')) nitaShowCheckoutAddressForm(); },0);
     }
-    const shipping=document.getElementById('shippingMethodBox'); if(shipping) shipping.innerHTML=`<div><b>Aramex delivery across Lebanon</b><span>$7 delivery fee for orders under $150 · 2–3 business days</span></div><strong>$7</strong>`;
+    const shipping=document.getElementById('shippingMethodBox'); if(shipping) shipping.innerHTML=`<div><b>Wakilni delivery across Lebanon</b><span>$5 delivery fee for orders under $150 · 2-4 working days</span></div><strong>$5</strong>`;
     renderCheckoutSummary();
   };
 
@@ -3145,7 +3145,7 @@ placeOrder=async function(){
     }
     const ps=productList(); const cart=currentCart(); let subtotal=0; const items=[];
     for(const item of cart){ const p=ps.find(x=>String(x.id)===String(item.id)); const qty=Number(item.qty||1); if(!p){ if(typeof toast==='function')toast('A product in your cart is no longer available.'); return; } const price=Number(p.salePrice||p.price||item.price||0); subtotal+=price*qty; items.push({id:p.id,name:p.name,size:item.size,qty,price,total:price*qty}); if(p.quantity!==undefined && p.quantity!==''){ p.quantity=Math.max(0,Number(p.quantity||0)-qty); if(p.quantity<=0){p.status='out-of-stock';p.soldOut=true;} } }
-    const discount=couponDiscount(subtotal); const fee=deliveryFee(subtotal); const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:form.name.value.trim(),email:normalizeEmail(form.email.value),phone:form.phone.value.trim(),address,payment:'Cash on delivery',deliveryMethod:'Aramex',deliveryFee:fee,deliveryTime:'2–3 business days across Lebanon',status:'Order submitted',items,subtotal,discount,total:Math.max(0,subtotal-discount)+fee};
+    const discount=couponDiscount(subtotal); const fee=deliveryFee(subtotal); const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:form.name.value.trim(),email:normalizeEmail(form.email.value),phone:form.phone.value.trim(),address,payment:'Cash on delivery',deliveryMethod:'Wakilni',deliveryFee:fee,deliveryTime:'2-4 working days across Lebanon',status:'Order submitted',items,subtotal,discount,total:Math.max(0,subtotal-discount)+fee};
     const orders=read('nitaOrders',[]); orders.push(order); await saveCloud('nitaOrders',orders); await saveCloud('nitaProducts',ps);
     write('nitaCart',[]); window.cart=[]; if(typeof updateCartCount==='function') updateCartCount(); sessionStorage.removeItem('nitaAppliedCoupon'); location.href='order-success.html';
   };
@@ -3160,7 +3160,7 @@ placeOrder=async function(){
 /* === NITA STYLE CART + CHECKOUT ADDRESS STABILITY PATCH 2026-06-08 === */
 (function(){
   const DELIVERY_THRESHOLD = 150;
-  const DELIVERY_FEE = 7;
+  const DELIVERY_FEE = 5;
   const read = (k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f));}catch(e){return f;}};
   const write = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
   const esc = (v)=>String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -3219,13 +3219,13 @@ placeOrder=async function(){
     }else{
       area.innerHTML=`<p class="muted">No saved delivery address yet. Add a new delivery address to continue.</p><button class="btn" type="button" onclick="nitaShowCheckoutAddressForm()">ADD NEW DELIVERY ADDRESS</button>`;
     }
-    const ship=document.getElementById('shippingMethodBox'); if(ship) ship.innerHTML='<div><b>Aramex delivery across Lebanon</b><span>$7 delivery fee for orders under $150 · 2–3 business days</span></div><strong>$7</strong>';
+    const ship=document.getElementById('shippingMethodBox'); if(ship) ship.innerHTML='<div><b>Wakilni delivery across Lebanon</b><span>$5 delivery fee for orders under $150 · 2-4 working days</span></div><strong>$5</strong>';
     renderCheckoutSummary();
   };
   window.renderCheckoutSummary = function(){
     const box=document.getElementById('checkoutSummary'); if(!box)return; const c=cartList(); const ps=products(); let sub=0;
     const rows=c.length?c.map(item=>{const p=ps.find(x=>String(x.id)===String(item.id)); const qty=Number(item.qty||1); const price=Number(p?.salePrice||p?.price||item.price||0); sub+=price*qty; return `<div class="premium-summary-item"><span><b>${esc(p?.name||item.name||'Product')}</b><small>${esc(item.size||'')} × ${qty}</small></span><strong>${moneySafe(price*qty)}</strong></div>`;}).join(''):'<p class="muted">Your cart is empty.</p>';
-    const fee=deliveryFee(sub); const total=sub+fee; box.innerHTML=`${rows}<hr><div class="summary-line"><span>Subtotal</span><b>${moneySafe(sub)}</b></div><div class="summary-line"><span>Aramex delivery</span><b>${fee?moneySafe(fee):'Free'}</b></div><p class="delivery-note">Aramex delivery across Lebanon. $7 for orders under $150. Estimated delivery: 2–3 business days.</p><div class="summary-line summary-total"><span>Total</span><b>${moneySafe(total)}</b></div>`;
+    const fee=deliveryFee(sub); const total=sub+fee; box.innerHTML=`${rows}<hr><div class="summary-line"><span>Subtotal</span><b>${moneySafe(sub)}</b></div><div class="summary-line"><span>Wakilni delivery</span><b>${fee?moneySafe(fee):'Free'}</b></div><p class="delivery-note">Wakilni delivery across Lebanon. $5 for orders under $150. Estimated delivery: 2-4 working days.</p><div class="summary-line summary-total"><span>Total</span><b>${moneySafe(total)}</b></div>`;
     const btn=document.querySelector('.complete-order-btn'); if(btn){btn.disabled=!c.length; btn.classList.toggle('disabled',!c.length); btn.textContent=c.length?'COMPLETE ORDER':'CART IS EMPTY';}
   };
   window.placeOrder = async function(){
@@ -3235,7 +3235,7 @@ placeOrder=async function(){
     if(!validAddress(address||{})){ if(typeof toast==='function')toast('Please add and save a delivery address.'); nitaShowCheckoutAddressForm(); return; }
     const ps=products(); let sub=0; const items=[];
     for(const item of c){ const p=ps.find(x=>String(x.id)===String(item.id)); if(!p) continue; const qty=Number(item.qty||1); const price=Number(p.salePrice||p.price||item.price||0); sub+=price*qty; items.push({id:p.id,name:p.name,size:item.size,qty,price,total:price*qty}); if(p.quantity!==undefined&&p.quantity!==''){p.quantity=Math.max(0,Number(p.quantity||0)-qty); if(p.quantity<=0)p.status='out-of-stock';} }
-    const fee=deliveryFee(sub); const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:form.name.value.trim(),email:String(form.email.value||'').toLowerCase(),phone:form.phone.value.trim(),address,payment:'Cash on delivery',deliveryMethod:'Aramex',deliveryFee:fee,deliveryTime:'2–3 business days across Lebanon',status:'Order submitted',items,subtotal:sub,discount:0,total:sub+fee};
+    const fee=deliveryFee(sub); const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:form.name.value.trim(),email:String(form.email.value||'').toLowerCase(),phone:form.phone.value.trim(),address,payment:'Cash on delivery',deliveryMethod:'Wakilni',deliveryFee:fee,deliveryTime:'2-4 working days across Lebanon',status:'Order submitted',items,subtotal:sub,discount:0,total:sub+fee};
     const orders=read('nitaOrders',[]); orders.push(order); write('nitaOrders',orders); write('nitaProducts',ps); try{if(typeof saveCloudKey==='function'){await saveCloudKey('nitaOrders',orders); await saveCloudKey('nitaProducts',ps);}}catch(e){console.warn(e)} setCart([]); location.href='order-success.html';
   };
   function boot(){ try{renderCartPanel();}catch(e){} if(document.getElementById('checkoutForm')){try{nitaPremiumCheckoutInit();}catch(e){console.error(e)}} }
@@ -3245,7 +3245,7 @@ placeOrder=async function(){
 
 /* === NITA STYLE FINAL CHECKOUT/CART ADDRESS HOTFIX 2026-06-08 === */
 (function(){
-  const DELIVERY_FEE = 7;
+  const DELIVERY_FEE = 5;
   const DELIVERY_THRESHOLD = 150;
   const esc = (v)=>String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const read = (k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f));}catch(e){return f;}};
@@ -3319,14 +3319,14 @@ placeOrder=async function(){
     } else {
       area.innerHTML=`<p class="muted">No saved delivery address yet. Add a new delivery address to continue.</p><button class="btn" type="button" onclick="nitaShowCheckoutAddressForm()">ADD NEW DELIVERY ADDRESS</button>`;
     }
-    const ship=document.getElementById('shippingMethodBox'); if(ship) ship.innerHTML='<div><b>Aramex delivery across Lebanon</b><span>$7 delivery fee for orders under $150 · 2–3 business days</span></div><strong>$7</strong>';
+    const ship=document.getElementById('shippingMethodBox'); if(ship) ship.innerHTML='<div><b>Wakilni delivery across Lebanon</b><span>$5 delivery fee for orders under $150 · 2-4 working days</span></div><strong>$5</strong>';
     const payment=document.querySelector('.payment-box'); if(payment) payment.innerHTML='<label class="payment-row disabled-payment"><input type="radio" disabled><span><b>Credit card / online payment</b><small>Coming soon</small></span></label><label class="payment-row active-payment"><input type="radio" name="payment" value="Cash on delivery" checked><span><b>Cash on Delivery (COD)</b><small>Cash on delivery is ONLY accepted in Lebanon, and payments must be in USD.</small></span></label>';
     renderCheckoutSummary();
   };
   window.renderCheckoutSummary=function(){
     const box=document.getElementById('checkoutSummary'); if(!box)return; const c=cartList(); const ps=products(); let sub=0;
     const rows=c.length?c.map(item=>{const p=ps.find(x=>String(x.id)===String(item.id)); const qty=Number(item.qty||1); const price=Number(p?.salePrice||p?.price||item.price||0); sub+=price*qty; return `<div class="premium-summary-item"><span><b>${esc(p?.name||item.name||'Product')}</b><small>${esc(item.size||'')} × ${qty}</small></span><strong>${moneySafe(price*qty)}</strong></div>`;}).join(''):'<p class="muted">Your cart is empty.</p>';
-    const fee=deliveryFee(sub); const total=sub+fee; box.innerHTML=`${rows}<hr><div class="summary-line"><span>Subtotal</span><b>${moneySafe(sub)}</b></div><div class="summary-line"><span>Aramex delivery</span><b>${fee?moneySafe(fee):'Free'}</b></div><div class="summary-line summary-total"><span>Total</span><b>${moneySafe(total)}</b></div>`;
+    const fee=deliveryFee(sub); const total=sub+fee; box.innerHTML=`${rows}<hr><div class="summary-line"><span>Subtotal</span><b>${moneySafe(sub)}</b></div><div class="summary-line"><span>Wakilni delivery</span><b>${fee?moneySafe(fee):'Free'}</b></div><div class="summary-line summary-total"><span>Total</span><b>${moneySafe(total)}</b></div>`;
     const btn=document.querySelector('.complete-order-btn'); if(btn){btn.disabled=!c.length; btn.classList.toggle('disabled',!c.length); btn.textContent=c.length?'COMPLETE ORDER':'CART IS EMPTY';}
   };
   window.placeOrder=async function(){
@@ -3336,7 +3336,7 @@ placeOrder=async function(){
     if(!validAddress(address||{})){ if(typeof toast==='function')toast('Please add and save a delivery address.'); nitaShowCheckoutAddressForm(); return; }
     const ps=products(); let sub=0; const items=[];
     for(const item of c){ const p=ps.find(x=>String(x.id)===String(item.id)); if(!p) continue; const qty=Number(item.qty||1); const price=Number(p.salePrice||p.price||item.price||0); sub+=price*qty; items.push({id:p.id,name:p.name,size:item.size,qty,price,total:price*qty}); if(p.quantity!==undefined&&p.quantity!==''){p.quantity=Math.max(0,Number(p.quantity||0)-qty); if(p.quantity<=0)p.status='out-of-stock';} }
-    const fee=deliveryFee(sub); const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:form.name.value.trim(),email:String(form.email.value||'').toLowerCase(),phone:form.phone.value.trim(),address,payment:'Cash on delivery',deliveryMethod:'Aramex',deliveryFee:fee,deliveryTime:'2–3 business days across Lebanon',status:'Order submitted',items,subtotal:sub,discount:0,total:sub+fee};
+    const fee=deliveryFee(sub); const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer:form.name.value.trim(),email:String(form.email.value||'').toLowerCase(),phone:form.phone.value.trim(),address,payment:'Cash on delivery',deliveryMethod:'Wakilni',deliveryFee:fee,deliveryTime:'2-4 working days across Lebanon',status:'Order submitted',items,subtotal:sub,discount:0,total:sub+fee};
     const orders=read('nitaOrders',[]); orders.push(order); write('nitaOrders',orders); write('nitaProducts',ps); try{if(typeof saveCloudKey==='function'){await saveCloudKey('nitaOrders',orders); await saveCloudKey('nitaProducts',ps);}}catch(e){console.warn(e)} setCart([]); location.href='order-success.html';
   };
   function boot(){ try{renderCartPanel();}catch(e){} if(document.getElementById('checkoutForm')){try{nitaPremiumCheckoutInit();}catch(e){console.error(e)}} }
@@ -3498,7 +3498,7 @@ placeOrder=async function(){
 /* === NITA STYLE ORDER + EMAIL + SUCCESS FINAL RELIABILITY PATCH 2026-06-08 === */
 (function(){
   const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
-  const DELIVERY_FEE = 7;
+  const DELIVERY_FEE = 5;
   const DELIVERY_THRESHOLD = 150;
   const ORDER_STEPS = ['Order submitted','Confirmed','Packing','Out for delivery','Delivered'];
   function readJSON(k,f){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f));}catch(e){return f;}}
@@ -3608,7 +3608,7 @@ placeOrder=async function(){
     await cloudLoad(); const products=getLocalProducts(); let subtotal=0; const items=[];
     cart.forEach(item=>{const p=products.find(x=>String(x.id)===String(item.id)); if(!p)return; const qty=Math.max(1,Number(item.qty||1)); const price=Number(p.salePrice||p.price||item.price||0); subtotal+=price*qty; items.push({id:p.id,name:p.name,size:item.size||'One Size',qty,price,total:price*qty}); if(p.quantity!==undefined && p.quantity!==''){p.quantity=Math.max(0,Number(p.quantity||0)-qty); if(p.quantity<=0)p.status='out-of-stock';}});
     const fee=subtotal>0 && subtotal<DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
-    const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer,email,phone,address,payment:'Cash on Delivery',deliveryMethod:'Aramex',deliveryFee:fee,deliveryTime:'2–3 business days across Lebanon',status:'Order submitted',items,subtotal,discount:0,total:subtotal+fee};
+    const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer,email,phone,address,payment:'Cash on Delivery',deliveryMethod:'Wakilni',deliveryFee:fee,deliveryTime:'2-4 working days across Lebanon',status:'Order submitted',items,subtotal,discount:0,total:subtotal+fee};
     const orders=readJSON('nitaOrders',[]); orders.push(order);
     await cloudSet('nitaOrders',orders); await cloudSet('nitaProducts',products); writeJSON('nitaLastOrder',order);
     const users=userMap(); if(users[email]){users[email].orders=users[email].orders||[]; users[email].orders.push(order.id); await cloudSet('nitaUsersByEmail',users);}
@@ -3640,7 +3640,7 @@ placeOrder=async function(){
   window.renderOrderSuccess=function(){
     const root=document.getElementById('orderSuccessRoot'); if(!root)return;
     const order=readJSON('nitaLastOrder',null); const emailError=localStorage.getItem('nitaLastEmailError');
-    root.innerHTML=`<section class="order-success-wrap"><div class="success-mark"><span>✓</span></div><p class="eyebrow">Order received</p><h1>Thank you for your purchase</h1><p class="muted">Your Nita Style order has been submitted successfully. We will prepare your order and contact you if any detail needs confirmation.</p>${order?`<div class="success-summary"><div><span>Order number</span><b>${safe(order.id)}</b></div><div><span>Total</span><b>${money2(order.total)}</b></div><div><span>Delivery</span><b>Aramex · 2–3 business days</b></div><div><span>Payment</span><b>Cash on Delivery</b></div></div>`:''}${emailError?`<p class="email-warning">${safe(emailError)}</p>`:''}<div class="success-actions"><a class="btn" href="shop.html">CONTINUE SHOPPING</a><a class="btn light" href="account.html">VIEW MY ORDER</a></div></section>`;
+    root.innerHTML=`<section class="order-success-wrap"><div class="success-mark"><span>✓</span></div><p class="eyebrow">Order received</p><h1>Thank you for your purchase</h1><p class="muted">Your Nita Style order has been submitted successfully. We will prepare your order and contact you if any detail needs confirmation.</p>${order?`<div class="success-summary"><div><span>Order number</span><b>${safe(order.id)}</b></div><div><span>Total</span><b>${money2(order.total)}</b></div><div><span>Delivery</span><b>Wakilni · 2-4 working days</b></div><div><span>Payment</span><b>Cash on Delivery</b></div></div>`:''}${emailError?`<p class="email-warning">${safe(emailError)}</p>`:''}<div class="success-actions"><a class="btn" href="shop.html">CONTINUE SHOPPING</a><a class="btn light" href="account.html">VIEW MY ORDER</a></div></section>`;
   };
   document.addEventListener('DOMContentLoaded',function(){if(document.getElementById('orderSuccessRoot')) renderOrderSuccess();});
 })();
@@ -3648,7 +3648,7 @@ placeOrder=async function(){
 
 /* === NITA STYLE FINAL COUPON TOTAL CALCULATION FIX 2026-06-08 === */
 (function(){
-  const DELIVERY_FEE = 7;
+  const DELIVERY_FEE = 5;
   const DELIVERY_THRESHOLD = 150;
   const EMAIL_RE = /^\S+@\S+\.\S+$/;
   function read(k,f){ try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f));}catch(e){return f;} }
@@ -3718,7 +3718,7 @@ placeOrder=async function(){
     if(applied && typed && applied===typed){ result=calculateDiscount(applied,email,subtotal); if(Number(result.discount)<=0){ setAppliedCode(''); note='<p class="discount-bad">Coupon code is expired, invalid, already used, or no discount is applicable.</p>'; } }
     else if(typed){ note='<p class="muted">Click Apply to validate this coupon before placing your order.</p>'; }
     const discount=Math.min(subtotal,Number(result.discount||0)); const fee=shippingFee(subtotal); const total=Math.max(0,subtotal-discount)+fee;
-    box.innerHTML=`${rows}<hr><div class="summary-line"><span>Subtotal</span><b>${moneyX(subtotal)}</b></div>${discount>0?`<div class="summary-line discount-line"><span>Discount</span><b>-${moneyX(discount)}</b></div>`:''}<div class="summary-line"><span>Aramex delivery</span><b>${fee?moneyX(fee):'Free'}</b></div><div class="summary-line summary-total"><span>Total</span><b>${moneyX(total)}</b></div>${note}`;
+    box.innerHTML=`${rows}<hr><div class="summary-line"><span>Subtotal</span><b>${moneyX(subtotal)}</b></div>${discount>0?`<div class="summary-line discount-line"><span>Discount</span><b>-${moneyX(discount)}</b></div>`:''}<div class="summary-line"><span>Wakilni delivery</span><b>${fee?moneyX(fee):'Free'}</b></div><div class="summary-line summary-total"><span>Total</span><b>${moneyX(total)}</b></div>${note}`;
   };
   window.placeOrder=async function(){
     const form=document.getElementById('checkoutForm'); if(!form) return;
@@ -3736,7 +3736,7 @@ placeOrder=async function(){
     cart.forEach(item=>{ const p=products.find(x=>String(x.id)===String(item.id)); if(!p) return; const qty=Math.max(1,Number(item.qty||1)); const price=Number(p.salePrice||p.price||item.price||0); subtotal+=price*qty; items.push({id:p.id,name:p.name,size:item.size||'One Size',qty,price,total:price*qty}); if(p.quantity!==undefined && p.quantity!==''){ p.quantity=Math.max(0,Number(p.quantity||0)-qty); if(p.quantity<=0) p.status='out-of-stock'; }});
     const result=applied?calculateDiscount(applied,email,subtotal):{discount:0}; const discount=Math.min(subtotal,Number(result.discount||0)); const fee=shippingFee(subtotal); const total=Math.max(0,subtotal-discount)+fee;
     markCouponUsed(result,applied,email);
-    const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer,email,phone,address,payment:'Cash on Delivery',deliveryMethod:'Aramex',deliveryFee:fee,deliveryTime:'2–3 business days across Lebanon',status:'Order submitted',items,subtotal,discount,coupon:applied,total};
+    const order={id:'NS'+Date.now(),date:new Date().toLocaleString(),customer,email,phone,address,payment:'Cash on Delivery',deliveryMethod:'Wakilni',deliveryFee:fee,deliveryTime:'2-4 working days across Lebanon',status:'Order submitted',items,subtotal,discount,coupon:applied,total};
     const orders=read('nitaOrders',[]); orders.push(order); write('nitaOrders',orders); write('nitaProducts',products); write('nitaLastOrder',order);
     try{ if(typeof window.saveCloudKey==='function'){ await window.saveCloudKey('nitaOrders',orders); await window.saveCloudKey('nitaProducts',products); } else if(typeof window.saveSharedKeyNow==='function'){ await window.saveSharedKeyNow('nitaOrders',orders); await window.saveSharedKeyNow('nitaProducts',products); } }catch(e){console.warn(e);}
     const users=read('nitaUsersByEmail',{}); if(users[email]){ users[email].orders=users[email].orders||[]; users[email].orders.push(order.id); write('nitaUsersByEmail',users); try{ await window.saveCloudKey?.('nitaUsersByEmail',users); }catch(e){} }
@@ -4807,7 +4807,7 @@ placeOrder=async function(){
     if(!root) return;
     localStorage.removeItem('nitaLastEmailError');
     const order=readJSON('nitaLastOrder',null);
-    root.innerHTML=`<section class="order-success-wrap"><div class="success-mark"><span>✓</span></div><p class="eyebrow">Order received</p><h1>Thank you for your purchase</h1><p class="muted">Your Nita Style order has been submitted successfully. We will prepare your order and contact you if any detail needs confirmation.</p>${order?`<div class="success-summary"><div><span>Order number</span><b>${safe(order.id)}</b></div><div><span>Total</span><b>${money(order.total)}</b></div><div><span>Delivery</span><b>Aramex · 2–3 business days</b></div><div><span>Payment</span><b>Cash on Delivery</b></div></div>`:''}<div class="success-actions"><a class="btn" href="shop.html">CONTINUE SHOPPING</a><a class="btn light" href="account.html">VIEW MY ORDER</a></div></section>`;
+    root.innerHTML=`<section class="order-success-wrap"><div class="success-mark"><span>✓</span></div><p class="eyebrow">Order received</p><h1>Thank you for your purchase</h1><p class="muted">Your Nita Style order has been submitted successfully. We will prepare your order and contact you if any detail needs confirmation.</p>${order?`<div class="success-summary"><div><span>Order number</span><b>${safe(order.id)}</b></div><div><span>Total</span><b>${money(order.total)}</b></div><div><span>Delivery</span><b>Wakilni · 2-4 working days</b></div><div><span>Payment</span><b>Cash on Delivery</b></div></div>`:''}<div class="success-actions"><a class="btn" href="shop.html">CONTINUE SHOPPING</a><a class="btn light" href="account.html">VIEW MY ORDER</a></div></section>`;
   };
 
   document.addEventListener('DOMContentLoaded',function(){
@@ -5732,3 +5732,174 @@ placeOrder=async function(){
   window.addEventListener('load', function(){ setTimeout(function(){ markSecondImageCards(document); }, 600); });
 })();
 /* === END NITA STYLE ADMIN MULTI-PHOTO APPEND + PRODUCT SECOND PHOTO HOVER ONLY === */
+
+/* === NITA STYLE PRODUCT ADD + AUTH HOME REDIRECT ONLY FIX 2026-06-12 ===
+   Fixes only: admin add-product save reliability and redirect after sign-in/sign-up to homepage.
+   Does not change design, checkout, cart, orders, emails, footer, or other website sections. */
+(function(){
+  const esc = (v='') => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const normEmail = (v='') => String(v||'').trim().toLowerCase();
+  const readJSON = (k,f)=>{ try{ const raw=localStorage.getItem(k); return raw ? JSON.parse(raw) : f; }catch(e){ return f; } };
+  const writeJSON = (k,v)=>{ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){ console.warn(e); } };
+  const msg = (text, ok=true, sticky=false)=>{
+    try{ if(typeof window.nitaNotify==='function') return window.nitaNotify(text, ok, sticky); }catch(e){}
+    try{ if(typeof notify==='function') return notify(text, ok, sticky); }catch(e){}
+    try{ if(typeof toast==='function') return toast(text); }catch(e){}
+    console[ok?'log':'error'](text);
+  };
+  const moneyNum = v => Number(String(v ?? '').trim() || 0);
+  function unique(arr){ const out=[]; (arr||[]).forEach(v=>{ v=String(v||'').trim(); if(v && !out.some(x=>x.toLowerCase()===v.toLowerCase())) out.push(v); }); return out; }
+  function selected(selector){ return unique(Array.from(document.querySelectorAll(selector)).filter(el=>el.classList.contains('on') || el.classList.contains('active') || el.checked).map(el=>el.dataset.size || el.value || el.textContent)); }
+  function products(){ try{ return typeof getProducts==='function' ? getProducts() : readJSON('nitaProducts',[]); }catch(e){ return readJSON('nitaProducts',[]); } }
+  function normalizeProductSafe(p){ try{ if(typeof normalizeProduct==='function') return normalizeProduct(p); }catch(e){} try{ if(typeof normalizeProductStatus==='function') return normalizeProductStatus(p); }catch(e){} return p; }
+  function invalidateStoreCache(){ try{ localStorage.removeItem('nitaStoreSessionCache'); }catch(e){} try{ localStorage.removeItem('nitaStoreCache'); }catch(e){} }
+  async function saveProductsReliably(next){
+    const clean = (Array.isArray(next)?next:[]).map(p=>normalizeProductSafe({...p}));
+    writeJSON('nitaProducts', clean);
+    invalidateStoreCache();
+    try{
+      if(typeof window.nitaSaveKeyStrict==='function') await window.nitaSaveKeyStrict('nitaProducts', clean);
+      else if(typeof window.saveProducts==='function') {
+        const ok = await window.saveProducts(clean);
+        if(ok === false) throw new Error('Cloud save returned false.');
+      } else {
+        const res = await fetch('/.netlify/functions/store',{method:'POST',headers:{'Content-Type':'application/json','Cache-Control':'no-cache'},body:JSON.stringify({key:'nitaProducts',value:clean})});
+        if(!res.ok) throw new Error(await res.text().catch(()=>('Cloud save failed '+res.status)));
+      }
+      writeJSON('nitaProducts', clean);
+      invalidateStoreCache();
+      return true;
+    }catch(err){
+      console.error('Add product cloud save failed:', err);
+      msg('Product was not saved globally: '+(err.message||err)+'. Please check Netlify Functions before adding products.', false, true);
+      return false;
+    }
+  }
+
+  window.addProductAdmin = async function(){
+    const name = String(document.getElementById('pname')?.value || '').trim();
+    const price = moneyNum(document.getElementById('pprice')?.value);
+    if(!name){ msg('Please enter a product name.', false); return false; }
+    if(!price || price <= 0){ msg('Please enter a valid product price.', false); return false; }
+
+    const photos = Array.isArray(window.pendingAdminPhotos) ? window.pendingAdminPhotos.filter(Boolean) : [];
+    const mainIndex = Math.max(0, Math.min(Number(window.pendingAdminMainIndex || 0), Math.max(photos.length - 1, 0)));
+    const available = selected('#sizePicker .pill.on, #sizePicker .pill.active, #sizePicker input:checked');
+    const out = selected('#sizeOutPicker .pill.on, #sizeOutPicker .pill.active, #sizeOutPicker input:checked');
+    const sizes = unique([...(available.length?available:[]), ...out]);
+    const qtyRaw = document.getElementById('pquantity')?.value;
+    const qty = qtyRaw === undefined || qtyRaw === '' ? '' : Math.max(0, Number(qtyRaw));
+    const saleRaw = String(document.getElementById('psale')?.value || '').trim();
+    const color = document.getElementById('pcolor')?.value || 'Black';
+    const style = document.getElementById('pstyle')?.value || 'Clean everyday piece';
+    const section = document.getElementById('phome')?.value || 'trending-now';
+    const product = normalizeProductSafe({
+      id: 'p' + Date.now(),
+      name,
+      price,
+      salePrice: saleRaw === '' ? '' : Number(saleRaw),
+      status: document.getElementById('pstatus')?.value || 'in-stock',
+      category: document.getElementById('pcat')?.value || 'Tops',
+      collection: document.getElementById('pcollection')?.value || 'Everyday Edit',
+      displaySection: section,
+      homeSection: section,
+      note: color + ' · ' + style,
+      sizes: sizes.length ? sizes : ['One Size'],
+      outOfStockSizes: out,
+      quantity: qty,
+      initialQuantity: qty,
+      photos,
+      mainPhotoIndex: mainIndex,
+      img: photos[mainIndex] || photos[0] || 'linear-gradient(135deg,#fff,#ddd)',
+      desc: String(document.getElementById('pdesc')?.value || '').trim() || 'A carefully selected piece for a clean, feminine wardrobe.'
+    });
+
+    msg('Saving product globally...', true, false);
+    try{ if(typeof window.loadSharedStore==='function') await window.loadSharedStore(); }catch(e){ console.warn(e); }
+    const next = products().filter(p => String(p.id) !== String(product.id));
+    next.push(product);
+    const ok = await saveProductsReliably(next);
+    if(!ok) return false;
+
+    window.pendingAdminPhotos = [];
+    window.pendingAdminMainIndex = 0;
+    ['pname','pprice','psale','pdesc','pquantity'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    document.querySelectorAll('#sizePicker .pill.on,#sizePicker .pill.active,#sizeOutPicker .pill.on,#sizeOutPicker .pill.active').forEach(el=>el.classList.remove('on','active'));
+    const input=document.getElementById('pphotos'); if(input) input.value='';
+    const prev=document.getElementById('photoPreview'); if(prev) prev.innerHTML='';
+    try{ await window.loadSharedStore?.(); }catch(e){}
+    try{ await window.renderAdmin?.(); }catch(e){ console.warn(e); }
+    msg('Product added to the website globally.', true);
+    return true;
+  };
+
+  async function sendEmail(payload){
+    if(typeof window.sendStoreEmail==='function') return window.sendStoreEmail(payload);
+    if(typeof window.emailSend==='function') return window.emailSend(payload);
+    const res = await fetch('/.netlify/functions/send-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload||{})});
+    let body={}; try{ body=await res.json(); }catch(e){}
+    if(!res.ok || body.ok===false) throw new Error(body.error||'Email could not be sent.');
+    return body;
+  }
+  const randomCode = ()=>String(Math.floor(100000 + Math.random()*900000));
+  const users = ()=>readJSON('nitaUsersByEmail',{});
+  async function saveUsersReliable(u){
+    writeJSON('nitaUsersByEmail', u||{});
+    try{ if(typeof window.nitaSaveKeyStrict==='function') await window.nitaSaveKeyStrict('nitaUsersByEmail', u||{}); else if(typeof window.saveUsers==='function') await window.saveUsers(u||{}); }catch(e){ console.warn('User cloud save failed:',e); }
+  }
+
+  window.submitAuth = async function(){
+    const root=document.getElementById('loginRoot'); if(!root) return;
+    const authMsg=document.getElementById('authMessage');
+    const pending = readJSON('nitaPendingSignup', null);
+    if(pending && pending.awaitingVerification){
+      const entered=String(document.getElementById('authCode')?.value || '').trim();
+      if(!entered || entered !== String(pending.code)){ if(authMsg) authMsg.textContent='Wrong verification code. Please check your email and try again.'; return; }
+      const all=users(); const email=normEmail(pending.email);
+      const existing=all[email] || {};
+      const user={...existing, email, password:pending.password, firstName:pending.firstName||'', lastName:pending.lastName||'', phone:pending.phone||'', addresses:existing.addresses||[], liked:existing.liked||[], isVerified:true, createdAt:existing.createdAt||Date.now()};
+      all[email]=user;
+      await saveUsersReliable(all);
+      writeJSON('nitaUser', user); localStorage.setItem('nitaSessionEmail', email); localStorage.removeItem('nitaPendingSignup');
+      try{ await sendEmail({type:'discount',to:email,code:'NITA10'}); }catch(e){ console.warn('Welcome code email failed:', e); }
+      if(authMsg) authMsg.textContent='Account verified. Redirecting to homepage...';
+      setTimeout(()=>{ location.href='index.html'; }, 500);
+      return;
+    }
+
+    const email=normEmail(document.getElementById('authEmail')?.value);
+    const password=String(document.getElementById('authPassword')?.value||'');
+    const signupVisible=!!(document.getElementById('signupFields') && document.getElementById('signupFields').style.display !== 'none');
+    if(!/^\S+@\S+\.\S+$/.test(email)){ if(authMsg) authMsg.textContent='Please enter a valid email address.'; return; }
+    if(!password){ if(authMsg) authMsg.textContent='Please enter your password.'; return; }
+    try{ if(typeof window.loadSharedStore==='function') await window.loadSharedStore(); }catch(e){}
+    const all=users();
+    if(!signupVisible){
+      const u=all[email];
+      if(!u || String(u.password||'') !== password){ if(authMsg) authMsg.textContent='Incorrect email or password.'; return; }
+      writeJSON('nitaUser', u); localStorage.setItem('nitaSessionEmail', email); window.currentUser=u;
+      if(authMsg) authMsg.textContent='Signed in. Redirecting to homepage...';
+      setTimeout(()=>{ location.href='index.html'; }, 350);
+      return;
+    }
+    if(all[email]){ if(authMsg) authMsg.textContent='An account already exists with this email. Please sign in.'; return; }
+    const firstName=String(document.getElementById('authFirst')?.value||'').trim();
+    const lastName=String(document.getElementById('authLast')?.value||'').trim();
+    const phone=String(document.getElementById('authPhone')?.value||'').trim();
+    if(!firstName || !lastName || !phone){ if(authMsg) authMsg.textContent='Please complete your first name, last name, and phone number.'; return; }
+    const c=randomCode();
+    const pendingSignup={awaitingVerification:true,email,password,firstName,lastName,phone,code:c,createdAt:Date.now(),codeSentAt:Date.now()};
+    writeJSON('nitaPendingSignup', pendingSignup);
+    try{
+      if(authMsg) authMsg.textContent='Sending verification code...';
+      await sendEmail({type:'verification',to:email,code:c});
+      if(typeof window.renderLoginPage==='function') window.renderLoginPage('signup');
+      const nextMsg=document.getElementById('authMessage'); if(nextMsg) nextMsg.textContent='Verification email sent. Check your inbox.';
+    }catch(e){
+      localStorage.removeItem('nitaPendingSignup');
+      if(authMsg) authMsg.textContent='Email could not be sent. Please try again.';
+      console.error(e);
+    }
+  };
+})();
+/* === END NITA STYLE PRODUCT ADD + AUTH HOME REDIRECT ONLY FIX 2026-06-12 === */

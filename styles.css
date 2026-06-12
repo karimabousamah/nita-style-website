@@ -1546,7 +1546,7 @@ a.btn:not(.light):not(.danger):not(.disabled):hover{
 /* === END NITA STYLE FINAL BUTTON/CART/CHECKOUT POLISH 2026-06-08 === */
 
 /* === NITA STYLE FINAL CART/SHIPPING BUTTON FIX 2026-06-08 === */
-/* Remove the duplicate Aramex box that appears below the Complete Order button. Keep only the Shipping method box. */
+/* Remove the duplicate Wakilni box that appears below the Complete Order button. Keep only the Shipping method box. */
 #deliveryInfoBox,
 .delivery-info-box:not(.shipping-method-box){
   display:none!important;
