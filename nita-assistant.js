@@ -1,7 +1,7 @@
 /* === NITA STYLE AI ASSISTANT ONLY - PREMIUM V6 VERTICAL PRODUCT CARDS === */
 (function(){
   const STEPS=['order submitted','confirmed','packing','out for delivery','delivered'];
-  const QUICK=['Track my order','Gift under $100','Gift under $200','New arrivals','Show dresses','Show tops','Show pants','Shipping & delivery','Size help','Return policy'];
+  const QUICK=['Track my order','Gift under $100','Gift under $200','New arrivals','Show dresses','Show tops','Shipping & delivery','Size help','Return policy'];
   const STOP=new Set(['product','products','search','find','shop','price','collection','want','with','what','recommend','suggest','budget','under','less','than','gift','present','show','most','expensive','latest','new','arrival','arrivals','please','need','looking','for','the','and','you','can','have']);
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
@@ -50,7 +50,7 @@
     $('#nitaAiClose').addEventListener('click',close);
     $('#nitaAiForm').addEventListener('submit',e=>{e.preventDefault();const input=$('#nitaAiInput');const text=input.value.trim();if(!text)return;input.value='';ask(text);});
     const name=firstName();
-    bot(`${name?`Hey ${name}, `:'Hello, '}I’m the Nita Style assistant. Tell me your budget, style, occasion, or size, and I’ll suggest pieces from Nita Style. I can also help with orders, delivery, returns, and contact information.`);
+    bot(`${name?`Hey ${name}, `:'Hello, '}I’m the Nita Style assistant. Tell me your budget, style, occasion, or size, and I’ll suggest pieces from Nita Style. I can also help with orders, delivery, size help, and contact information.`);
     insertSuggestionsOnce();
     revealAfterIntro();
   }
@@ -117,13 +117,14 @@
     if(/cheapest|lowest price|least expensive|low price/.test(q)) return productHelp(q,{sort:'cheap'});
     if(/new|latest|arrival|drop|collection|latest job|newest/.test(q)) return productHelp(q,{collection:'new arrivals'});
     if(/gift|present|birthday|budget|under|less than|maximum|max|recommend|consider|suggest|choose|outfit|style|occasion/.test(q) || budget) return productHelp(q,{budget,gift:/gift|present|birthday/.test(q)});
-    if(/return|refund|exchange/.test(q)) return bot('For returns or exchanges, contact Nita Style as soon as possible with your order number and item details. The team will review the request based on the item condition and order information.');
+    if(/return|refund|exchange/.test(q)) return bot('All purchases from Nita Style are final. We do not accept returns or exchanges, so please review the product, size, color, price, and delivery details carefully before confirming your order.');
     if(/size|fit|xs|small|medium|large|measure/.test(q)) return bot('For sizing, choose your usual size for fitted pieces. If you are between sizes or want a relaxed fit, size up. For exact help, send Nita Style your measurements before ordering.');
     if(/contact|instagram|whatsapp|phone|support/.test(q)) return bot('You can contact Nita Style through the Contact page or Instagram. For order help, include your order number, email, and phone number so the team can find your order quickly.');
     if(/discount|coupon|code|promo|10/.test(q)) return bot('If there is an active sign-up discount or coupon, enter the code at checkout. Some codes are one-time use and may have start and end dates.');
-    if(/dress|top|pants|jacket|bag|accessor|product|shop|find|search|price|shirt|linen|knit|piece|pieces/.test(q)) return productHelp(q,{});
+    if(/pants/.test(q)) return bot('Nita Style does not currently list pants as a shopping category. I can help you with dresses, skirts, t-shirts, tops, bags, scarves, and overalls.');
+    if(/dress|skirt|t-?shirt|top|bag|scarf|overall|accessor|product|shop|find|search|price|shirt|linen|knit|piece|pieces/.test(q)) return productHelp(q,{});
     if(/hello|hi|hey|bonjour|salut/.test(q)){const n=firstName(); return bot(`${n?`Hey ${n}`:'Hi'} — I can help you find the right product by budget, gift idea, category, size, or order status. What are you looking for?`);}
-    bot('I can help you choose products by budget, gift idea, occasion, category, or size. You can also ask me about orders, shipping, returns, discounts, and contact details.');
+    bot('I can help you choose products by budget, gift idea, occasion, category, or size. You can also ask me about orders, shipping, discounts, size help, and contact details.');
   }
 
   function orderHelp(){
@@ -137,7 +138,7 @@
 
   function getBudget(q){ const m=q.match(/(?:\$|usd\s*)?(\d{2,5})(?:\s*(?:\$|usd|dollars))?/i); return m?Number(m[1]):null; }
   function productHelp(q,opts={}){
-    let ps=products().filter(Boolean);
+    let ps=products().filter(Boolean).filter(p=>String(p.category||'').toLowerCase()!=='pants');
     if(!ps.length) return bot('I could not find products yet. Please check the Shop page.');
     const words=q.split(/[^a-z0-9]+/).filter(w=>w.length>2&&!STOP.has(w));
     let list=ps.map((p,idx)=>({p,idx,score:scoreProduct(p,words,q,opts)}));
@@ -251,7 +252,7 @@
     if(/gift|present|birthday/.test(q) && /accessor|bag|top|shirt|dress/.test(hay)) s+=2;
     if(/summer|vacation|beach/.test(q) && /summer|linen|dress|shirt/.test(hay)) s+=3;
     if(/elegant|classy|formal|dinner/.test(q) && /dress|jacket|bag|elegant|refined/.test(hay)) s+=3;
-    if(/casual|everyday|daily/.test(q) && /everyday|pants|top|shirt|knit/.test(hay)) s+=3;
+    if(/casual|everyday|daily/.test(q) && /everyday|top|shirt|knit|dress|skirt/.test(hay)) s+=3;
     if(opts.collection && hay.includes(opts.collection)) s+=5;
     return s||1;
   }

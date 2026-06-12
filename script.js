@@ -6323,3 +6323,129 @@ placeOrder=async function(){
   },160);},{passive:true});
 })();
 /* === END NITA STYLE HOMEPAGE FINAL POLISH ONLY === */
+
+/* FINAL ADMIN CATEGORY + HOMEPAGE WALLPAPER CLEANUP
+   Keeps admin aligned with current homepage: only Shop Now + Explore Collections,
+   and product categories: Dresses, Skirts, T-Shirts, Tops, Bags, Scarves, Overalls. */
+(function(){
+  var FINAL_CATEGORIES = ['Dresses','Skirts','T-Shirts','Tops','Bags','Scarves','Overalls'];
+  window.ADMIN_CATEGORIES = FINAL_CATEGORIES.slice();
+  window.NITA_ADMIN_CATEGORY_OPTIONS = FINAL_CATEGORIES.slice();
+
+  function optionHtml(items, selected){
+    return items.map(function(item){
+      return '<option value="'+ item.replace(/"/g,'&quot;') +'" '+(item===selected?'selected':'')+'>'+item+'</option>';
+    }).join('');
+  }
+
+  function cleanProductCategorySelects(){
+    document.querySelectorAll('#pcat, .edit-category').forEach(function(select){
+      if(!select || select.dataset.nitaFinalCategories === '1') return;
+      var current = select.value;
+      if(FINAL_CATEGORIES.indexOf(current) === -1) current = 'Dresses';
+      select.innerHTML = optionHtml(FINAL_CATEGORIES, current);
+      select.dataset.nitaFinalCategories = '1';
+    });
+  }
+
+  var oldShowAdminSection = window.showAdminSection;
+  if(typeof oldShowAdminSection === 'function'){
+    window.showAdminSection = function(section){
+      var result = oldShowAdminSection.apply(this, arguments);
+      setTimeout(cleanProductCategorySelects, 0);
+      setTimeout(function(){ if(section === 'home-wallpapers' && typeof window.nitaRenderHomepageWallpaperAdmin === 'function') window.nitaRenderHomepageWallpaperAdmin(); }, 0);
+      return result;
+    };
+  }
+
+  var oldRenderAdmin = window.renderAdmin;
+  if(typeof oldRenderAdmin === 'function'){
+    window.renderAdmin = async function(){
+      var result = await oldRenderAdmin.apply(this, arguments);
+      cleanProductCategorySelects();
+      return result;
+    };
+  }
+
+  var WALL_KEY = 'nitaHomepageWallpapers';
+  var DEFAULTS = { shopNow:'', exploreCollections:'' };
+  function readJSON(key, fallback){
+    try { return Object.assign({}, fallback, JSON.parse(localStorage.getItem(key) || '{}')); }
+    catch(e){ return Object.assign({}, fallback); }
+  }
+  function writeJSON(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+  function safeUrl(value){ return String(value || '').replace(/'/g, '%27'); }
+
+  window.nitaRenderHomepageWallpaperAdmin = function(){
+    var root = document.getElementById('homepageWallpapersAdmin');
+    if(!root) return;
+    var stored = readJSON(WALL_KEY, DEFAULTS);
+    var w = { shopNow: stored.shopNow || '', exploreCollections: stored.exploreCollections || '' };
+    if(stored.newCollection){
+      writeJSON(WALL_KEY, w);
+    }
+    function card(label, key, value){
+      var has = !!value;
+      return '<div class="wallpaper-admin-card">'
+        + '<div class="wallpaper-preview '+(has?'has-image':'')+'" style="'+(has ? "background-image:url('"+safeUrl(value)+"')" : '')+'"></div>'
+        + '<div><h3>'+label+'</h3>'
+        + '<p class="muted">Upload the image that appears behind this homepage section.</p>'
+        + '<input class="field" type="file" accept="image/*" onchange="nitaPickHomepageWallpaper(event,\''+key+'\')">'
+        + '<div class="admin-actions"><button type="button" class="btn light" onclick="nitaClearHomepageWallpaper(\''+key+'\')">REMOVE PHOTO</button></div>'
+        + '</div></div>';
+    }
+    root.innerHTML = '<div class="admin-toolbar"><div><h2>Homepage wallpapers</h2>'
+      + '<p class="muted">Choose the two background images shown behind Shop Now and Explore Collections.</p></div>'
+      + '<span class="pill">Homepage</span></div>'
+      + card('Shop Now wallpaper','shopNow',w.shopNow)
+      + card('Explore Collections wallpaper','exploreCollections',w.exploreCollections)
+      + '<button type="button" class="btn" onclick="nitaSaveHomepageWallpapers()">SAVE HOMEPAGE WALLPAPERS</button>'
+      + '<p class="muted small-note">Images are saved to the same global store as your products, so all visitors see the selected wallpapers after saving.</p>';
+  };
+
+  window.nitaPickHomepageWallpaper = function(event, key){
+    var file = event && event.target && event.target.files && event.target.files[0];
+    if(!file || FINAL_CATEGORIES.indexOf(key) !== -1) return;
+    if(key !== 'shopNow' && key !== 'exploreCollections') return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      var stored = readJSON(WALL_KEY, DEFAULTS);
+      var clean = { shopNow: stored.shopNow || '', exploreCollections: stored.exploreCollections || '' };
+      clean[key] = reader.result;
+      writeJSON(WALL_KEY, clean);
+      if(typeof nitaApplyHomepageWallpapers === 'function') nitaApplyHomepageWallpapers();
+      window.nitaRenderHomepageWallpaperAdmin();
+    };
+    reader.readAsDataURL(file);
+  };
+
+  window.nitaClearHomepageWallpaper = function(key){
+    if(key !== 'shopNow' && key !== 'exploreCollections') return;
+    var stored = readJSON(WALL_KEY, DEFAULTS);
+    var clean = { shopNow: stored.shopNow || '', exploreCollections: stored.exploreCollections || '' };
+    clean[key] = '';
+    writeJSON(WALL_KEY, clean);
+    if(typeof nitaApplyHomepageWallpapers === 'function') nitaApplyHomepageWallpapers();
+    window.nitaRenderHomepageWallpaperAdmin();
+  };
+
+  window.nitaSaveHomepageWallpapers = async function(){
+    var stored = readJSON(WALL_KEY, DEFAULTS);
+    var clean = { shopNow: stored.shopNow || '', exploreCollections: stored.exploreCollections || '' };
+    writeJSON(WALL_KEY, clean);
+    if(typeof nitaApplyHomepageWallpapers === 'function') nitaApplyHomepageWallpapers();
+    try{
+      if(typeof storeSet === 'function') await storeSet(WALL_KEY, clean);
+      if(typeof toast === 'function') toast('Homepage wallpapers saved globally.');
+      if(typeof nitaNotify === 'function') nitaNotify('Homepage wallpapers saved globally.', true);
+    }catch(e){
+      if(typeof nitaNotify === 'function') nitaNotify('Could not save wallpapers globally. Check Netlify store settings.', false, true);
+    }
+    window.nitaRenderHomepageWallpaperAdmin();
+  };
+
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(cleanProductCategorySelects, 150);
+    setTimeout(function(){ if(document.getElementById('homepageWallpapersAdmin')) window.nitaRenderHomepageWallpaperAdmin(); }, 150);
+  });
+})();
