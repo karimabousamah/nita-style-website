@@ -81,7 +81,7 @@ exports.handler = async function(event) {
     } else if (type === 'order_status') {
       const order = data.order || {};
       subject = `Nita Style order update ${order.id || ''}`;
-      html = shell('Order update', 'Your order status changed', `<p>Your Nita Style order roadmap has been updated.</p><div style="border:1px solid #111;padding:18px;margin:20px 0"><p style="margin:0 0 8px"><b>Order:</b> ${esc(order.id || '')}</p><p style="margin:0"><b>New status:</b> ${esc(order.status || '')}</p></div><p>You can sign in to your account to follow your order details.</p>`);
+      html = shell('Order update', 'Your order status changed', `<p>Your Nita Style order roadmap has been updated.</p><div style="border:1px solid #111;padding:18px;margin:20px 0"><p style="margin:0 0 8px"><b>Order:</b> ${esc(order.id || '')}</p><p style="margin:0"><b>New status:</b> ${esc(order.status || '')}</p></div>${roadmapEmailHtml(order.status)}<p>You can sign in to your account to follow your order details.</p>`);
     } else if (type === 'admin_order') {
       const order = data.order || {}; recipient = ADMIN_EMAIL;
       subject = `New Nita Style order ${order.id || ''}`;

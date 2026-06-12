@@ -5994,3 +5994,162 @@ placeOrder=async function(){
   }, true);
 })();
 /* === END NITA STYLE LAPTOP ADD-PRODUCT PHOTO APPEND ONLY FIX === */
+
+/* === NITA STYLE PRODUCT PHOTO ORDER + DUPLICATE FIX ONLY 2026-06-12 ===
+   Fixes only: add-product photo duplicates on laptop and lets admin order photos.
+   First photo in the ordered list is the main product photo; second photo is hover image. */
+(function(){
+  function escapeHtml(v){return String(v ?? '').replace(/[&<>"']/g,function(ch){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]);});}
+  function uniquePhotos(list){
+    var out=[];
+    (Array.isArray(list)?list:[]).forEach(function(url){
+      url=String(url||'');
+      if(url && out.indexOf(url)===-1) out.push(url);
+    });
+    return out;
+  }
+  function readAsDataUrls(files, done){
+    var list=Array.prototype.slice.call(files||[]);
+    if(!list.length){done([]);return;}
+    Promise.all(list.map(function(file){
+      return new Promise(function(resolve){
+        try{
+          var reader=new FileReader();
+          reader.onload=function(e){resolve(e.target.result||'');};
+          reader.onerror=function(){resolve('');};
+          reader.readAsDataURL(file);
+        }catch(err){resolve('');}
+      });
+    })).then(function(urls){done(urls.filter(Boolean));});
+  }
+  function renderOrderedPhotos(){
+    var box=document.getElementById('photoPreview');
+    if(!box) return;
+    window.pendingAdminPhotos=uniquePhotos(window.pendingAdminPhotos);
+    window.pendingAdminMainIndex=0;
+    var photos=window.pendingAdminPhotos;
+    box.innerHTML=photos.map(function(url,i){
+      return '<div class="admin-thumb photo-order-thumb">'
+        + '<img src="'+escapeHtml(url)+'" alt="Product photo '+(i+1)+'">'
+        + '<span>Photo '+(i+1)+'</span>'
+        + '<div class="photo-order-controls">'
+        + '<button type="button" aria-label="Move photo left" onclick="movePendingPhoto('+i+',-1)" '+(i===0?'disabled':'')+'>←</button>'
+        + '<button type="button" aria-label="Move photo right" onclick="movePendingPhoto('+i+',1)" '+(i===photos.length-1?'disabled':'')+'>→</button>'
+        + '<button type="button" aria-label="Remove photo" onclick="removePendingPhoto('+i+')">×</button>'
+        + '</div>'
+        + '</div>';
+    }).join('') + (photos.length ? '<p class="muted admin-photo-note">Drag by order using the arrows. Photo 1 is the main image. Photo 2 is the hover image on desktop.</p>' : '');
+  }
+  window.movePendingPhoto=function(index, direction){
+    var photos=uniquePhotos(window.pendingAdminPhotos);
+    index=Number(index); direction=Number(direction);
+    var target=index+direction;
+    if(target<0 || target>=photos.length) return;
+    var temp=photos[index]; photos[index]=photos[target]; photos[target]=temp;
+    window.pendingAdminPhotos=photos;
+    window.pendingAdminMainIndex=0;
+    renderOrderedPhotos();
+  };
+  window.removePendingPhoto=function(index){
+    var photos=uniquePhotos(window.pendingAdminPhotos);
+    photos.splice(Number(index),1);
+    window.pendingAdminPhotos=photos;
+    window.pendingAdminMainIndex=0;
+    renderOrderedPhotos();
+  };
+  window.setPendingMainPhoto=function(){
+    // Main selector removed: ordered Photo 1 is always the main product photo.
+    window.pendingAdminMainIndex=0;
+    renderOrderedPhotos();
+  };
+  window.previewAdminPhotos=function(event){
+    var input=event && event.target;
+    readAsDataUrls(input ? input.files : [], function(urls){
+      var existing=uniquePhotos(window.pendingAdminPhotos);
+      window.pendingAdminPhotos=uniquePhotos(existing.concat(urls||[]));
+      window.pendingAdminMainIndex=0;
+      renderOrderedPhotos();
+      if(input) input.value='';
+    });
+  };
+  var previousAddProductAdmin=window.addProductAdmin;
+  if(typeof previousAddProductAdmin==='function'){
+    window.addProductAdmin=async function(){
+      window.pendingAdminPhotos=uniquePhotos(window.pendingAdminPhotos);
+      window.pendingAdminMainIndex=0;
+      return previousAddProductAdmin.apply(this, arguments);
+    };
+  }
+  document.addEventListener('change', function(e){
+    var input=e.target && e.target.closest && e.target.closest('#pphotos');
+    if(!input) return;
+    // Let older listeners call previewAdminPhotos too; duplicate protection above makes it safe.
+    setTimeout(renderOrderedPhotos, 80);
+  }, true);
+  window.addEventListener('load', function(){ setTimeout(renderOrderedPhotos, 300); });
+})();
+/* === END PRODUCT PHOTO ORDER + DUPLICATE FIX ONLY === */
+
+
+/* === NITA STYLE ADMIN ROADMAP + STATUS EMAIL PREMIUM ONLY FIX 2026-06-12 ===
+   Changes only: admin order roadmap display and status-update email roadmap markup. */
+(function(){
+  const STEPS = ['Order submitted','Confirmed','Packing','Out for delivery','Delivered'];
+  function esc(v){return String(v ?? '').replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];});}
+  function normStatus(status){
+    const s=String(status||'Order submitted').trim();
+    if(/^new order$/i.test(s)) return 'Order submitted';
+    if(/^preparing$/i.test(s)) return 'Packing';
+    return s || 'Order submitted';
+  }
+  function premiumRoadmap(status){
+    const current=normStatus(status);
+    if(/^cancelled$/i.test(current)){
+      return '<div class="order-roadmap-wrap admin-premium-roadmap"><div class="order-roadmap"><span class="done">Cancelled</span></div></div>';
+    }
+    let idx=STEPS.findIndex(s=>s.toLowerCase()===current.toLowerCase());
+    if(idx<0) idx=0;
+    return '<div class="order-roadmap-wrap admin-premium-roadmap"><div class="order-roadmap">'+STEPS.map(function(step,i){
+      return '<span class="'+(i<=idx?'done':'')+'">'+esc(step)+'</span>';
+    }).join('')+'</div></div>';
+  }
+  window.nitaAdminPremiumRoadmapHtml = premiumRoadmap;
+  window.nitaAdminRoadmapHtml = premiumRoadmap;
+  function orders(){try{return (typeof getJSON==='function'?getJSON('nitaOrders',[]):JSON.parse(localStorage.getItem('nitaOrders')||'[]'))||[];}catch(e){return [];}}
+  function apply(){
+    if(!/admin\.html$/i.test(location.pathname)) return;
+    const os=orders();
+    document.querySelectorAll('.admin-order-roadmap').forEach(el=>el.remove());
+    document.querySelectorAll('.admin-premium-roadmap').forEach(el=>el.remove());
+    Array.from(document.querySelectorAll('.admin-section-page[data-section="orders"] .admin-list-card')).forEach(function(card,i){
+      const o=os[i]; if(!o) return;
+      const textCol=card.querySelector('div'); if(!textCol) return;
+      const anchor=Array.from(textCol.querySelectorAll('p')).pop() || textCol.querySelector('h3');
+      if(anchor) anchor.insertAdjacentHTML('afterend', premiumRoadmap(o.status));
+      else textCol.insertAdjacentHTML('beforeend', premiumRoadmap(o.status));
+    });
+    Array.from(document.querySelectorAll('tr.admin-order-row')).forEach(function(row,i){
+      const o=os[i]; const cell=row.querySelector('td'); if(o&&cell) cell.insertAdjacentHTML('beforeend', premiumRoadmap(o.status));
+    });
+  }
+  const prevRender=window.renderAdmin;
+  window.renderAdmin=async function(){
+    if(typeof prevRender==='function') await prevRender.apply(this, arguments);
+    setTimeout(apply,0);
+  };
+  const prevShow=window.showAdminSection;
+  window.showAdminSection=function(section){
+    const r=prevShow?prevShow.apply(this, arguments):undefined;
+    if(section==='orders') setTimeout(apply,0);
+    return r;
+  };
+  const prevUpdate=window.updateOrder;
+  window.updateOrder=async function(index,status){
+    const r=prevUpdate?await prevUpdate.apply(this, arguments):undefined;
+    setTimeout(apply,0);
+    return r;
+  };
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(apply,500));
+  window.addEventListener('load',()=>setTimeout(apply,800));
+})();
+/* === END NITA STYLE ADMIN ROADMAP + STATUS EMAIL PREMIUM ONLY FIX === */

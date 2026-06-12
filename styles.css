@@ -2282,3 +2282,49 @@ img{content-visibility:auto;}
 
 /* FINAL hide out of stock size text only */
 .size .size-oos-text{display:none!important;}
+
+/* Product photo order controls only */
+.photo-order-thumb{position:relative}.photo-order-thumb span{display:block;margin-top:6px;font-weight:900}.photo-order-controls{display:flex;gap:4px;justify-content:center;margin-top:7px}.photo-order-controls button{width:28px;height:26px;border:1px solid #111;background:#fff;color:#111;font-weight:900;cursor:pointer;line-height:1}.photo-order-controls button:hover:not(:disabled),.photo-order-controls button:active:not(:disabled){background:#111;color:#fff}.photo-order-controls button:disabled{opacity:.25;cursor:not-allowed}.photo-preview .photo-order-thumb{cursor:default;border:1px solid #ddd;background:#fff;padding:8px}.photo-preview .photo-order-thumb:first-child{border:2px solid #111;box-shadow:0 0 0 2px rgba(0,0,0,.06)}
+
+
+/* === Admin order roadmap matches customer account roadmap exactly === */
+.admin-premium-roadmap{margin:18px 0 6px!important;max-width:980px!important;overflow-x:auto!important;}
+.admin-list-card .admin-premium-roadmap .order-roadmap,
+tr.admin-order-row .admin-premium-roadmap .order-roadmap{
+  display:grid!important;
+  grid-template-columns:repeat(5,minmax(96px,1fr))!important;
+  gap:0!important;
+  align-items:start!important;
+  position:relative!important;
+  border-left:0!important;
+  padding:24px 0 10px!important;
+  margin:0!important;
+  width:100%!important;
+  overflow:visible!important;
+}
+.admin-list-card .admin-premium-roadmap .order-roadmap:before,
+tr.admin-order-row .admin-premium-roadmap .order-roadmap:before{
+  content:""!important;position:absolute!important;top:33px!important;left:48px!important;right:48px!important;height:2px!important;background:#e4e4e4!important;z-index:0!important;
+}
+.admin-list-card .admin-premium-roadmap .order-roadmap span,
+tr.admin-order-row .admin-premium-roadmap .order-roadmap span{
+  position:relative!important;z-index:1!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;text-align:center!important;gap:10px!important;min-width:0!important;font-size:12px!important;line-height:1.1!important;font-weight:900!important;letter-spacing:.035em!important;text-transform:uppercase!important;color:#9a9a9a!important;white-space:normal!important;background:transparent!important;border:0!important;padding:0!important;
+}
+.admin-list-card .admin-premium-roadmap .order-roadmap span:before,
+tr.admin-order-row .admin-premium-roadmap .order-roadmap span:before{
+  content:""!important;width:20px!important;height:20px!important;border-radius:999px!important;background:#fff!important;border:3px solid #d8d8d8!important;box-sizing:border-box!important;margin:0!important;display:block!important;
+}
+.admin-list-card .admin-premium-roadmap .order-roadmap span.done,
+tr.admin-order-row .admin-premium-roadmap .order-roadmap span.done{color:#111!important;}
+.admin-list-card .admin-premium-roadmap .order-roadmap span.done:before,
+tr.admin-order-row .admin-premium-roadmap .order-roadmap span.done:before{background:#111!important;border-color:#111!important;}
+@media(max-width:760px){
+  .admin-list-card .admin-premium-roadmap .order-roadmap,
+  tr.admin-order-row .admin-premium-roadmap .order-roadmap{grid-template-columns:repeat(5,76px)!important;width:max-content!important;min-width:380px!important;max-width:none!important;padding:22px 0 8px!important;}
+  .admin-list-card .admin-premium-roadmap .order-roadmap:before,
+  tr.admin-order-row .admin-premium-roadmap .order-roadmap:before{left:38px!important;right:38px!important;top:31px!important;}
+  .admin-list-card .admin-premium-roadmap .order-roadmap span,
+  tr.admin-order-row .admin-premium-roadmap .order-roadmap span{font-size:10px!important;letter-spacing:.025em!important;gap:8px!important;}
+  .admin-list-card .admin-premium-roadmap .order-roadmap span:before,
+  tr.admin-order-row .admin-premium-roadmap .order-roadmap span:before{width:18px!important;height:18px!important;border-width:3px!important;}
+}
