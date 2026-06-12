@@ -73,11 +73,27 @@ exports.handler = async function(event) {
     const steps = ['Order submitted','Confirmed','Packing','Out for delivery','Delivered'];
     const current = normalize(status);
     if (/^cancelled$/i.test(current)) {
-      return `<div style="margin:22px 0;padding:16px;border:1px solid #111;background:#fafafa;text-align:center;font-weight:900;text-transform:uppercase;letter-spacing:1.5px">Cancelled</div>`;
+      return `<div style="margin:26px 0 18px;padding:18px;border:1px solid #111;background:#fafafa;text-align:center;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;color:#111">Cancelled</div>`;
     }
+
     let index = steps.findIndex(step => step.toLowerCase() === current.toLowerCase());
     if (index < 0) index = 0;
-    return `<div style="margin:22px 0;padding:18px;border:1px solid #e7e2da;background:#fbfaf8">${steps.map((step, i) => `<span style="display:inline-block;margin:4px 6px 4px 0;padding:9px 11px;border-radius:999px;border:1px solid ${i <= index ? '#111' : '#ddd'};background:${i <= index ? '#111' : '#fff'};color:${i <= index ? '#fff' : '#777'};font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.8px">${esc(step)}</span>`).join('')}</div>`;
+
+    const dot = (done) => done
+      ? `<span style="display:block;width:20px;height:20px;border-radius:50%;background:#111;border:3px solid #111;box-sizing:border-box;margin:-12px auto 0;line-height:20px;font-size:0">&nbsp;</span>`
+      : `<span style="display:block;width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid #d8d8d8;box-sizing:border-box;margin:-12px auto 0;line-height:20px;font-size:0">&nbsp;</span>`;
+
+    return `
+      <div style="margin:30px 0 22px;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;min-width:560px;border-collapse:collapse;table-layout:fixed;margin:0 auto">
+          <tr>
+            ${steps.map((step, i) => `<td style="width:20%;border-top:2px solid #e4e4e4;text-align:center;padding:0 6px 0">${dot(i <= index)}</td>`).join('')}
+          </tr>
+          <tr>
+            ${steps.map((step, i) => `<td style="width:20%;text-align:center;padding:14px 6px 0;font-size:13px;line-height:1.15;font-weight:900;letter-spacing:.35px;text-transform:uppercase;color:${i <= index ? '#111' : '#9a9a9a'};font-family:Arial,Helvetica,sans-serif">${esc(step)}</td>`).join('')}
+          </tr>
+        </table>
+      </div>`;
   }
 
   try {
