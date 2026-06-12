@@ -5938,3 +5938,59 @@ placeOrder=async function(){
   window.addEventListener('load', function(){ removeOosText(document); termsAndConditionsFooter(); });
 })();
 /* === END FINAL SIZE OOS TEXT REMOVED + FOOTER LABEL DIRECT FIX ONLY === */
+
+
+/* === NITA STYLE LAPTOP ADD-PRODUCT PHOTO APPEND ONLY FIX 2026-06-12 ===
+   Fixes only the admin add-product photo uploader on laptop/desktop.
+   Selecting a new photo now appends to the existing pending gallery instead of replacing it. */
+(function(){
+  function escapeHtml(v){return String(v ?? '').replace(/[&<>"']/g,function(ch){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]);});}
+  function readAsDataUrls(files, done){
+    var list=Array.prototype.slice.call(files||[]);
+    if(!list.length){done([]);return;}
+    Promise.all(list.map(function(file){
+      return new Promise(function(resolve){
+        try{
+          var reader=new FileReader();
+          reader.onload=function(e){resolve(e.target.result||'');};
+          reader.onerror=function(){resolve('');};
+          reader.readAsDataURL(file);
+        }catch(err){resolve('');}
+      });
+    })).then(function(urls){done(urls.filter(Boolean));});
+  }
+  function renderPendingPhotos(){
+    var box=document.getElementById('photoPreview');
+    if(!box) return;
+    var photos=Array.isArray(window.pendingAdminPhotos)?window.pendingAdminPhotos:[];
+    var main=Math.max(0, Math.min(Number(window.pendingAdminMainIndex||0), Math.max(photos.length-1,0)));
+    box.innerHTML=photos.map(function(url,i){
+      return '<button type="button" class="admin-thumb selectable-thumb '+(i===main?'selected-main':'')+'" onclick="setPendingMainPhoto('+i+')"><img src="'+escapeHtml(url)+'" alt="Product photo '+(i+1)+'"><span>'+(i===main?'Main photo':'Photo '+(i+1))+'</span></button>';
+    }).join('') + (photos.length?'<p class="muted admin-photo-note">Photos stay saved here. Click upload again to add more photos.</p>':'');
+  }
+  window.setPendingMainPhoto=function(i){
+    window.pendingAdminMainIndex=Number(i)||0;
+    renderPendingPhotos();
+  };
+  window.previewAdminPhotos=function(event){
+    var input=event && event.target;
+    readAsDataUrls(input ? input.files : [], function(urls){
+      window.pendingAdminPhotos=Array.isArray(window.pendingAdminPhotos)?window.pendingAdminPhotos:[];
+      window.pendingAdminPhotos=window.pendingAdminPhotos.concat((urls||[]).filter(Boolean));
+      if(!Number.isFinite(Number(window.pendingAdminMainIndex))) window.pendingAdminMainIndex=0;
+      renderPendingPhotos();
+      if(input) input.value='';
+    });
+  };
+  // Laptop Safari/Chrome fires the inline onchange after document listeners.
+  // This capture handler owns the #pphotos change event and blocks older replace-style handlers.
+  document.addEventListener('change', function(e){
+    var input=e.target && e.target.closest && e.target.closest('#pphotos');
+    if(!input) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if(typeof e.stopImmediatePropagation==='function') e.stopImmediatePropagation();
+    window.previewAdminPhotos({target:input});
+  }, true);
+})();
+/* === END NITA STYLE LAPTOP ADD-PRODUCT PHOTO APPEND ONLY FIX === */
