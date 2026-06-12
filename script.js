@@ -6449,3 +6449,125 @@ placeOrder=async function(){
     setTimeout(function(){ if(document.getElementById('homepageWallpapersAdmin')) window.nitaRenderHomepageWallpaperAdmin(); }, 150);
   });
 })();
+
+/* === NITA PROFESSIONAL REQUIRED FIELD VALIDATION + COUNTRY PHONE INPUT ONLY === */
+(function(){
+  const COUNTRY_CODES = [
+    ['+961','Lebanon'],['+971','UAE'],['+966','Saudi Arabia'],['+974','Qatar'],['+965','Kuwait'],['+973','Bahrain'],['+968','Oman'],
+    ['+33','France'],['+39','Italy'],['+44','United Kingdom'],['+1','USA / Canada'],['+61','Australia'],['+49','Germany'],['+34','Spain'],
+    ['+90','Turkey'],['+20','Egypt'],['+962','Jordan'],['+963','Syria'],['+964','Iraq'],['+212','Morocco'],['+216','Tunisia'],['+213','Algeria']
+  ];
+  const esc = window.escapeHtml || function(v){return String(v||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+  function codeOptions(selected){
+    selected = selected || '+961';
+    return COUNTRY_CODES.map(function(c){return '<option value="'+c[0]+'" '+(c[0]===selected?'selected':'')+'>'+c[1]+' '+c[0]+'</option>';}).join('');
+  }
+  function splitPhone(value){
+    value = String(value||'').trim();
+    let found = COUNTRY_CODES.find(function(c){return value.indexOf(c[0])===0;});
+    if(found) return {code:found[0], number:value.slice(found[0].length).replace(/[^0-9]/g,'')};
+    return {code:'+961', number:value.replace(/[^0-9]/g,'')};
+  }
+  function phoneHtml(hiddenId, codeId, localId, value){
+    const p = splitPhone(value);
+    return '<div class="nita-phone-wrap nita-field-wrap" data-for="'+hiddenId+'">'
+      + '<div class="nita-phone-row"><select class="nita-phone-code" id="'+codeId+'" onchange="nitaUpdatePhoneHidden(\''+hiddenId+'\',\''+codeId+'\',\''+localId+'\')">'+codeOptions(p.code)+'</select>'
+      + '<input class="nita-phone-number" id="'+localId+'" inputmode="numeric" pattern="[0-9]*" autocomplete="tel-national" placeholder="Phone number" value="'+esc(p.number)+'" oninput="nitaNumbersOnly(this);nitaUpdatePhoneHidden(\''+hiddenId+'\',\''+codeId+'\',\''+localId+'\')">'
+      + '</div><input type="hidden" id="'+hiddenId+'" value="'+esc((p.code+' '+p.number).trim())+'"><div class="nita-error-text">This field is required.</div></div>';
+  }
+  window.nitaNumbersOnly=function(input){ input.value = String(input.value||'').replace(/[^0-9]/g,''); };
+  window.nitaUpdatePhoneHidden=function(hiddenId, codeId, localId){
+    const hidden=document.getElementById(hiddenId), code=document.getElementById(codeId), local=document.getElementById(localId);
+    if(hidden) hidden.value = ((code&&code.value)||'+961') + ' ' + String((local&&local.value)||'').replace(/[^0-9]/g,'');
+    const wrap = hidden && hidden.closest('.nita-field-wrap');
+    if(wrap && String((local&&local.value)||'').trim()) wrap.classList.remove('has-error');
+  };
+  function wrapField(id){
+    const el=document.getElementById(id); if(!el || el.closest('.nita-field-wrap')) return;
+    const wrap=document.createElement('div'); wrap.className='nita-field-wrap'; wrap.dataset.for=id;
+    el.parentNode.insertBefore(wrap, el); wrap.appendChild(el);
+    const err=document.createElement('div'); err.className='nita-error-text'; err.textContent='This field is required.'; wrap.appendChild(err);
+  }
+  function setFieldError(id, on){
+    const el=document.getElementById(id); if(!el) return false;
+    const wrap=el.closest('.nita-field-wrap') || document.querySelector('.nita-field-wrap[data-for="'+id+'"]');
+    if(wrap) wrap.classList.toggle('has-error', !!on); else el.classList.toggle('nita-error', !!on);
+    return !!on;
+  }
+  function clearOnInput(id){
+    const el=document.getElementById(id); if(!el || el.dataset.nitaValidationBound) return;
+    el.dataset.nitaValidationBound='1';
+    el.addEventListener('input',function(){ if(String(el.value||'').trim()) setFieldError(id,false); });
+  }
+  function prepareSignupValidation(){
+    ['authEmail','authPassword','authFirst','authLast'].forEach(function(id){wrapField(id);clearOnInput(id);});
+    if(!document.getElementById('authPhoneLocal')){
+      const old=document.getElementById('authPhone');
+      if(old){ old.outerHTML = phoneHtml('authPhone','authPhoneCode','authPhoneLocal',old.value); }
+    }
+    const local=document.getElementById('authPhoneLocal');
+    if(local && !local.dataset.nitaValidationBound){
+      local.dataset.nitaValidationBound='1';
+      local.addEventListener('input',function(){ if(local.value.trim()) setFieldError('authPhone',false); });
+    }
+  }
+  function validateSignupFields(){
+    prepareSignupValidation();
+    let bad=false;
+    const ids=['authEmail','authPassword','authFirst','authLast'];
+    ids.forEach(function(id){ if(!String(document.getElementById(id)?.value||'').trim()) bad = setFieldError(id,true) || bad; else setFieldError(id,false); });
+    const phoneLocal=document.getElementById('authPhoneLocal');
+    if(!String(phoneLocal?.value||'').trim()) bad = setFieldError('authPhone',true) || bad; else setFieldError('authPhone',false);
+    nitaUpdatePhoneHidden('authPhone','authPhoneCode','authPhoneLocal');
+    const msg=document.getElementById('authMessage');
+    if(bad && msg) msg.textContent='Please complete the required fields.';
+    return !bad;
+  }
+
+  const previousRenderLoginPage = window.renderLoginPage;
+  window.renderLoginPage = function(mode){
+    const result = previousRenderLoginPage ? previousRenderLoginPage.apply(this, arguments) : undefined;
+    setTimeout(function(){
+      const signupVisible = document.getElementById('signupFields') && getComputedStyle(document.getElementById('signupFields')).display !== 'none';
+      if(signupVisible) prepareSignupValidation();
+    },0);
+    return result;
+  };
+  const previousSwitchAuthMode = window.switchAuthMode;
+  window.switchAuthMode = function(mode){
+    const result = previousSwitchAuthMode ? previousSwitchAuthMode.apply(this, arguments) : undefined;
+    setTimeout(function(){ if(mode==='signup') prepareSignupValidation(); },0);
+    return result;
+  };
+  const previousSubmitAuth = window.submitAuth;
+  window.submitAuth = function(){
+    const signupVisible = document.getElementById('signupFields') && getComputedStyle(document.getElementById('signupFields')).display !== 'none';
+    if(signupVisible && !validateSignupFields()) return;
+    return previousSubmitAuth ? previousSubmitAuth.apply(this, arguments) : undefined;
+  };
+
+  function enhanceAccountPhone(){
+    const input=document.getElementById('accPhone'); if(!input || document.getElementById('accPhoneLocal')) return;
+    const value=input.value;
+    input.outerHTML = phoneHtml('accPhone','accPhoneCode','accPhoneLocal',value);
+  }
+  const previousRenderAccount = window.renderAccount;
+  window.renderAccount = async function(){
+    const result = previousRenderAccount ? await previousRenderAccount.apply(this, arguments) : undefined;
+    setTimeout(enhanceAccountPhone,0);
+    return result;
+  };
+  const previousSaveAccountInfo = window.saveAccountInfo;
+  window.saveAccountInfo = function(){
+    nitaUpdatePhoneHidden('accPhone','accPhoneCode','accPhoneLocal');
+    const phoneLocal=document.getElementById('accPhoneLocal');
+    if(phoneLocal) phoneLocal.value = phoneLocal.value.replace(/[^0-9]/g,'');
+    return previousSaveAccountInfo ? previousSaveAccountInfo.apply(this, arguments) : undefined;
+  };
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){
+    const signupVisible = document.getElementById('signupFields') && getComputedStyle(document.getElementById('signupFields')).display !== 'none';
+    if(signupVisible) prepareSignupValidation();
+    enhanceAccountPhone();
+  },300);});
+})();
+/* === END NITA PROFESSIONAL REQUIRED FIELD VALIDATION + COUNTRY PHONE INPUT ONLY === */

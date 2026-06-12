@@ -2508,3 +2508,19 @@ tr.admin-order-row .admin-premium-roadmap .order-roadmap span.done:before{backgr
   .category-strip.category-icons.nita-category-edit-v2{justify-content:flex-start!important;gap:24px!important;padding:24px 18px!important;}
   .category-strip.category-icons.nita-category-edit-v2 .cat{min-width:82px!important;}
 }
+
+/* === NITA PROFESSIONAL ACCOUNT VALIDATION + PHONE INPUT ONLY === */
+.nita-field-wrap{position:relative;width:100%;}
+.nita-field-wrap.has-error .field,
+.field.nita-error,
+.nita-phone-row.has-error{border-color:#b00020!important;box-shadow:0 0 0 1px #b00020!important;}
+.nita-error-text{display:none;margin-top:7px;color:#b00020;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
+.nita-field-wrap.has-error .nita-error-text{display:block;}
+.nita-phone-wrap{width:100%;}
+.nita-phone-row{display:flex;align-items:center;width:100%;border:1px solid #ddd;background:#fff;min-height:54px;transition:border-color .2s ease,box-shadow .2s ease;}
+.nita-phone-row:focus-within{border-color:#111;box-shadow:0 0 0 1px #111;}
+.nita-phone-code{min-width:155px;height:52px;border:0;border-right:1px solid #e5e5e5;background:#fafafa;padding:0 13px;font:inherit;font-weight:800;color:#111;outline:0;}
+.nita-phone-number{flex:1;height:52px;border:0!important;box-shadow:none!important;background:#fff;padding:0 14px;font:inherit;outline:0;min-width:0;}
+.nita-phone-number:focus{border:0!important;box-shadow:none!important;}
+@media(max-width:640px){.nita-phone-row{min-height:52px}.nita-phone-code{min-width:132px;font-size:12px}.nita-phone-number{font-size:14px}}
+/* === END NITA PROFESSIONAL ACCOUNT VALIDATION + PHONE INPUT ONLY === */
