@@ -7,7 +7,7 @@ const defaultProducts = [
   {id:'p6',name:'Roma Linen Shirt',price:58,category:'Tops',collection:'New Arrivals',sizes:['S','M','L'],img:'linear-gradient(135deg,#fff,#dcdcdc)',desc:'A breathable shirt for effortless weekday and weekend styling.'}
 ];
 
-const NITA_PERSIST_KEYS = ['nitaProducts','nitaOrders','nitaCoupons','nitaUsersByEmail','nitaDiscountUses'];
+const NITA_PERSIST_KEYS = ['nitaProducts','nitaOrders','nitaCoupons','nitaUsersByEmail','nitaDiscountUses','nitaStockNotifications'];
 let nitaStoreLoaded = false;
 let nitaApplyingRemote = false;
 let nitaBackendOnline = false;
@@ -27,7 +27,8 @@ function defaultSharedStore(){
     nitaOrders: [],
     nitaCoupons: [],
     nitaUsersByEmail: {},
-    nitaDiscountUses: {}
+    nitaDiscountUses: {},
+    nitaStockNotifications: []
   };
 }
 
@@ -45,6 +46,7 @@ function currentSharedStore(){
   if(!Array.isArray(store.nitaCoupons)) store.nitaCoupons = [];
   if(!store.nitaUsersByEmail || typeof store.nitaUsersByEmail !== 'object') store.nitaUsersByEmail = {};
   if(!store.nitaDiscountUses || typeof store.nitaDiscountUses !== 'object') store.nitaDiscountUses = {};
+  if(!Array.isArray(store.nitaStockNotifications)) store.nitaStockNotifications = [];
   return store;
 }
 

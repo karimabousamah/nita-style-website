@@ -6634,3 +6634,619 @@ placeOrder=async function(){
   window.addEventListener('load',function(){setTimeout(renderSplitOrders,900);});
 })();
 /* === END NITA STYLE ADMIN ORDERS ONGOING / PREVIOUS SPLIT ONLY === */
+
+/* === NITA PHONE FLAGS + SMART LENGTHS + ACCOUNT ORDER ACCORDIONS FINAL === */
+(function(){
+  const PHONE_COUNTRIES = [
+    {code:'+961', name:'Lebanon', flag:'🇱🇧', len:8},
+    {code:'+966', name:'Saudi Arabia', flag:'🇸🇦', len:10},
+    {code:'+965', name:'Kuwait', flag:'🇰🇼', len:8},
+    {code:'+971', name:'UAE', flag:'🇦🇪', len:9},
+    {code:'+974', name:'Qatar', flag:'🇶🇦', len:8},
+    {code:'+973', name:'Bahrain', flag:'🇧🇭', len:8},
+    {code:'+968', name:'Oman', flag:'🇴🇲', len:8},
+    {code:'+962', name:'Jordan', flag:'🇯🇴', len:9},
+    {code:'+20', name:'Egypt', flag:'🇪🇬', len:10},
+    {code:'+33', name:'France', flag:'🇫🇷', len:9},
+    {code:'+39', name:'Italy', flag:'🇮🇹', len:10},
+    {code:'+44', name:'United Kingdom', flag:'🇬🇧', len:10},
+    {code:'+1', name:'USA / Canada', flag:'🇺🇸', len:10},
+    {code:'+61', name:'Australia', flag:'🇦🇺', len:9},
+    {code:'+49', name:'Germany', flag:'🇩🇪', len:11},
+    {code:'+34', name:'Spain', flag:'🇪🇸', len:9},
+    {code:'+90', name:'Turkey', flag:'🇹🇷', len:10},
+    {code:'+212', name:'Morocco', flag:'🇲🇦', len:9},
+    {code:'+216', name:'Tunisia', flag:'🇹🇳', len:8},
+    {code:'+213', name:'Algeria', flag:'🇩🇿', len:9}
+  ];
+  function esc(v){return String(v==null?'':v).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function getCountry(code){return PHONE_COUNTRIES.find(c=>c.code===code) || PHONE_COUNTRIES[0];}
+  function options(selected){return PHONE_COUNTRIES.map(c=>'<option value="'+esc(c.code)+'" data-len="'+c.len+'" '+(c.code===selected?'selected':'')+'>'+c.flag+' '+c.name+' '+c.code+'</option>').join('');}
+  function selectedLen(select){const opt=select?.selectedOptions?.[0]; return Number(opt?.dataset?.len || getCountry(select?.value).len || 15);}
+  function clampPhone(local){ if(!local) return; const row=local.closest('.nita-phone-row'); const select=row?.querySelector('.nita-phone-code'); const max=selectedLen(select); local.maxLength=max; local.value=String(local.value||'').replace(/[^0-9]/g,'').slice(0,max); }
+  function refreshPhoneWidget(wrap){
+    if(!wrap) return;
+    const select=wrap.querySelector('.nita-phone-code');
+    const local=wrap.querySelector('.nita-phone-number');
+    if(!select || !local) return;
+    const current=select.value || '+961';
+    select.innerHTML=options(current);
+    select.value = PHONE_COUNTRIES.some(c=>c.code===current) ? current : '+961';
+    clampPhone(local);
+    const helper = wrap.querySelector('.nita-phone-helper') || document.createElement('div');
+    helper.className='nita-phone-helper';
+    helper.textContent='Use numbers only. '+getCountry(select.value).name+' numbers require '+selectedLen(select)+' digits.';
+    if(!helper.parentNode) wrap.appendChild(helper);
+    select.onchange=function(){ clampPhone(local); if(typeof window.nitaUpdatePhoneHidden==='function') window.nitaUpdatePhoneHidden(wrap.dataset.for||'authPhone', select.id, local.id); helper.textContent='Use numbers only. '+getCountry(select.value).name+' numbers require '+selectedLen(select)+' digits.'; };
+    local.oninput=function(){ clampPhone(local); if(typeof window.nitaUpdatePhoneHidden==='function') window.nitaUpdatePhoneHidden(wrap.dataset.for||'authPhone', select.id, local.id); };
+  }
+  const oldNumbersOnly=window.nitaNumbersOnly;
+  window.nitaNumbersOnly=function(input){ if(oldNumbersOnly) oldNumbersOnly(input); clampPhone(input); };
+  const oldUpdate=window.nitaUpdatePhoneHidden;
+  window.nitaUpdatePhoneHidden=function(hiddenId, codeId, localId){
+    const local=document.getElementById(localId); clampPhone(local);
+    const hidden=document.getElementById(hiddenId), code=document.getElementById(codeId);
+    if(hidden) hidden.value=((code&&code.value)||'+961')+' '+String((local&&local.value)||'').replace(/[^0-9]/g,'');
+    const wrap=hidden && hidden.closest('.nita-field-wrap');
+    if(wrap && String((local&&local.value)||'').trim()) wrap.classList.remove('has-error');
+    if(oldUpdate && !hidden) return oldUpdate(hiddenId,codeId,localId);
+  };
+  function enhancePhones(){ document.querySelectorAll('.nita-phone-wrap').forEach(refreshPhoneWidget); }
+  function enhanceAccountOrderAccordions(){
+    const root=document.getElementById('accountRoot'); if(!root || root.dataset.nitaAccordionsReady==='1') return;
+    const sections=[...root.querySelectorAll('section.account-card.full-span')].filter(s=>/ongoing orders|previous orders/i.test(s.querySelector('h2')?.textContent||''));
+    sections.forEach((section,idx)=>{
+      const h2=section.querySelector('h2'); const body=section.querySelector('.orders-list'); if(!h2 || !body || section.classList.contains('nita-account-order-accordion')) return;
+      section.classList.add('nita-account-order-accordion');
+      const title=h2.textContent.trim();
+      const count=body.querySelectorAll('.order-card-pro,.account-order,.order-card').length;
+      const button=document.createElement('button');
+      button.type='button'; button.className='nita-account-order-toggle'; button.setAttribute('aria-expanded','false');
+      button.innerHTML='<span>'+esc(title)+'</span><em>'+count+'</em><strong>+</strong>';
+      h2.replaceWith(button);
+      body.classList.add('nita-account-order-body');
+      body.hidden=true;
+      button.addEventListener('click',function(){
+        const open=button.getAttribute('aria-expanded')==='true';
+        button.setAttribute('aria-expanded', String(!open));
+        button.querySelector('strong').textContent=open?'+':'−';
+        body.hidden=open;
+        section.classList.toggle('open', !open);
+      });
+    });
+    root.dataset.nitaAccordionsReady='1';
+  }
+  const prevRenderAccount=window.renderAccount;
+  window.renderAccount=async function(){
+    const r=prevRenderAccount ? await prevRenderAccount.apply(this, arguments) : undefined;
+    setTimeout(function(){ enhancePhones(); enhanceAccountOrderAccordions(); },30);
+    return r;
+  };
+  const prevRenderLogin=window.renderLoginPage;
+  window.renderLoginPage=function(){ const r=prevRenderLogin ? prevRenderLogin.apply(this, arguments):undefined; setTimeout(enhancePhones,30); return r; };
+  const prevSwitch=window.switchAuthMode;
+  window.switchAuthMode=function(){ const r=prevSwitch ? prevSwitch.apply(this, arguments):undefined; setTimeout(enhancePhones,30); return r; };
+  document.addEventListener('DOMContentLoaded',function(){ setTimeout(function(){enhancePhones(); enhanceAccountOrderAccordions();},500); });
+})();
+/* === END NITA PHONE FLAGS + SMART LENGTHS + ACCOUNT ORDER ACCORDIONS FINAL === */
+
+/* === NITA STYLE BACK-IN-STOCK NOTIFY + 72H OUT-OF-STOCK + ADMIN PRODUCT SPLIT FINAL === */
+(function(){
+  const NOTIFY_KEY = 'nitaStockNotifications';
+  const OUT_HOURS = 72;
+  const OUT_MS = OUT_HOURS * 60 * 60 * 1000;
+  const PAST_HIDDEN_MS = OUT_MS;
+  const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const read = (k,f) => { try { return JSON.parse(localStorage.getItem(k) || JSON.stringify(f)); } catch(e){ return f; } };
+  const write = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+  const now = () => Date.now();
+  const moneyX = n => { try { return typeof money === 'function' ? money(n) : ('$' + Number(n||0).toFixed(2)); } catch(e){ return '$' + Number(n||0).toFixed(2); } };
+  const productsRaw = () => { try { return typeof getProducts === 'function' ? getProducts() : read('nitaProducts', []); } catch(e){ return read('nitaProducts', []); } };
+  const qtyNumber = v => v !== undefined && v !== null && v !== '' && !Number.isNaN(Number(v)) ? Number(v) : null;
+  const keySize = s => String(s || '').trim().toLowerCase();
+  const unique = arr => [...new Set((arr || []).map(x => String(x || '').trim()).filter(Boolean))];
+  function normalizeProduct(p){
+    p = p || {};
+    if(!Array.isArray(p.sizes) || !p.sizes.length) p.sizes = ['One Size'];
+    if(!Array.isArray(p.outOfStockSizes)) p.outOfStockSizes = [];
+    p.outOfStockSizes = unique(p.outOfStockSizes).filter(s => p.sizes.some(x => keySize(x) === keySize(s)));
+    if(!Array.isArray(p.photos)) p.photos = p.img && String(p.img).startsWith('data:') ? [p.img] : [];
+    if(typeof p.mainPhotoIndex !== 'number') p.mainPhotoIndex = Number(p.mainPhotoIndex || 0);
+    const q = qtyNumber(p.quantity);
+    const manual = String(p.status || (p.soldOut ? 'out-of-stock' : 'in-stock')).trim().toLowerCase();
+    if(q !== null && q <= 0) p.status = 'out-of-stock';
+    else if(manual === 'coming-soon') p.status = 'coming-soon';
+    else if(manual === 'out-of-stock' || p.soldOut) p.status = 'out-of-stock';
+    else {
+      const initial = qtyNumber(p.initialQuantity);
+      if(q !== null && initial !== null && initial > 0 && q > 0 && q <= initial * 0.5) p.status = 'low-stock';
+      else p.status = 'in-stock';
+    }
+    p.soldOut = p.status === 'out-of-stock';
+    if(p.status === 'out-of-stock') {
+      if(!p.outOfStockAt) p.outOfStockAt = now();
+    } else {
+      if(p.outOfStockAt) p.lastRestockedAt = now();
+      delete p.outOfStockAt;
+    }
+    return p;
+  }
+  function isOverallOut(p){ p = normalizeProduct({...p}); return p.status === 'out-of-stock' || p.soldOut || qtyNumber(p.quantity) === 0; }
+  function isPublicVisible(raw){
+    const p = normalizeProduct({...raw});
+    if(!isOverallOut(p)) return true;
+    const t = Number(p.outOfStockAt || now());
+    return (now() - t) < PAST_HIDDEN_MS;
+  }
+  function isSizeOut(p,size){ return (p.outOfStockSizes || []).some(s => keySize(s) === keySize(size)); }
+  async function cloudSave(key,val){
+    write(key,val);
+    try { if(typeof window.nitaSaveKeyStrict === 'function') return await window.nitaSaveKeyStrict(key,val); } catch(e){ console.warn(e); }
+    try { if(typeof window.saveCloudKey === 'function') return await window.saveCloudKey(key,val); } catch(e){ console.warn(e); }
+    try { if(typeof window.saveSharedKeyNow === 'function') return await window.saveSharedKeyNow(key,val); } catch(e){ console.warn(e); }
+    try { await fetch('/.netlify/functions/store', {method:'POST', headers:{'Content-Type':'application/json','Cache-Control':'no-cache'}, body:JSON.stringify({key,value:val})}); } catch(e){ console.warn(e); }
+  }
+  async function saveProductsFinal(ps){
+    ps = (Array.isArray(ps)?ps:[]).map(p => normalizeProduct(p));
+    await cloudSave('nitaProducts', ps);
+    return true;
+  }
+  function currentUser(){ try { return JSON.parse(localStorage.getItem('nitaUser') || '{}'); } catch(e){ return {}; } }
+  function productMain(p){ try { return typeof productMainImage === 'function' ? productMainImage(p) : (p.photos?.[p.mainPhotoIndex||0] || p.photos?.[0] || p.img || 'linear-gradient(135deg,#fff,#ddd)'); } catch(e){ return p?.photos?.[0] || p?.img || 'linear-gradient(135deg,#fff,#ddd)'; } }
+  function bg(img){ try { return typeof cssBgImage === 'function' ? cssBgImage(img) : (String(img||'').startsWith('data:') ? `background-image:url(${img})` : `background:${img||'linear-gradient(135deg,#fff,#ddd)'}`); } catch(e){ return 'background:linear-gradient(135deg,#fff,#ddd)'; } }
+
+  // Make product status/timer global and final.
+  window.normalizeProductStatus = normalizeProduct;
+  window.productStatusValue = function(p){ return normalizeProduct({...p}).status; };
+  window.nitaProductIsPublicVisible = isPublicVisible;
+  window.nitaProductsPublic = function(list){ return (list || productsRaw()).map(p => normalizeProduct({...p})).filter(isPublicVisible); };
+  window.stockStatusHtml = function(status){
+    const labels = {'in-stock':'In stock','low-stock':'Low in stock','coming-soon':'Coming soon','out-of-stock':'Out of stock'};
+    status = String(status || 'in-stock');
+    return `<span class="stock-status ${esc(status)}"><span class="stock-dot"></span><span>${esc(labels[status] || 'In stock')}</span></span>`;
+  };
+  window.productPriceStatusRow = function(raw,tag='p'){
+    const p = normalizeProduct({...raw});
+    const sale = p.salePrice !== '' && p.salePrice != null && Number(p.salePrice) < Number(p.price);
+    const price = sale ? `<span class="muted old-price">${moneyX(p.price)}</span><span class="price-drop">${moneyX(p.salePrice)}</span>` : moneyX(p.price || 0);
+    return `<div class="product-price-row"><${tag} class="price-line">${price}</${tag}>${window.stockStatusHtml(p.status)}</div>`;
+  };
+
+  // Hide out-of-stock products after 72 hours from public grids, but keep them in admin database.
+  const prevRenderProducts = window.renderProducts;
+  window.renderProducts = function(el='#products', list){
+    const node = document.querySelector(el); if(!node) return;
+    const shouldFilter = !String(el).includes('admin');
+    const source = list || productsRaw();
+    const finalList = (shouldFilter ? window.nitaProductsPublic(source) : (source || []).map(p => normalizeProduct({...p})));
+    if(finalList.length) node.innerHTML = finalList.map(p => window.productCard ? window.productCard(p) : '').join('');
+    else node.innerHTML = '<p class="muted">No products listed yet.</p>';
+  };
+  const prevShopPage = window.shopPage;
+  window.shopPage = function(){
+    const filter = document.getElementById('filter');
+    const url = new URL(location.href);
+    let cat = url.searchParams.get('cat') || filter?.value || 'All';
+    if(filter) filter.value = cat;
+    let list = productsRaw().map(p=>normalizeProduct({...p})).filter(p => cat === 'All' || p.category === cat);
+    window.renderProducts('#products', list);
+  };
+  const prevHome = window.renderHomeSections;
+  window.renderHomeSections = function(){
+    const ps = window.nitaProductsPublic(productsRaw());
+    const homeSection = p => p.displaySection || p.homeSection || (p.collection === 'New Arrivals' ? 'new-arrivals' : 'trending-now');
+    const fill = (id, list) => {
+      const box=document.getElementById(id); if(!box) return;
+      const src = list.length ? list : ps.slice(0,6);
+      if(!src.length){ box.innerHTML='<p class="muted">No products listed yet.</p>'; return; }
+      const html = src.map(p => window.productCard ? window.productCard(p) : '').join('');
+      box.innerHTML = html + html;
+    };
+    fill('trendingMarquee', ps.filter(p => homeSection(p) === 'trending-now'));
+    fill('newArrivalsMarquee', ps.filter(p => homeSection(p) === 'new-arrivals'));
+    if(!document.getElementById('trendingMarquee') && typeof prevHome === 'function') return prevHome.apply(this, arguments);
+  };
+
+  // Final product cards and product page actions include Notify Me when not buyable.
+  const prevProductCard = window.productCard;
+  window.productCard = function(raw){
+    const p = normalizeProduct({...raw});
+    if(!isPublicVisible(p) && !document.body.classList.contains('admin-page')) return '';
+    const img = productMain(p);
+    const sale = p.salePrice !== '' && p.salePrice != null && Number(p.salePrice) < Number(p.price);
+    return `<article class="product status-${esc(p.status)}" data-product-id="${esc(p.id)}"><a class="product-hit" href="product.html?id=${encodeURIComponent(p.id)}"><div class="product-img">${sale?'<span class="sale-badge">PRICE DROP</span>':''}<span class="product-img-layer product-img-primary" style="${bg(img)}"></span><span class="product-img-layer product-img-secondary" style="${bg(img)}"></span></div><h3>${esc(p.name||'Product')}</h3>${window.productPriceStatusRow(p,'p')}</a><button class="quick-view-btn" type="button" data-quick-id="${esc(p.id)}" onclick="event.stopPropagation();event.preventDefault();openQuickView('${String(p.id).replace(/'/g,"\\'")}')">QUICK VIEW</button></article>`;
+  };
+
+  window.notifyMe = async function(productId, size){
+    const user = currentUser();
+    const email = String(user.email || '').trim().toLowerCase();
+    if(!email){
+      try { toast('Please sign in or create an account first so we can email you.'); } catch(e){}
+      setTimeout(()=>{ location.href='login.html'; }, 700);
+      return;
+    }
+    const ps = productsRaw().map(p => normalizeProduct({...p}));
+    const p = ps.find(x => String(x.id) === String(productId));
+    if(!p){ try{toast('Product not found.')}catch(e){} return; }
+    const chosenSize = size || window.selectedSize || document.querySelector('.product-size-list .size.active, #quickContent .size.active')?.textContent || '';
+    const subs = read(NOTIFY_KEY, []);
+    const exists = subs.some(s => String(s.email).toLowerCase() === email && String(s.productId) === String(productId) && String(s.size || '') === String(chosenSize || '') && !s.notified);
+    if(!exists){
+      subs.push({id:'STOCK'+Date.now(), productId:p.id, productName:p.name, size:chosenSize || '', email, firstName:user.firstName || user.name || '', createdAt:new Date().toISOString(), notified:false});
+      await cloudSave(NOTIFY_KEY, subs);
+    }
+    try{ toast(exists ? 'You are already on the notify list for this product.' : 'Done. We will email you when this product is back in stock.'); }catch(e){}
+  };
+
+  async function sendBackInStockFor(product, oldProduct){
+    const p = normalizeProduct({...product});
+    const old = oldProduct ? normalizeProduct({...oldProduct}) : {};
+    const wasOut = oldProduct && (isOverallOut(old) || String(old.status||'') === 'out-of-stock');
+    const nowIn = p.status === 'in-stock' || p.status === 'low-stock';
+    const oldOutSizes = new Set((old.outOfStockSizes || []).map(keySize));
+    const newOutSizes = new Set((p.outOfStockSizes || []).map(keySize));
+    const sizesBack = (p.sizes || []).filter(s => oldOutSizes.has(keySize(s)) && !newOutSizes.has(keySize(s)));
+    if(!wasOut && !sizesBack.length) return;
+    if(!nowIn && !sizesBack.length) return;
+    const subs = read(NOTIFY_KEY, []);
+    let changed = false;
+    const toSend = subs.filter(s => !s.notified && String(s.productId) === String(p.id) && (
+      (!s.size && wasOut && nowIn) ||
+      (s.size && sizesBack.some(x => keySize(x) === keySize(s.size))) ||
+      (s.size && wasOut && nowIn && !(p.outOfStockSizes||[]).some(x => keySize(x) === keySize(s.size)))
+    ));
+    for(const sub of toSend){
+      try{
+        await window.sendStoreEmail?.({type:'back_in_stock', to:sub.email, product:{id:p.id,name:p.name,price:p.salePrice || p.price}, size:sub.size || ''});
+        sub.notified = true; sub.notifiedAt = new Date().toISOString(); changed = true;
+      }catch(e){ console.warn('Back-in-stock email failed:', e); }
+    }
+    if(changed) await cloudSave(NOTIFY_KEY, subs);
+  }
+
+  // Prevent adding hidden/out-of-stock products to cart, and cap by private quantity.
+  window.addToCart = function(id, size='One Size'){
+    const ps = productsRaw().map(p => normalizeProduct({...p}));
+    const p = ps.find(x => String(x.id) === String(id));
+    if(!p){ try{toast('Product not found.')}catch(e){} return; }
+    if(!isPublicVisible(p) || p.status === 'out-of-stock' || p.status === 'coming-soon') { try{toast('This product is not available.')}catch(e){} return; }
+    if(isSizeOut(p,size)){ try{toast('This size is out of stock.')}catch(e){} return; }
+    const q = qtyNumber(p.quantity);
+    const cart = read('nitaCart', []);
+    const existing = cart.find(i => String(i.id) === String(id) && String(i.size) === String(size));
+    const nextQty = (existing ? Number(existing.qty || 1) : 0) + 1;
+    if(q !== null && nextQty > q){ try{toast(`Only ${q} piece${q===1?'':'s'} available.`)}catch(e){} return; }
+    if(existing) existing.qty = nextQty;
+    else cart.push({id:p.id, size, qty:1, name:p.name, price:Number(p.salePrice || p.price || 0), photo:productMain(p)});
+    window.cart = cart; write('nitaCart', cart); try{ saveCart?.(); renderCartPanel?.(); updateCartCount?.(); toast?.('Added to cart'); }catch(e){}
+  };
+
+  // Final checkout stock decrement: set outOfStockAt from the exact second the item reaches 0.
+  const previousPlaceOrder = window.placeOrder;
+  window.placeOrder = async function(){
+    const before = productsRaw().map(p => ({...p, sizes:[...(p.sizes||[])], outOfStockSizes:[...(p.outOfStockSizes||[])]}));
+    const result = previousPlaceOrder ? await previousPlaceOrder.apply(this, arguments) : undefined;
+    const after = productsRaw().map(p => normalizeProduct(p));
+    let changed = false;
+    after.forEach(p => { if(p.status === 'out-of-stock' && !p.outOfStockAt){ p.outOfStockAt = now(); changed = true; } });
+    if(changed) await saveProductsFinal(after);
+    return result;
+  };
+
+  // Admin product editor: split active/out-of-stock products like order tabs.
+  function isAdminOut(p){ p = normalizeProduct({...p}); return isOverallOut(p); }
+  function adminView(){ return localStorage.getItem('nitaAdminProductsView') === 'out' ? 'out' : 'in'; }
+  window.nitaSwitchAdminProducts = function(view){ localStorage.setItem('nitaAdminProductsView', view === 'out' ? 'out' : 'in'); window.renderAdminProducts?.(); };
+  function editorHTML(p){
+    if(typeof window.productEditorHTML === 'function') return window.productEditorHTML(p);
+    return '<p class="muted">Editor unavailable.</p>';
+  }
+  window.renderAdminProducts = function(){
+    const box = document.getElementById('adminProducts'); if(!box) return;
+    const all = productsRaw().map(p => normalizeProduct({...p}));
+    const instock = all.filter(p => !isAdminOut(p));
+    const out = all.filter(p => isAdminOut(p));
+    const active = adminView();
+    const list = active === 'out' ? out : instock;
+    box.innerHTML = `<div class="admin-toolbar nita-products-toolbar"><div><h2>${active==='out'?'Out-of-stock products':'In-stock products'}</h2><p class="muted">Out-of-stock products stay on the website for 72 hours, then stay here in admin until restocked.</p></div><div class="nita-product-tabs"><button type="button" class="nita-product-tab ${active==='in'?'active':''}" onclick="nitaSwitchAdminProducts('in')">In-stock products <span>${instock.length}</span></button><button type="button" class="nita-product-tab ${active==='out'?'active':''}" onclick="nitaSwitchAdminProducts('out')">Out-of-stock products <span>${out.length}</span></button></div></div>` +
+      (list.length ? list.map(p => {
+        const img = productMain(p);
+        const qty = qtyNumber(p.quantity);
+        const hidden = isAdminOut(p) && !isPublicVisible(p);
+        return `<div class="admin-product-card" id="edit-${esc(p.id)}"><div class="admin-product-top"><div class="admin-product-photo" style="${bg(img)}"></div><div><div class="admin-product-name">${esc(p.name||'Product')}</div><span class="muted">${esc(p.category||'')} · ${moneyX(p.price||0)} · Private stock: ${qty===null?'Not set':qty}</span><div>${window.stockStatusHtml(p.status)} ${hidden?'<span class="admin-hidden-badge">Hidden from website after 72h</span>':''}</div></div><button type="button" onclick="toggleProductEditor('${String(p.id).replace(/'/g,"\\'")}')">Edit listing</button><button type="button" onclick="removeProduct('${String(p.id).replace(/'/g,"\\'")}')">Remove</button></div><div class="product-editor" id="editor-${esc(p.id)}">${editorHTML(p)}</div></div>`;
+      }).join('') : `<div class="admin-empty">${active==='out'?'No out-of-stock products yet.':'No in-stock products yet.'}</div>`);
+  };
+
+  // Save product edits with restock notification trigger.
+  const previousSaveProductEditor = window.saveProductEditor;
+  window.saveProductEditor = async function(id){
+    const oldProducts = productsRaw().map(p => ({...p, sizes:[...(p.sizes||[])], outOfStockSizes:[...(p.outOfStockSizes||[])]}));
+    const old = oldProducts.find(p => String(p.id) === String(id));
+    if(previousSaveProductEditor) await previousSaveProductEditor.apply(this, arguments);
+    const ps = productsRaw().map(p => normalizeProduct(p));
+    const p = ps.find(x => String(x.id) === String(id));
+    if(p){
+      const root = document.getElementById('editor-' + id);
+      const qtyField = root?.querySelector('.edit-quantity');
+      if(qtyField){ const qv = qtyField.value; p.quantity = qv === '' ? '' : Math.max(0, Number(qv || 0)); if(qtyNumber(p.quantity) !== null && qtyNumber(p.quantity) > 0 && p.status === 'out-of-stock') p.status = 'in-stock'; }
+      const statusField = root?.querySelector('.edit-status');
+      if(statusField) p.status = statusField.value;
+      normalizeProduct(p);
+      await sendBackInStockFor(p, old);
+      await saveProductsFinal(ps);
+    }
+    setTimeout(()=>window.renderAdminProducts?.(), 150);
+  };
+
+  const previousAddProductAdmin = window.addProductAdmin;
+  window.addProductAdmin = async function(){
+    if(previousAddProductAdmin) await previousAddProductAdmin.apply(this, arguments);
+    const ps = productsRaw().map(p => normalizeProduct(p));
+    await saveProductsFinal(ps);
+    setTimeout(()=>window.renderAdminProducts?.(), 150);
+  };
+
+  // Normalize existing products once so old out-of-stock products receive an exact timestamp and persist.
+  async function normalizeAndSaveExisting(){
+    const ps = productsRaw(); let changed = false;
+    ps.forEach(p => { const before = JSON.stringify({status:p.status,outOfStockAt:p.outOfStockAt,quantity:p.quantity,initialQuantity:p.initialQuantity}); normalizeProduct(p); if(JSON.stringify({status:p.status,outOfStockAt:p.outOfStockAt,quantity:p.quantity,initialQuantity:p.initialQuantity}) !== before) changed = true; });
+    if(changed) await saveProductsFinal(ps);
+    if(document.getElementById('adminProducts')) window.renderAdminProducts?.();
+    if(document.getElementById('products')) window.shopPage ? window.shopPage() : window.renderProducts('#products', ps);
+    if(document.getElementById('trendingMarquee') || document.getElementById('newArrivalsMarquee')) window.renderHomeSections?.();
+  }
+  document.addEventListener('DOMContentLoaded', () => setTimeout(normalizeAndSaveExisting, 600));
+  window.addEventListener('nita-store-ready', () => setTimeout(normalizeAndSaveExisting, 300));
+  window.addEventListener('load', () => setTimeout(normalizeAndSaveExisting, 900));
+})();
+/* === END NITA STYLE BACK-IN-STOCK NOTIFY + 72H OUT-OF-STOCK + ADMIN PRODUCT SPLIT FINAL === */
+
+/* === NITA STYLE FINAL PATCH: notify-me sign-in modal + guest checkout account creation === */
+(function(){
+  const read=(k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f))}catch(e){return f}};
+  const write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  const esc=(v)=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const norm=(v)=>String(v||'').trim().toLowerCase();
+  const validEmail=(v)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(norm(v));
+  async function cloudSave(key,val){
+    write(key,val);
+    try{ if(typeof window.nitaSaveKeyStrict==='function') return await window.nitaSaveKeyStrict(key,val); }catch(e){}
+    try{ if(typeof window.saveCloudKey==='function') return await window.saveCloudKey(key,val); }catch(e){}
+    try{ if(typeof window.saveSharedKeyNow==='function') return await window.saveSharedKeyNow(key,val); }catch(e){}
+    try{ await fetch('/.netlify/functions/store',{method:'POST',headers:{'Content-Type':'application/json','Cache-Control':'no-cache'},body:JSON.stringify({key,value:val})}); }catch(e){}
+  }
+  function users(){return read('nitaUsersByEmail',{})}
+  async function saveUserRecord(user){
+    if(!user || !validEmail(user.email)) return null;
+    const email=norm(user.email);
+    const all=users();
+    const old=all[email]||{};
+    const merged={...old,...user,email,createdAt:old.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+    all[email]=merged;
+    await cloudSave('nitaUsersByEmail',all);
+    write('nitaUser',merged);
+    localStorage.setItem('nitaSessionEmail',email);
+    try{ window.currentUser=merged; currentUser=merged; }catch(e){}
+    return merged;
+  }
+  function getCurrentUser(){
+    const local=read('nitaUser',null)||{};
+    const email=norm(local.email || localStorage.getItem('nitaSessionEmail'));
+    if(!email) return null;
+    const all=users();
+    return all[email] ? {...all[email],email} : {...local,email};
+  }
+  function splitName(full){
+    const parts=String(full||'').trim().split(/\s+/).filter(Boolean);
+    return {firstName:parts.shift()||'',lastName:parts.join(' ')};
+  }
+  function addressFromForm(form){
+    if(!form) return null;
+    return {
+      label:String(form.get('addressLabel')||'Home').trim()||'Home',
+      city:String(form.get('city')||'').trim(),
+      street:String(form.get('street')||'').trim(),
+      building:String(form.get('building')||'').trim(),
+      floor:String(form.get('floor')||'').trim(),
+      apartment:String(form.get('apartment')||'').trim(),
+      landmark:String(form.get('landmark')||'').trim(),
+      preferredTime:String(form.get('preferredTime')||'').trim(),
+      notes:String(form.get('notes')||'').trim()
+    };
+  }
+  function sameAddress(a,b){
+    return ['city','street','building','floor','apartment'].map(k=>norm(a?.[k])).join('|') === ['city','street','building','floor','apartment'].map(k=>norm(b?.[k])).join('|');
+  }
+  async function createOrUpdateAccountFromCheckout(){
+    const formEl=document.getElementById('checkoutForm'); if(!formEl) return null;
+    const form=new FormData(formEl);
+    const email=norm(form.get('email'));
+    if(!validEmail(email)) return null;
+    const full=String(form.get('name')||form.get('fullName')||'').trim();
+    const names=splitName(full);
+    const phone=String(form.get('phone')||'').trim();
+    const addr=addressFromForm(form);
+    const all=users();
+    const old=all[email]||{};
+    let addresses=Array.isArray(old.addresses)?old.addresses.slice():[];
+    if(addr && (addr.city || addr.street || addr.building)){
+      const idx=addresses.findIndex(a=>sameAddress(a,addr));
+      if(idx>=0) addresses[idx]={...addresses[idx],...addr}; else addresses.push(addr);
+    }
+    return await saveUserRecord({
+      ...old,
+      email,
+      firstName:old.firstName || names.firstName,
+      lastName:old.lastName || names.lastName,
+      name:old.name || full,
+      phone:phone || old.phone || '',
+      defaultAddress:addr || old.defaultAddress || null,
+      addresses,
+      autoCreatedFromCheckout:true
+    });
+  }
+
+  function modalHtml(){
+    return `<div class="nita-auth-modal-backdrop" id="nitaAuthNotifyModal" role="dialog" aria-modal="true" aria-labelledby="nitaAuthNotifyTitle">
+      <div class="nita-auth-modal-card">
+        <button class="nita-auth-modal-close" type="button" onclick="nitaCloseAuthNotifyModal()" aria-label="Close">×</button>
+        <p class="eyebrow">Back-in-stock alert</p>
+        <h2 id="nitaAuthNotifyTitle">Sign in to be notified</h2>
+        <p class="muted">To save this request and email you when the product is back in stock, please sign in or create an account first.</p>
+        <div class="nita-auth-modal-actions">
+          <button class="btn" type="button" onclick="nitaGoAuthForNotify()">SIGN IN / CREATE ACCOUNT</button>
+          <button class="btn light" type="button" onclick="nitaCloseAuthNotifyModal()">NOT NOW</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  function ensureModal(){
+    if(!document.getElementById('nitaAuthNotifyModal')) document.body.insertAdjacentHTML('beforeend',modalHtml());
+    return document.getElementById('nitaAuthNotifyModal');
+  }
+  window.nitaCloseAuthNotifyModal=function(){document.getElementById('nitaAuthNotifyModal')?.classList.remove('show')};
+  window.nitaGoAuthForNotify=function(){
+    const pending=read('nitaPendingNotifyMe',null);
+    const returnUrl=pending?.returnUrl || location.href;
+    localStorage.setItem('nitaAfterLoginRedirect',returnUrl);
+    location.href='login.html';
+  };
+  function openAuthModal(productId,size){
+    write('nitaPendingNotifyMe',{productId,size:size||'',returnUrl:location.href,createdAt:new Date().toISOString()});
+    ensureModal().classList.add('show');
+  }
+
+  const previousNotifyMe=window.notifyMe;
+  window.notifyMe=async function(productId,size){
+    const user=getCurrentUser();
+    if(!user || !validEmail(user.email)){
+      openAuthModal(productId,size);
+      return;
+    }
+    return previousNotifyMe ? previousNotifyMe.apply(this,arguments) : undefined;
+  };
+
+  async function completePendingNotifyAfterLogin(){
+    const pending=read('nitaPendingNotifyMe',null);
+    const user=getCurrentUser();
+    if(!pending || !user || !validEmail(user.email) || !window.notifyMe) return;
+    localStorage.removeItem('nitaPendingNotifyMe');
+    try{ await window.notifyMe(pending.productId,pending.size); }catch(e){ console.warn(e); }
+  }
+
+  const previousLogin=window.login;
+  window.login=function(){
+    const beforeRedirect=localStorage.getItem('nitaAfterLoginRedirect');
+    if(previousLogin) previousLogin.apply(this,arguments);
+    // If the legacy login did not navigate immediately, handle the saved return URL.
+    setTimeout(()=>{
+      const u=getCurrentUser();
+      const target=beforeRedirect || localStorage.getItem('nitaAfterLoginRedirect');
+      if(u && validEmail(u.email) && target){
+        localStorage.removeItem('nitaAfterLoginRedirect');
+        location.href=target;
+      }
+    },60);
+  };
+
+  const previousPlaceOrder=window.placeOrder;
+  window.placeOrder=async function(){
+    await createOrUpdateAccountFromCheckout();
+    return previousPlaceOrder ? previousPlaceOrder.apply(this,arguments) : undefined;
+  };
+
+  function boot(){
+    ensureModal();
+    setTimeout(completePendingNotifyAfterLogin,500);
+  }
+  document.addEventListener('DOMContentLoaded',boot);
+  window.addEventListener('load',boot);
+})();
+/* === END NITA STYLE FINAL PATCH: notify-me sign-in modal + guest checkout account creation === */
+
+/* === NITA STYLE CHECKOUT ACCOUNT CREATION VERIFIED PATCH 20260613 === */
+(function(){
+  const read=(k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f))}catch(e){return f}};
+  const write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  const norm=v=>String(v||'').trim().toLowerCase();
+  const validEmail=v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(norm(v));
+  async function cloudSave(key,val){
+    write(key,val);
+    try{ if(typeof window.nitaSaveKeyStrict==='function') return await window.nitaSaveKeyStrict(key,val); }catch(e){}
+    try{ if(typeof window.saveCloudKey==='function') return await window.saveCloudKey(key,val); }catch(e){}
+    try{ if(typeof window.saveSharedKeyNow==='function') return await window.saveSharedKeyNow(key,val); }catch(e){}
+    try{ await fetch('/.netlify/functions/store',{method:'POST',headers:{'Content-Type':'application/json','Cache-Control':'no-cache'},body:JSON.stringify({key,value:val})}); }catch(e){}
+  }
+  function users(){return read('nitaUsersByEmail',{}) || {};}
+  function currentEmail(){
+    const u=read('nitaUser',null)||{};
+    return norm(u.email || localStorage.getItem('nitaSessionEmail') || '');
+  }
+  function splitName(full){
+    const parts=String(full||'').trim().split(/\s+/).filter(Boolean);
+    return {firstName:parts.shift()||'',lastName:parts.join(' ')};
+  }
+  function checkoutAddress(form){
+    return {
+      label:String(form.get('addressLabel')||'Home').trim()||'Home',
+      city:String(form.get('city')||'').trim(),
+      street:String(form.get('street')||'').trim(),
+      building:String(form.get('building')||'').trim(),
+      floor:String(form.get('floor')||'').trim(),
+      apartment:String(form.get('apartment')||'').trim(),
+      landmark:String(form.get('landmark')||'').trim(),
+      preferredTime:String(form.get('preferredTime')||'').trim(),
+      notes:String(form.get('notes')||'').trim()
+    };
+  }
+  function sameAddress(a,b){
+    return ['city','street','building','floor','apartment'].map(k=>norm(a?.[k])).join('|') === ['city','street','building','floor','apartment'].map(k=>norm(b?.[k])).join('|');
+  }
+  async function createCheckoutCustomerAccount(){
+    const formEl=document.getElementById('checkoutForm');
+    if(!formEl) return null;
+    // Do not create an account if the customer has not completed the required checkout fields.
+    if(typeof formEl.checkValidity==='function' && !formEl.checkValidity()) return null;
+    const form=new FormData(formEl);
+    const email=norm(form.get('email'));
+    if(!validEmail(email)) return null;
+    const all=users();
+    const old=all[email]||{};
+    const full=String(form.get('name')||form.get('fullName')||old.name||'').trim();
+    const names=splitName(full);
+    const addr=checkoutAddress(form);
+    let addresses=Array.isArray(old.addresses)?old.addresses.slice():[];
+    if(addr.city || addr.street || addr.building){
+      const idx=addresses.findIndex(a=>sameAddress(a,addr));
+      if(idx>=0) addresses[idx]={...addresses[idx],...addr}; else addresses.push(addr);
+    }
+    const merged={
+      ...old,
+      email,
+      name:old.name || full,
+      firstName:old.firstName || names.firstName,
+      lastName:old.lastName || names.lastName,
+      phone:String(form.get('phone')||old.phone||'').trim(),
+      defaultAddress:addr || old.defaultAddress || null,
+      addresses,
+      autoCreatedFromCheckout: old.autoCreatedFromCheckout || !old.createdAt,
+      createdAt: old.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    all[email]=merged;
+    await cloudSave('nitaUsersByEmail', all);
+    // If the visitor was a guest, automatically sign them into the account created from checkout.
+    // If they were already signed in, keep the session aligned with the checkout email/account.
+    write('nitaUser', merged);
+    localStorage.setItem('nitaSessionEmail', email);
+    try{ window.currentUser=merged; currentUser=merged; }catch(e){}
+    return merged;
+  }
+  const oldPlaceOrder=window.placeOrder;
+  window.placeOrder=async function(){
+    await createCheckoutCustomerAccount();
+    return oldPlaceOrder ? oldPlaceOrder.apply(this,arguments) : undefined;
+  };
+  window.nitaCreateCheckoutCustomerAccount=createCheckoutCustomerAccount;
+})();
+/* === END NITA STYLE CHECKOUT ACCOUNT CREATION VERIFIED PATCH 20260613 === */

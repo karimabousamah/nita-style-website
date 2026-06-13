@@ -4,7 +4,8 @@ const DEFAULT_STATE = {
   nitaCoupons: [],
   nitaUsersByEmail: {},
   nitaDiscountUses: {},
-  nitaHomepageWallpapers: {}
+  nitaHomepageWallpapers: {},
+  nitaStockNotifications: []
 };
 
 const ALLOWED_KEYS = Object.keys(DEFAULT_STATE);
@@ -17,6 +18,7 @@ function safeState(state) {
   cleaned.nitaUsersByEmail = cleaned.nitaUsersByEmail && typeof cleaned.nitaUsersByEmail === 'object' ? cleaned.nitaUsersByEmail : {};
   cleaned.nitaDiscountUses = cleaned.nitaDiscountUses && typeof cleaned.nitaDiscountUses === 'object' ? cleaned.nitaDiscountUses : {};
   cleaned.nitaHomepageWallpapers = cleaned.nitaHomepageWallpapers && typeof cleaned.nitaHomepageWallpapers === 'object' ? cleaned.nitaHomepageWallpapers : {};
+  cleaned.nitaStockNotifications = Array.isArray(cleaned.nitaStockNotifications) ? cleaned.nitaStockNotifications : [];
   return cleaned;
 }
 

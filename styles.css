@@ -2603,3 +2603,89 @@ tr.admin-order-row .admin-premium-roadmap .order-roadmap span.done:before{backgr
 .nita-admin-order-actions .admin-order-status{min-width:190px;}
 @media(max-width:760px){.nita-orders-toolbar{flex-direction:column}.nita-order-tabs{margin-left:0;width:100%;justify-content:flex-start}.nita-order-tab{width:100%;display:flex;justify-content:space-between;align-items:center}.nita-admin-order-actions{justify-content:flex-start}.nita-admin-order-actions .admin-order-status{width:100%;}}
 /* === END NITA STYLE ADMIN ORDERS ONGOING / PREVIOUS SPLIT ONLY === */
+
+
+/* === NITA STYLE FINAL ADMIN ORDER TAB HOVER/ACTIVE FIX ===
+   Keeps order view buttons readable: white/black by default, black/white on hover or active. */
+.nita-order-tabs .nita-order-tab{
+  background:#fff !important;
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+  border:1.5px solid #111 !important;
+  box-shadow:none !important;
+}
+.nita-order-tabs .nita-order-tab span{
+  color:inherit !important;
+  -webkit-text-fill-color:inherit !important;
+  border-color:currentColor !important;
+}
+.nita-order-tabs .nita-order-tab:hover,
+.nita-order-tabs .nita-order-tab:focus-visible,
+.nita-order-tabs .nita-order-tab:active,
+.nita-order-tabs .nita-order-tab.active{
+  background:#111 !important;
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+  border-color:#111 !important;
+  box-shadow:0 14px 34px rgba(0,0,0,.10) !important;
+}
+.nita-order-tabs .nita-order-tab:hover span,
+.nita-order-tabs .nita-order-tab:focus-visible span,
+.nita-order-tabs .nita-order-tab:active span,
+.nita-order-tabs .nita-order-tab.active span{
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+  border-color:#fff !important;
+}
+/* === END NITA STYLE FINAL ADMIN ORDER TAB HOVER/ACTIVE FIX === */
+
+/* === NITA PHONE FLAGS + ACCOUNT ORDER ACCORDIONS FINAL === */
+.nita-phone-code{min-width:190px!important;background:#fafafa!important;cursor:pointer;}
+.nita-phone-helper{font-size:11px;color:#777;margin-top:7px;line-height:1.35;}
+.nita-phone-number{letter-spacing:.03em;}
+.nita-phone-row{border-color:#ddd!important;}
+.nita-phone-row:hover{border-color:#111!important;}
+.nita-account-order-accordion{padding:0!important;overflow:hidden;transition:border-color .22s ease,box-shadow .22s ease;}
+.nita-account-order-toggle{width:100%;appearance:none;border:0;background:#fff;color:#111;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:24px 26px;font:inherit;text-align:left;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;transition:background .22s ease,color .22s ease,box-shadow .22s ease;}
+.nita-account-order-toggle span{font-size:22px;font-weight:900;}
+.nita-account-order-toggle em{margin-left:auto;min-width:28px;height:28px;border:1px solid currentColor;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:12px;font-weight:900;}
+.nita-account-order-toggle strong{width:30px;height:30px;border:1px solid currentColor;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:18px;line-height:1;}
+.nita-account-order-toggle:hover,.nita-account-order-toggle:focus-visible,.nita-account-order-toggle[aria-expanded="true"]{background:#111!important;color:#fff!important;outline:none;}
+.nita-account-order-body{padding:0 26px 26px;animation:nitaAccordionIn .22s ease both;}
+.nita-account-order-toggle[aria-expanded="true"] + .nita-account-order-body{display:grid;}
+@keyframes nitaAccordionIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:640px){.nita-phone-code{min-width:150px!important;font-size:12px!important}.nita-account-order-toggle{padding:20px}.nita-account-order-toggle span{font-size:18px}.nita-account-order-body{padding:0 20px 20px}}
+/* === END NITA PHONE FLAGS + ACCOUNT ORDER ACCORDIONS FINAL === */
+
+/* === NITA STOCK NOTIFY + ADMIN PRODUCT SPLIT POLISH === */
+.notify-btn{
+  display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:12px 20px;margin-left:10px;border:2px solid #111;background:#fff;color:#111;font-weight:900;text-transform:uppercase;letter-spacing:.7px;border-radius:999px;cursor:pointer;transition:background .22s ease,color .22s ease,transform .22s ease,box-shadow .22s ease;
+}
+.notify-btn:hover,.notify-btn:focus{background:#111;color:#fff;transform:translateY(-1px);box-shadow:0 16px 30px rgba(0,0,0,.14);outline:none;}
+.nita-products-toolbar{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:22px;}
+.nita-product-tabs{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+.nita-product-tab{border:2px solid #111;background:#fff;color:#111;border-radius:999px;padding:12px 18px;font-weight:900;text-transform:uppercase;letter-spacing:.7px;cursor:pointer;transition:background .2s ease,color .2s ease,transform .2s ease,box-shadow .2s ease;}
+.nita-product-tab span{display:inline-flex;align-items:center;justify-content:center;margin-left:8px;min-width:21px;height:21px;border:1px solid currentColor;border-radius:50%;font-size:11px;line-height:1;}
+.nita-product-tab:hover,.nita-product-tab:focus,.nita-product-tab.active{background:#111!important;color:#fff!important;transform:translateY(-1px);box-shadow:0 16px 34px rgba(0,0,0,.16);outline:none;}
+.admin-hidden-badge{display:inline-flex;margin-left:8px;padding:5px 8px;border:1px solid #111;border-radius:999px;font-size:10px;letter-spacing:.6px;text-transform:uppercase;font-weight:900;background:#fff;color:#111;}
+.admin-empty{border:1px dashed #d9d9d9;padding:34px;text-align:center;color:#777;background:#fafafa;font-weight:700;}
+.product.status-out-of-stock .quick-view-btn,.product.status-coming-soon .quick-view-btn{border-color:#111;}
+@media(max-width:760px){.nita-products-toolbar{display:block}.nita-product-tabs{justify-content:flex-start;margin-top:14px}.notify-btn{margin-left:0;margin-top:10px;width:100%;}}
+/* === END NITA STOCK NOTIFY + ADMIN PRODUCT SPLIT POLISH === */
+
+/* === NITA STYLE FINAL PATCH: professional notify sign-in modal === */
+.nita-auth-modal-backdrop{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(255,255,255,.74);backdrop-filter:blur(10px);}
+.nita-auth-modal-backdrop.show{display:flex;animation:nitaModalFade .18s ease both;}
+.nita-auth-modal-card{position:relative;width:min(440px,calc(100vw - 36px));background:#fff;border:1px solid #dedede;border-radius:28px;padding:36px;box-shadow:0 30px 90px rgba(0,0,0,.18);transform:translateY(8px);animation:nitaModalRise .22s ease both;}
+.nita-auth-modal-card h2{margin:8px 0 12px;font-size:30px;line-height:1;text-transform:uppercase;letter-spacing:.02em;}
+.nita-auth-modal-card .muted{font-size:14px;line-height:1.7;color:#666;max-width:34em;}
+.nita-auth-modal-close{position:absolute;right:18px;top:18px;width:44px;height:44px;border:1px solid #111;border-radius:999px;background:#fff;color:#111;font-size:22px;font-weight:900;cursor:pointer;transition:background .18s ease,color .18s ease,transform .18s ease;}
+.nita-auth-modal-close:hover,.nita-auth-modal-close:focus{background:#111;color:#fff;transform:translateY(-1px);}
+.nita-auth-modal-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px;}
+.nita-auth-modal-actions .btn{min-width:170px;text-align:center;}
+.nita-auth-modal-actions .btn.light{background:#fff!important;color:#111!important;border:1px solid #111!important;}
+.nita-auth-modal-actions .btn.light:hover,.nita-auth-modal-actions .btn.light:focus{background:#111!important;color:#fff!important;}
+@keyframes nitaModalFade{from{opacity:0}to{opacity:1}}
+@keyframes nitaModalRise{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:560px){.nita-auth-modal-card{padding:30px 24px;border-radius:24px}.nita-auth-modal-card h2{font-size:24px}.nita-auth-modal-actions .btn{width:100%;}}
+/* === END NITA STYLE FINAL PATCH: professional notify sign-in modal === */

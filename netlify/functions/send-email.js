@@ -120,6 +120,12 @@ exports.handler = async function(event) {
       const order = data.order || {};
       subject = `Nita Style order update ${order.id || ''}`;
       html = shell('Order update', 'Your order status changed', `<p>Your Nita Style order roadmap has been updated.</p><div style="border:1px solid #111;padding:18px;margin:20px 0"><p style="margin:0 0 8px"><b>Order:</b> ${esc(order.id || '')}</p><p style="margin:0"><b>New status:</b> ${esc(order.status || '')}</p></div>${roadmapEmailHtml(order.status)}<p>You can sign in to your account to follow your order details.</p>`);
+
+    } else if (type === 'back_in_stock') {
+      const product = data.product || {};
+      const sizeLine = data.size ? `<p><b>Size:</b> ${esc(data.size)}</p>` : '';
+      subject = `${esc(product.name || 'A Nita Style piece')} is back in stock`;
+      html = shell('Back in stock', 'Your piece is available again', `<p>The Nita Style piece you asked about is back in stock.</p><div style="border:1px solid #eee;background:#fafafa;padding:18px;margin:20px 0"><p style="margin:0 0 8px"><b>${esc(product.name || 'Product')}</b></p><p style="margin:0 0 8px"><b>Price:</b> ${money(product.price || 0)}</p>${sizeLine}</div><p>You can now visit Nita Style and place your order while it is available.</p>`);
     } else if (type === 'admin_order') {
       const order = data.order || {}; recipient = ADMIN_EMAIL;
       subject = `New Nita Style order ${order.id || ''}`;
