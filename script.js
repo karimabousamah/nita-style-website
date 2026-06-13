@@ -7814,3 +7814,86 @@ placeOrder=async function(){
   window.addEventListener('load',function(){setTimeout(function(){renderHomeSmooth(); injectProductPageArrows();},650);});
   window.addEventListener('nita-store-ready',function(){setTimeout(function(){if(document.getElementById('products')) window.renderProducts('#products',getProductsSafe()); renderHomeSmooth(); injectProductPageArrows();},100);});
 })();
+
+/* Final 20260613: true premium image preservation, clean product title, centered gallery arrows */
+(function(){
+  function esc(v){return String(v ?? '').replace(/[&<>"']/g,function(ch){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[ch];});}
+  function safeId(v){return String(v ?? '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+  function productsSafe(){try{return typeof getProducts==='function'?getProducts():[]}catch(e){return []}}
+  function norm(p){try{return typeof normalizeProductStatus==='function'?normalizeProductStatus(p||{}):(p||{})}catch(e){return p||{}}}
+  function photosOf(p){p=norm(p); var ph=Array.isArray(p.photos)?p.photos.filter(Boolean):[]; if(!ph.length&&p.img) ph=[p.img]; if(!ph.length) ph=['']; return ph;}
+  function moneySafe(v){try{return typeof money==='function'?money(v):('$'+Number(v||0).toFixed(2))}catch(e){return '$'+Number(v||0).toFixed(2)}}
+  function isOOS(p,s){try{return typeof isSizeOOS==='function'?isSizeOOS(p,s):false}catch(e){return false}}
+  function prodImages(p){try{return typeof productImagesForDisplay==='function'?productImagesForDisplay(p):{all:photosOf(p),first:photosOf(p)[0]}}catch(e){return {all:photosOf(p),first:photosOf(p)[0]}}}
+  function priceStatus(p,tag){try{return typeof productPriceStatusRow==='function'?productPriceStatusRow(p,tag):('<'+tag+'>'+moneySafe(p.salePrice||p.price)+'</'+tag+'>')}catch(e){return '<'+tag+'>'+moneySafe(p.salePrice||p.price)+'</'+tag+'>'}}
+  function sizeButtons(p){
+    p=norm(p); var sizes=Array.isArray(p.sizes)&&p.sizes.length?p.sizes:['One Size'];
+    var active=sizes.find(function(s){return !isOOS(p,s)})||sizes[0];
+    window.selectedSize=(window.selectedSize&&sizes.includes(window.selectedSize)&&!isOOS(p,window.selectedSize))?window.selectedSize:active;
+    return sizes.map(function(s){var off=isOOS(p,s); return '<button type="button" class="size '+(s===window.selectedSize?'active':'')+' '+(off?'size-disabled':'')+'" '+(off?'disabled aria-disabled="true" title="Out of stock"':'onclick="selectedSize=\''+esc(s)+'\';productPage()"')+'>'+esc(s)+'</button>';}).join('');
+  }
+  function isVisualSource(s){return String(s||'').indexOf('data:image')===0 || /^https?:/i.test(String(s||'')) || /^assets\//i.test(String(s||''));}
+  function imgTag(src,cls,alt){
+    src=String(src||'');
+    if(!isVisualSource(src)) return '<div class="'+cls+' nita-image-placeholder"></div>';
+    return '<img class="'+cls+'" src="'+esc(src)+'" alt="'+esc(alt||'Product image')+'" loading="eager" decoding="async" draggable="false">';
+  }
+  window.nitaDetailPhoto=function(dir){
+    var id=new URL(location.href).searchParams.get('id');
+    var p=norm(productsSafe().find(function(x){return String(x.id)===String(id)})||productsSafe()[0]);
+    var imgs=prodImages(p).all||photosOf(p); if(!imgs.length) return;
+    window.selectedPhoto=(Number(window.selectedPhoto||0)+dir+imgs.length)%imgs.length;
+    if(typeof window.productPage==='function') window.productPage();
+  };
+  window.productPage=function(){
+    var detail=document.getElementById('detail'); if(!detail) return;
+    var id=new URL(location.href).searchParams.get('id');
+    var p=norm(productsSafe().find(function(x){return String(x.id)===String(id)})||productsSafe()[0]);
+    if(!p||!p.id){detail.innerHTML='<div class="card"><h1>Product not found</h1><a class="btn" href="shop.html">BACK TO SHOP</a></div>';return;}
+    var imgs=(prodImages(p).all||photosOf(p)).filter(Boolean); if(!imgs.length) imgs=[''];
+    window.selectedPhoto=Math.min(Math.max(Number(window.selectedPhoto||0),0),imgs.length-1);
+    var current=imgs[window.selectedPhoto];
+    var canBuy=(p.status||'in-stock')==='in-stock' && !isOOS(p,window.selectedSize);
+    var action=canBuy?'<button class="btn" onclick="addToCart(\''+safeId(p.id)+'\',selectedSize||\'One Size\')">ADD TO CART</button><a class="btn light" href="checkout.html">BUY NOW</a>':'<button class="btn disabled" disabled aria-disabled="true">'+((p.status==='coming-soon')?'COMING SOON':((p.status==='out-of-stock')?'OUT OF STOCK':'SIZE OUT OF STOCK'))+'</button><button class="notify-btn" type="button" onclick="notifyMe&&notifyMe(\''+safeId(p.id)+'\')">NOTIFY ME</button>';
+    var arrows=imgs.length>1?'<button type="button" class="detail-photo-arrow detail-photo-prev" aria-label="Previous product photo" onclick="nitaDetailPhoto(-1)"><span>‹</span></button><button type="button" class="detail-photo-arrow detail-photo-next" aria-label="Next product photo" onclick="nitaDetailPhoto(1)"><span>›</span></button>':'';
+    detail.innerHTML='<div class="product-media nita-premium-product-media"><div class="detail-img nita-premium-detail-img">'+imgTag(current,'nita-detail-real-img',p.name)+arrows+'</div><div class="product-thumbs">'+imgs.map(function(ph,i){return '<button class="'+(i===window.selectedPhoto?'active':'')+'" onclick="selectedPhoto='+i+';productPage()">'+imgTag(ph,'nita-thumb-real-img',p.name+' photo '+(i+1))+'</button>';}).join('')+'</div></div><div class="product-info nita-premium-product-info"><p class="muted">'+esc(p.category||'')+'</p><h1>'+esc(p.name||'Product')+'</h1>'+priceStatus(p,'h2')+'<p>'+esc(p.desc||'')+'</p><div class="sizes product-size-list">'+sizeButtons(p)+'</div><div class="product-actions">'+action+'</div><hr><p class="muted">Cash on delivery available. Online payment will be available soon.</p></div>';
+  };
+
+  function readOriginal(file){return new Promise(function(resolve,reject){var r=new FileReader(); r.onload=function(e){resolve(e.target.result)}; r.onerror=reject; r.readAsDataURL(file);});}
+  function optionalResizeOnlyIfExtreme(dataUrl){
+    return new Promise(function(resolve){
+      var img=new Image();
+      img.onload=function(){
+        var w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+        var maxSide=6000;
+        if(w<=maxSide && h<=maxSide){resolve(dataUrl);return;}
+        var scale=Math.min(maxSide/w,maxSide/h), canvas=document.createElement('canvas');
+        canvas.width=Math.round(w*scale); canvas.height=Math.round(h*scale);
+        var ctx=canvas.getContext('2d'); ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL('image/jpeg',0.995));
+      };
+      img.onerror=function(){resolve(dataUrl)}; img.src=dataUrl;
+    });
+  }
+  window.fileToHighQualityDataURL=function(file){return readOriginal(file).then(optionalResizeOnlyIfExtreme);};
+  window.handleProductPhotos=function(e){
+    var files=Array.from((e&&e.target&&e.target.files)||[]); if(!files.length) return;
+    var status=document.getElementById('productSaveStatus');
+    if(status) status.innerHTML='<div class="admin-save-hint">Preparing original-quality product photos…</div>';
+    Promise.all(files.slice(0,8).map(window.fileToHighQualityDataURL)).then(function(urls){
+      window.pendingPhotos=urls; window.pendingAdminPhotos=urls;
+      if(typeof window.renderPendingPhotos==='function') window.renderPendingPhotos();
+      if(status) status.innerHTML='<div class="admin-save-ok">Original-quality photos ready.</div>';
+      setTimeout(function(){if(status) status.innerHTML='';},1400);
+    }).catch(function(){if(status) status.innerHTML='<div class="email-status-warn">One photo could not be prepared. Please try another image.</div>';});
+  };
+  window.previewEditPhotos=function(e,id){
+    var files=Array.from((e&&e.target&&e.target.files)||[]); if(!files.length) return;
+    Promise.all(files.slice(0,8).map(window.fileToHighQualityDataURL)).then(function(urls){
+      window.editingPhotoBuffers=window.editingPhotoBuffers||{}; window.editingMainPhotoIndex=window.editingMainPhotoIndex||{};
+      window.editingPhotoBuffers[id]=urls; window.editingMainPhotoIndex[id]=0;
+      if(typeof window.setEditMainPhoto==='function') window.setEditMainPhoto(id,0);
+    });
+  };
+})();
