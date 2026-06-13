@@ -21,25 +21,16 @@ function safeState(state) {
   return cleaned;
 }
 
-async function loadBlobStore() {
-  let blobs;
+async function getBlobStore() {
+  const blobs = require('@netlify/blobs');
+  if (!blobs || !blobs.getStore) throw new Error('Netlify Blobs getStore unavailable.');
   try {
-    blobs = require('@netlify/blobs');
-  } catch (requireError) {
-    blobs = await import('@netlify/blobs');
-  }
-  const getStore = blobs.getStore;
-  if (!getStore) throw new Error('Netlify Blobs getStore is unavailable.');
-
-  // In Netlify Functions, getStore('name') works without manually setting site ID/token.
-  // If the site is using older/manual credentials, fall back to the explicit config.
-  try {
-    return getStore('nita-style-live-database');
-  } catch (automaticError) {
+    return blobs.getStore('nita-style-live-database');
+  } catch (err) {
     const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
     const token = process.env.NETLIFY_AUTH_TOKEN;
-    if (!siteID || !token) throw automaticError;
-    return getStore({ name: 'nita-style-live-database', siteID, token });
+    if (!siteID || !token) throw err;
+    return blobs.getStore({ name: 'nita-style-live-database', siteID, token });
   }
 }
 
@@ -51,14 +42,16 @@ exports.handler = async function(event) {
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
   };
-
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
 
   try {
-    const store = await loadBlobStore();
+    const store = await getBlobStore();
 
     if (event.httpMethod === 'GET') {
-      const saved = await store.get('state', { type: 'json' });
+      let saved = null;
+      try {
+        if (typeof store.get === 'function') saved = await store.get('state', { type: 'json' });
+      } catch (e) { saved = null; }
       return { statusCode: 200, headers, body: JSON.stringify(safeState(saved)) };
     }
 
@@ -67,8 +60,9 @@ exports.handler = async function(event) {
       try { data = JSON.parse(event.body || '{}'); }
       catch { return { statusCode: 400, headers, body: JSON.stringify({ ok:false, error:'Invalid JSON.' }) }; }
 
-      const previous = safeState(await store.get('state', { type: 'json' }));
-      let next = { ...previous };
+      let previous = null;
+      try { previous = await store.get('state', { type: 'json' }); } catch (e) { previous = null; }
+      let next = safeState(previous);
 
       if (data.key && ALLOWED_KEYS.includes(data.key)) {
         next[data.key] = data.value;
@@ -77,20 +71,28 @@ exports.handler = async function(event) {
           if (Object.prototype.hasOwnProperty.call(data, key)) next[key] = data[key];
         }
       }
-
       next = safeState(next);
       next.updatedAt = new Date().toISOString();
-      await store.setJSON('state', next);
+
+      const payload = JSON.stringify(next);
+      if (typeof store.setJSON === 'function') {
+        await store.setJSON('state', next);
+      } else if (typeof store.set === 'function') {
+        await store.set('state', payload, { contentType: 'application/json' });
+      } else {
+        throw new Error('Netlify Blobs store cannot write data.');
+      }
+
       return { statusCode: 200, headers, body: JSON.stringify({ ok:true, updatedAt: next.updatedAt }) };
     }
 
     return { statusCode: 405, headers, body: JSON.stringify({ ok:false, error:'Method not allowed.' }) };
   } catch (error) {
-    console.error('Nita store function error:', error);
+    console.error('Nita store function error:', error && (error.stack || error.message || error));
     return { statusCode: 500, headers, body: JSON.stringify({
       ok:false,
       error: error && error.message ? error.message : 'Store error.',
-      hint: 'Check that the Netlify deployment includes package.json and netlify/functions/store.js.'
+      hint: 'Check Netlify deploy logs for netlify/functions/store.js and make sure package.json is deployed.'
     }) };
   }
 };

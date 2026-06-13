@@ -2743,3 +2743,7 @@ body .nita-final-order-road{margin-top:16px!important;overflow:auto!important;}
 @keyframes nitaFinalOrdersIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media(max-width:700px){body .nita-final-order-trigger{font-size:18px!important;min-height:68px!important;padding:0 20px!important}body .nita-final-orders-overlay{padding:14px!important}body .nita-final-orders-box{padding:20px!important}body .nita-final-order-main{display:grid!important}body .nita-final-order-side{text-align:left!important}}
 /* === END NITA STYLE REAL FIX: simple account order buttons and modal === */
+
+/* Final: remove Style note controls and keep add-product clean */
+#pstyle,.edit-style{display:none!important;}
+#pstyle.closest-remove{display:none!important;}
