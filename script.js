@@ -8648,3 +8648,156 @@ placeOrder=async function(){
   window.addEventListener('load', () => { setTimeout(applyMaterialFields, 500); setTimeout(addMaterialToProductDetails, 700); });
 })();
 /* === END NITA STYLE PRODUCT MATERIAL SELECTOR FIX === */
+
+/* =========================================================
+   NITA STYLE FINAL COMBINED FIX
+   - Quick View product image from assets/products filenames
+   - Live 500/500 description remaining counter
+   - Product material selector in Add/Edit Product
+   ========================================================= */
+(function(){
+  const MATERIAL_OPTIONS = ['Leather','Faux leather','Suede','Linen','Cotton','Denim','Silk','Satin','Wool','Knit','Cashmere','Polyester','Viscose','Tweed','Crochet','Lace','Nylon','Canvas','Mixed materials','Other'];
+  const DESC_LIMIT = 500;
+  const esc = (s)=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const money2 = (v)=>{ try { return typeof money==='function'?money(v):('$'+Number(v||0).toFixed(2)); } catch(e){ return '$'+Number(v||0).toFixed(2); } };
+  function resolveProductImage(src){
+    src = String(src||'').trim();
+    if(!src) return '';
+    if(src.startsWith('data:') || src.startsWith('http://') || src.startsWith('https://') || src.startsWith('/') || src.startsWith('assets/')) return src;
+    if(src.includes('gradient(')) return '';
+    return 'assets/products/' + src.replace(/^\.\//,'');
+  }
+  function photosOfProduct(p){
+    let list=[];
+    if(Array.isArray(p?.photos)) list=list.concat(p.photos);
+    if(Array.isArray(p?.imageFiles)) list=list.concat(p.imageFiles);
+    if(Array.isArray(p?.filePhotos)) list=list.concat(p.filePhotos);
+    if(p?.img) list.unshift(p.img);
+    list = list.map(resolveProductImage).filter(Boolean);
+    return [...new Set(list)];
+  }
+  window.nitaResolveProductImage = resolveProductImage;
+  window.productImagesForDisplay = function(p){
+    const all = photosOfProduct(p);
+    const fallback = 'assets/logo-cropped.png';
+    return { first: all[0] || fallback, second: all[1] || all[0] || fallback, all: all.length ? all : [fallback] };
+  };
+
+  function ensureQuickModal(){
+    let m=document.getElementById('quickModal');
+    if(!m){
+      document.body.insertAdjacentHTML('beforeend','<div class="quick-modal" id="quickModal" aria-hidden="true"><div class="quick-backdrop" data-quick-close="true"></div><div class="quick-dialog" role="dialog" aria-modal="true"><button class="quick-close" type="button" data-quick-close="true">×</button><div id="quickContent"></div></div></div>');
+      m=document.getElementById('quickModal');
+    }
+    return m;
+  }
+  window.openQuickView = function(id){
+    const list = typeof getProducts==='function' ? getProducts() : [];
+    const p = list.find(x=>String(x.id)===String(id));
+    if(!p) return false;
+    const imgs = productImagesForDisplay(p);
+    const sizes = (Array.isArray(p.sizes)&&p.sizes.length?p.sizes:['One Size']).map((s,i)=>`<button type="button" class="size ${i===0?'active':''}" onclick="this.parentElement.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${esc(s)}</button>`).join('');
+    const status = p.status || 'in-stock';
+    const canBuy = status === 'in-stock';
+    const action = canBuy
+      ? `<button class="btn quick-add" type="button" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}', document.querySelector('#quickContent .size.active')?.textContent || 'One Size'); closeQuickView();">ADD TO CART</button>`
+      : `<button class="btn disabled quick-disabled" type="button" disabled>${status==='coming-soon'?'COMING SOON':'OUT OF STOCK'}</button>`;
+    const price = (p.salePrice!=='' && p.salePrice!=null && Number(p.salePrice)<Number(p.price))
+      ? `<h3><span class="muted" style="text-decoration:line-through;margin-right:8px">${money2(p.price)}</span><span class="price-drop">${money2(p.salePrice)}</span></h3>`
+      : `<h3>${money2(p.price)}</h3>`;
+    const q = document.getElementById('quickContent') || ensureQuickModal().querySelector('#quickContent');
+    q.innerHTML = `<div class="quick-grid quick-grid-fixed">
+      <div class="quick-image quick-image-fixed"><img src="${esc(imgs.first)}" alt="${esc(p.name||'Product image')}" loading="eager"></div>
+      <div class="quick-info"><p class="muted">${esc(p.category||'')}</p><h2>${esc(p.name||'Product')}</h2>${price}<p>${esc(p.desc||'')}</p><div class="sizes">${sizes}</div>${action}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div>
+    </div>`;
+    const m=ensureQuickModal(); m.classList.add('open'); m.setAttribute('aria-hidden','false'); document.body.classList.add('quick-open','panel-open'); return false;
+  };
+  window.closeQuickView = function(){ const m=document.getElementById('quickModal'); if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true')} document.body.classList.remove('quick-open','panel-open'); };
+  document.addEventListener('click',function(e){ if(e.target.closest('[data-quick-close]')){ e.preventDefault(); closeQuickView(); }});
+
+  function ensureDescCounter(textarea){
+    if(!textarea || textarea.dataset.nitaCounterReady==='1') return;
+    textarea.dataset.nitaCounterReady='1';
+    textarea.setAttribute('maxlength', String(DESC_LIMIT));
+    let counter = textarea.parentElement?.querySelector('.nita-desc-counter');
+    if(!counter){
+      counter = document.createElement('div');
+      counter.className = 'nita-desc-counter';
+      textarea.insertAdjacentElement('afterend', counter);
+    }
+    function update(){
+      if(textarea.value.length > DESC_LIMIT) textarea.value = textarea.value.slice(0,DESC_LIMIT);
+      counter.textContent = `${DESC_LIMIT - textarea.value.length}/${DESC_LIMIT}`;
+    }
+    textarea.addEventListener('input', update);
+    update();
+  }
+  function materialSelectHtml(value){
+    const current = value || 'Leather';
+    return `<div class="nita-material-field"><label>Product material</label><select id="pmaterial" class="field nita-material-select">${MATERIAL_OPTIONS.map(m=>`<option value="${esc(m)}" ${m===current?'selected':''}>${esc(m)}</option>`).join('')}</select><p class="field-help">Choose the main material of this product.</p></div>`;
+  }
+  function editMaterialSelectHtml(value){
+    const current = value || 'Leather';
+    return `<div class="nita-material-field edit-material-wrap"><label>Product material</label><select class="field edit-material nita-material-select">${MATERIAL_OPTIONS.map(m=>`<option value="${esc(m)}" ${m===current?'selected':''}>${esc(m)}</option>`).join('')}</select><p class="field-help">Choose the main material of this product.</p></div>`;
+  }
+  function ensureMaterialFields(){
+    const addCat = document.getElementById('pcat');
+    if(addCat && !document.getElementById('pmaterial')){
+      const wrap = addCat.closest('div') || addCat.parentElement;
+      if(wrap) wrap.insertAdjacentHTML('afterend', materialSelectHtml('Leather'));
+    }
+    document.querySelectorAll('.product-editor').forEach(editor=>{
+      if(editor.querySelector('.edit-material')) return;
+      const id = (editor.id||'').replace(/^editor-/,'');
+      const p = (typeof getProducts==='function'?getProducts():[]).find(x=>String(x.id)===String(id));
+      const cat = editor.querySelector('.edit-category');
+      const wrap = cat?.closest('div') || cat?.parentElement;
+      if(wrap) wrap.insertAdjacentHTML('afterend', editMaterialSelectHtml(p?.material || p?.productMaterial || 'Leather'));
+    });
+  }
+  function ensureAllAdminEnhancements(){
+    document.querySelectorAll('#pdesc, textarea.edit-desc').forEach(ensureDescCounter);
+    ensureMaterialFields();
+  }
+  const oldAdd = window.addProductAdmin;
+  if(typeof oldAdd === 'function'){
+    window.addProductAdmin = async function(){
+      const mat = document.getElementById('pmaterial')?.value || 'Leather';
+      const before = (typeof getProducts==='function'?getProducts():[]).map(p=>String(p.id));
+      const result = await oldAdd.apply(this, arguments);
+      try{
+        const ps = typeof getProducts==='function'?getProducts():[];
+        const added = [...ps].reverse().find(p=>!before.includes(String(p.id)));
+        if(added && !added.material){ added.material = mat; added.productMaterial = mat; if(typeof saveProducts==='function') await saveProducts(ps); }
+      }catch(e){}
+      setTimeout(ensureAllAdminEnhancements, 300);
+      return result;
+    };
+  }
+  const oldEditSave = window.saveProductEditor;
+  if(typeof oldEditSave === 'function'){
+    window.saveProductEditor = async function(id){
+      const editor = document.getElementById('editor-'+CSS.escape(String(id)));
+      const mat = editor?.querySelector('.edit-material')?.value || 'Leather';
+      const result = await oldEditSave.apply(this, arguments);
+      try{
+        const ps = typeof getProducts==='function'?getProducts():[];
+        const p = ps.find(x=>String(x.id)===String(id));
+        if(p){ p.material = mat; p.productMaterial = mat; if(typeof saveProducts==='function') await saveProducts(ps); }
+      }catch(e){}
+      setTimeout(ensureAllAdminEnhancements, 300);
+      return result;
+    };
+  }
+  const oldRenderAdmin = window.renderAdmin;
+  if(typeof oldRenderAdmin==='function'){
+    window.renderAdmin = async function(){ const r=await oldRenderAdmin.apply(this, arguments); setTimeout(ensureAllAdminEnhancements, 300); return r; };
+  }
+  const oldToggle = window.toggleProductEditor;
+  if(typeof oldToggle==='function'){
+    window.toggleProductEditor=function(){ const r=oldToggle.apply(this,arguments); setTimeout(ensureAllAdminEnhancements, 150); return r; };
+  }
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(ensureAllAdminEnhancements,500));
+  window.addEventListener('load',()=>setTimeout(ensureAllAdminEnhancements,800));
+  new MutationObserver(()=>ensureAllAdminEnhancements()).observe(document.documentElement,{childList:true,subtree:true});
+})();
