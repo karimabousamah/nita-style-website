@@ -1181,7 +1181,7 @@ placeOrder=async function(){
     const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader(); r.onload=()=>resolve(r.result); r.onerror=reject; r.readAsDataURL(file);});
     try{
       const img=await new Promise((resolve,reject)=>{const im=new Image(); im.onload=()=>resolve(im); im.onerror=reject; im.src=dataUrl;});
-      const max=1200; let w=img.width,h=img.height; if(Math.max(w,h)>max){const ratio=max/Math.max(w,h); w=Math.round(w*ratio); h=Math.round(h*ratio);} 
+      const max=2200; let w=img.width,h=img.height; if(Math.max(w,h)>max){const ratio=max/Math.max(w,h); w=Math.round(w*ratio); h=Math.round(h*ratio);} 
       const canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h; const ctx=canvas.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h);
       return canvas.toDataURL('image/jpeg',0.78);
     }catch(e){return dataUrl;}
@@ -7368,7 +7368,7 @@ placeOrder=async function(){
               var ctx = canvas.getContext('2d');
               ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h);
               ctx.drawImage(img,0,0,w,h);
-              resolve(canvas.toDataURL('image/jpeg', 0.68));
+              resolve(canvas.toDataURL('image/jpeg', 0.94));
             }catch(err){ resolve(raw || ''); }
           };
           img.onerror = function(){ resolve(raw || ''); };
@@ -7398,7 +7398,7 @@ placeOrder=async function(){
         + '<button type="button" aria-label="Move photo right" onclick="movePendingPhoto('+i+',1)" '+(i===photos.length-1?'disabled':'')+'>→</button>'
         + '<button type="button" aria-label="Remove photo" onclick="removePendingPhoto('+i+')">×</button>'
         + '</div></div>';
-    }).join('') + (photos.length ? '<p class="muted admin-photo-note">Photo 1 is the main product photo. Images are compressed so the product saves globally without Netlify errors.</p>' : '');
+    }).join('') + (photos.length ? '<p class="muted admin-photo-note">Photo 1 is the main product photo. Images are optimized at high quality for clear product display.</p>' : '');
   }
   window.previewAdminPhotos = function(event){
     var input = event && event.target;
@@ -7468,7 +7468,7 @@ placeOrder=async function(){
           w=Math.max(1,Math.round(w*ratio)); h=Math.max(1,Math.round(h*ratio));
           var canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
           var ctx=canvas.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h);
-          resolve(canvas.toDataURL('image/jpeg',0.52));
+          resolve(canvas.toDataURL('image/jpeg',0.94));
         }catch(e){resolve(url)}
       };
       img.onerror=function(){resolve(url)};
@@ -7530,7 +7530,7 @@ placeOrder=async function(){
   function renderPhotos(){
     var box=document.getElementById('photoPreview'); if(!box)return;
     var photos=unique(window.pendingAdminPhotos||[]); window.pendingAdminPhotos=photos;
-    box.innerHTML=photos.map(function(u,i){return '<div class="admin-thumb photo-order-thumb"><img src="'+esc(u)+'" alt="Product photo '+(i+1)+'"><span>'+(i===0?'Photo 1':'Photo '+(i+1))+'</span><div class="photo-order-controls"><button type="button" onclick="movePendingPhoto('+i+',-1)" '+(i===0?'disabled':'')+'>←</button><button type="button" onclick="movePendingPhoto('+i+',1)" '+(i===photos.length-1?'disabled':'')+'>→</button><button type="button" onclick="removePendingPhoto('+i+')">×</button></div></div>'}).join('') + (photos.length?'<p class="muted admin-photo-note">Photo 1 is the main product photo. Photos are compressed before saving so the product can save globally.</p>':'');
+    box.innerHTML=photos.map(function(u,i){return '<div class="admin-thumb photo-order-thumb"><img src="'+esc(u)+'" alt="Product photo '+(i+1)+'"><span>'+(i===0?'Photo 1':'Photo '+(i+1))+'</span><div class="photo-order-controls"><button type="button" onclick="movePendingPhoto('+i+',-1)" '+(i===0?'disabled':'')+'>←</button><button type="button" onclick="movePendingPhoto('+i+',1)" '+(i===photos.length-1?'disabled':'')+'>→</button><button type="button" onclick="removePendingPhoto('+i+')">×</button></div></div>'}).join('') + (photos.length?'<p class="muted admin-photo-note">Photo 1 is the main product photo. Photos are optimized at high quality for clear product display.</p>':'');
   }
   window.previewAdminPhotos=function(event){
     var input=event&&event.target; var files=Array.prototype.slice.call((input&&input.files)||[]); if(!files.length)return;
@@ -7608,3 +7608,209 @@ placeOrder=async function(){
   };
 })();
 /* === END NITA STYLE FINAL PRODUCT SAVE + REMOVE STYLE NOTE FIX === */
+
+
+/* Final 20260613: high-quality product image handling.
+   Keeps uploaded product photos clear while still resizing very large files safely for Netlify. */
+(function(){
+  function readAsDataURL(file){
+    return new Promise(function(resolve,reject){
+      var reader=new FileReader();
+      reader.onload=function(e){resolve(e.target.result)};
+      reader.onerror=reject;
+      reader.readAsDataURL(file);
+    });
+  }
+  function optimizeImage(dataUrl){
+    return new Promise(function(resolve){
+      var img=new Image();
+      img.onload=function(){
+        var w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+        var max=2400;
+        if(w<=max && h<=max){ resolve(dataUrl); return; }
+        var scale=Math.min(max/w,max/h);
+        var canvas=document.createElement('canvas');
+        canvas.width=Math.round(w*scale);
+        canvas.height=Math.round(h*scale);
+        var ctx=canvas.getContext('2d');
+        ctx.imageSmoothingEnabled=true;
+        ctx.imageSmoothingQuality='high';
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL('image/jpeg',0.94));
+      };
+      img.onerror=function(){resolve(dataUrl)};
+      img.src=dataUrl;
+    });
+  }
+  function fileToHighQualityDataURL(file){ return readAsDataURL(file).then(optimizeImage); }
+  window.fileToHighQualityDataURL=fileToHighQualityDataURL;
+
+  window.renderPendingPhotos=function(){
+    var box=document.getElementById('photoPreview'); if(!box) return;
+    var photos=window.pendingPhotos||[];
+    var esc=function(v){return String(v||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+    box.innerHTML=photos.map(function(u,i){return '<div class="admin-thumb photo-order-thumb"><img src="'+esc(u)+'" alt="Product photo '+(i+1)+'"><span>'+(i===0?'Photo 1':'Photo '+(i+1))+'</span><div class="photo-order-controls"><button type="button" onclick="movePendingPhoto('+i+',-1)" '+(i===0?'disabled':'')+'>←</button><button type="button" onclick="movePendingPhoto('+i+',1)" '+(i===photos.length-1?'disabled':'')+'>→</button><button type="button" onclick="removePendingPhoto('+i+')">×</button></div></div>'}).join('') + (photos.length?'<p class="muted admin-photo-note">Photo 1 is the main product photo. Photos are saved in high quality and only resized if they are extremely large.</p>':'');
+  };
+  window.handleProductPhotos=function(e){
+    var files=Array.from((e&&e.target&&e.target.files)||[]);
+    if(!files.length) return;
+    var status=document.getElementById('productSaveStatus');
+    if(status) status.innerHTML='<div class="admin-save-hint">Preparing high-quality photos…</div>';
+    Promise.all(files.slice(0,8).map(fileToHighQualityDataURL)).then(function(urls){
+      window.pendingPhotos=urls;
+      window.renderPendingPhotos();
+      if(status) status.innerHTML='';
+    }).catch(function(){
+      if(status) status.innerHTML='<div class="email-status-warn">One photo could not be prepared. Please try another image.</div>';
+    });
+  };
+})();
+
+/* Final 20260613: premium product image quality override.
+   Keeps product uploads as close as possible to the original device image.
+   Only very large images are resized, and compression is near-lossless for product clarity. */
+(function(){
+  function readFile(file){
+    return new Promise(function(resolve,reject){
+      var r=new FileReader();
+      r.onload=function(e){resolve(e.target.result)};
+      r.onerror=reject;
+      r.readAsDataURL(file);
+    });
+  }
+  function preserveProductImage(dataUrl){
+    return new Promise(function(resolve){
+      var img=new Image();
+      img.onload=function(){
+        var w=img.naturalWidth||img.width;
+        var h=img.naturalHeight||img.height;
+        /* For normal product photos, keep the original file data exactly.
+           Resize only oversized photos so Netlify/global storage does not fail. */
+        var maxSide=3600;
+        if(w<=maxSide && h<=maxSide){
+          resolve(dataUrl);
+          return;
+        }
+        var scale=Math.min(maxSide/w,maxSide/h);
+        var canvas=document.createElement('canvas');
+        canvas.width=Math.round(w*scale);
+        canvas.height=Math.round(h*scale);
+        var ctx=canvas.getContext('2d');
+        ctx.imageSmoothingEnabled=true;
+        ctx.imageSmoothingQuality='high';
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL('image/jpeg',0.985));
+      };
+      img.onerror=function(){resolve(dataUrl)};
+      img.src=dataUrl;
+    });
+  }
+  window.fileToHighQualityDataURL=function(file){
+    return readFile(file).then(preserveProductImage);
+  };
+  window.handleProductPhotos=function(e){
+    var files=Array.from((e&&e.target&&e.target.files)||[]);
+    if(!files.length) return;
+    var status=document.getElementById('productSaveStatus');
+    if(status) status.innerHTML='<div class="admin-save-hint">Preparing premium-quality photos…</div>';
+    Promise.all(files.slice(0,8).map(window.fileToHighQualityDataURL)).then(function(urls){
+      window.pendingPhotos=urls;
+      if(typeof window.renderPendingPhotos==='function') window.renderPendingPhotos();
+      if(status) status.innerHTML='<div class="admin-save-ok">Premium-quality photos ready.</div>';
+      setTimeout(function(){ if(status) status.innerHTML=''; },1600);
+    }).catch(function(){
+      if(status) status.innerHTML='<div class="email-status-warn">One photo could not be prepared. Please try another image.</div>';
+    });
+  };
+})();
+
+/* Final 20260613: product gallery arrows + reliable hover second image + smoother homepage marquees */
+(function(){
+  function esc(v){return String(v ?? '').replace(/[&<>"']/g,function(ch){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[ch];});}
+  function getProductsSafe(){try{return typeof getProducts==='function'?getProducts():[]}catch(e){return []}}
+  function normalize(p){try{return typeof normalizeProductStatus==='function'?normalizeProductStatus(p||{}):(p||{})}catch(e){return p||{}}}
+  function moneySafe(v){try{return typeof money==='function'?money(v):('$'+Number(v||0).toFixed(2))}catch(e){return '$'+Number(v||0).toFixed(2)}}
+  function priceHtml(p){try{return typeof productPriceStatusRow==='function'?productPriceStatusRow(p,'p'):'<p>'+moneySafe(p.salePrice||p.price)+'</p>'}catch(e){return '<p>'+moneySafe(p.salePrice||p.price)+'</p>'}}
+  function bg(u){
+    var s=String(u||'');
+    if(!s) return 'background:linear-gradient(135deg,#f7f7f7,#e9e9e9)';
+    if(typeof cssBgImage==='function') return cssBgImage(s);
+    if(s.indexOf('data:')===0 || /^https?:/i.test(s) || s.indexOf('/')>=0) return 'background-image:url("'+s.replace(/"/g,'&quot;')+'")';
+    return 'background:'+s;
+  }
+  function photosOf(raw){
+    var p=normalize(raw);
+    var photos=[];
+    if(Array.isArray(p.photos)) photos=p.photos.filter(Boolean);
+    if(!photos.length && p.img) photos=[p.img];
+    if(!photos.length) photos=['linear-gradient(135deg,#f7f7f7,#e9e9e9)'];
+    return photos;
+  }
+  function productById(id){return getProductsSafe().map(normalize).find(function(p){return String(p.id)===String(id)})}
+
+  window.nitaCardPhotoNext=function(btn,dir){
+    var card=btn && btn.closest ? btn.closest('.product') : null;
+    if(!card) return false;
+    var id=card.getAttribute('data-product-id');
+    var p=productById(id); if(!p) return false;
+    var photos=photosOf(p); if(photos.length<2) return false;
+    var idx=Number(card.dataset.photoIndex||0);
+    idx=(idx+dir+photos.length)%photos.length;
+    card.dataset.photoIndex=String(idx);
+    var primary=card.querySelector('.product-img-primary');
+    var secondary=card.querySelector('.product-img-secondary');
+    if(primary){primary.setAttribute('style',bg(photos[idx])+';background-size:cover;background-position:center;');}
+    if(secondary){secondary.setAttribute('style',bg(photos[(idx+1)%photos.length])+';background-size:cover;background-position:center;');}
+    var dots=card.querySelectorAll('.product-photo-dot');
+    dots.forEach(function(d,i){d.classList.toggle('active',i===idx);});
+    return false;
+  };
+
+  window.productCard=function(raw){
+    var p=normalize(raw); var photos=photosOf(p); var sale=p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price);
+    var title=esc(p.name||'Product'); var second=photos[1] || photos[0];
+    var controls = photos.length>1 ? '<button class="product-photo-arrow product-photo-prev" type="button" aria-label="Previous product photo" onclick="event.preventDefault();event.stopPropagation();return nitaCardPhotoNext(this,-1)">‹</button><button class="product-photo-arrow product-photo-next" type="button" aria-label="Next product photo" onclick="event.preventDefault();event.stopPropagation();return nitaCardPhotoNext(this,1)">›</button><div class="product-photo-dots">'+photos.slice(0,5).map(function(_,i){return '<span class="product-photo-dot '+(i===0?'active':'')+'"></span>';}).join('')+'</div>' : '';
+    return '<article class="product status-'+esc(p.status||'in-stock')+'" data-product-id="'+esc(p.id)+'" data-photo-index="0"><a class="product-hit" href="product.html?id='+encodeURIComponent(p.id)+'"><div class="product-img">'+(sale?'<span class="sale-badge">PRICE DROP</span>':'')+'<span class="product-img-layer product-img-primary" style="'+bg(photos[0])+';background-size:cover;background-position:center;"></span><span class="product-img-layer product-img-secondary" style="'+bg(second)+';background-size:cover;background-position:center;"></span>'+controls+'</div><h3>'+title+'</h3>'+priceHtml(p)+'</a><button class="quick-view-btn" type="button" data-quick-id="'+esc(p.id)+'" aria-label="Quick view '+title+'">QUICK VIEW</button></article>';
+  };
+
+  window.renderProducts=function(el,list){
+    var node=document.querySelector(el||'#products'); if(!node) return;
+    var arr=list || getProductsSafe();
+    node.innerHTML=(arr||[]).map(window.productCard).join('') || '<p class="muted">No products listed yet.</p>';
+  };
+
+  function productHomeSection(p){try{return window.productHomeSection?p.homeSection||p.displaySection||window.productHomeSection(p):p.homeSection||p.displaySection||''}catch(e){return p.homeSection||p.displaySection||''}}
+  function renderHomeSmooth(){
+    var products=getProductsSafe().map(normalize);
+    var pairs=[['trendingMarquee','trending-now'],['newArrivalsMarquee','new-arrivals']];
+    pairs.forEach(function(pair){
+      var box=document.getElementById(pair[0]); if(!box) return;
+      var list=products.filter(function(p){return productHomeSection(p)===pair[1];});
+      if(!list.length) list=products.slice(0,8);
+      if(!list.length){box.innerHTML='<p class="muted">No products listed yet.</p>'; return;}
+      var repeated=[]; for(var i=0;i<5;i++) repeated=repeated.concat(list);
+      box.classList.add('nita-smooth-marquee');
+      box.innerHTML=repeated.map(window.productCard).join('');
+      box.style.setProperty('--nita-marquee-distance','-'+(100/5)+'%');
+    });
+  }
+  window.renderHomeSections=renderHomeSmooth;
+
+  function injectProductPageArrows(){
+    var detail=document.getElementById('detail'); if(!detail) return;
+    var id=new URL(location.href).searchParams.get('id'); var p=productById(id); if(!p) return;
+    var photos=photosOf(p); if(photos.length<2) return;
+    var img=detail.querySelector('.detail-img'); if(!img || img.querySelector('.detail-photo-arrow')) return;
+    img.classList.add('has-detail-arrows');
+    img.insertAdjacentHTML('beforeend','<button type="button" class="detail-photo-arrow detail-photo-prev" aria-label="Previous product photo">‹</button><button type="button" class="detail-photo-arrow detail-photo-next" aria-label="Next product photo">›</button>');
+    img.querySelector('.detail-photo-prev').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();window.selectedPhoto=(Number(window.selectedPhoto||0)-1+photos.length)%photos.length; window.productPage&&window.productPage();});
+    img.querySelector('.detail-photo-next').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();window.selectedPhoto=(Number(window.selectedPhoto||0)+1)%photos.length; window.productPage&&window.productPage();});
+  }
+  var oldProductPage=window.productPage;
+  if(typeof oldProductPage==='function'){
+    window.productPage=function(){var r=oldProductPage.apply(this,arguments); setTimeout(injectProductPageArrows,0); return r;};
+  }
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){if(document.getElementById('products')) window.renderProducts('#products',getProductsSafe()); renderHomeSmooth(); injectProductPageArrows();},250);});
+  window.addEventListener('load',function(){setTimeout(function(){renderHomeSmooth(); injectProductPageArrows();},650);});
+  window.addEventListener('nita-store-ready',function(){setTimeout(function(){if(document.getElementById('products')) window.renderProducts('#products',getProductsSafe()); renderHomeSmooth(); injectProductPageArrows();},100);});
+})();
