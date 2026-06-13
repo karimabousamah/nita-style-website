@@ -8145,3 +8145,67 @@ placeOrder=async function(){
   window.addEventListener('load',function(){setTimeout(function(){if(document.getElementById('detail'))window.productPage();if(document.getElementById('adminProducts'))window.renderAdminProducts();},900)});
   window.addEventListener('nita-store-ready',function(){setTimeout(function(){if(document.getElementById('detail'))window.productPage();if(document.getElementById('adminProducts'))window.renderAdminProducts();},260)});
 })();
+
+/* FINAL 20260613: full-quality product photos via static asset paths/URLs */
+(function(){
+  function $(id){return document.getElementById(id)}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function cleanLines(v){return String(v||'').split(/\n|,/).map(function(s){return s.trim()}).filter(Boolean)}
+  function normalizePhotoPath(s){
+    s=String(s||'').trim(); if(!s) return '';
+    if(/^data:image\//i.test(s) || /^https?:\/\//i.test(s) || /^\//.test(s)) return s;
+    if(/^assets\//i.test(s)) return s;
+    return 'assets/products/'+s.replace(/^\/+/, '');
+  }
+  function assetPhotos(){return cleanLines(($('pPhotoPaths')||{}).value).map(normalizePhotoPath).filter(Boolean)}
+  function unique(arr){var seen={};return (arr||[]).filter(function(x){x=String(x||'').trim();if(!x||seen[x])return false;seen[x]=1;return true;})}
+  function injectAssetPhotoBox(){
+    if(!$('adminProducts') && !$('pname')) return;
+    if($('pPhotoPaths')) return;
+    var input=$('pphotos');
+    var target=input ? input.closest('.upload-zone') || input.parentElement : null;
+    if(!target) return;
+    var wrap=document.createElement('div');
+    wrap.className='asset-photo-box';
+    wrap.innerHTML='<label>Original image file names / links</label><p class="muted">For maximum quality, put photos in <b>assets/products</b> inside the ZIP, then write one file name per line here. This avoids Netlify upload-size limits and keeps exact original quality.</p><textarea id="pPhotoPaths" class="field" rows="4" placeholder="red-bag-1.jpg\nred-bag-2.jpg\nred-bag-3.jpg"></textarea><button type="button" class="btn light asset-preview-btn" onclick="previewAssetProductPhotos()">PREVIEW FILE PHOTOS</button><p class="muted">You may still use the normal photo upload for small images. For large professional photos, use this file-name method.</p>';
+    target.insertAdjacentElement('afterend', wrap);
+  }
+  window.previewAssetProductPhotos=function(){
+    var photos=assetPhotos();
+    if(!photos.length){if(typeof msg==='function')msg('Add one image file name or link first.',false);return;}
+    window.pendingAdminPhotos=unique(photos.concat(window.pendingAdminPhotos||[]));
+    window.pendingPhotos=window.pendingAdminPhotos;
+    var box=$('photoPreview');
+    if(box){box.innerHTML=window.pendingAdminPhotos.map(function(u,i){return '<div class="admin-thumb photo-order-thumb"><img src="'+esc(u)+'" alt="Product photo '+(i+1)+'" onerror="this.closest(\'.admin-thumb\').classList.add(\'missing-asset\')"><span>'+(i===0?'Photo 1':'Photo '+(i+1))+'</span><small>'+esc(u)+'</small><div class="photo-order-controls"><button type="button" onclick="movePendingPhoto&&movePendingPhoto('+i+',-1)" '+(i===0?'disabled':'')+'>←</button><button type="button" onclick="movePendingPhoto&&movePendingPhoto('+i+',1)" '+(i===window.pendingAdminPhotos.length-1?'disabled':'')+'>→</button><button type="button" onclick="removePendingPhoto&&removePendingPhoto('+i+')">×</button></div></div>'}).join('');}
+    if(typeof msg==='function')msg('File photos added. Make sure these files exist in assets/products before deploying.',true);
+  };
+  var oldAdd=window.addProductAdmin;
+  window.addProductAdmin=async function(){
+    var paths=assetPhotos();
+    if(paths.length){
+      window.pendingAdminPhotos=unique(paths.concat(window.pendingAdminPhotos||window.pendingPhotos||[]));
+      window.pendingPhotos=window.pendingAdminPhotos;
+    }
+    return oldAdd ? oldAdd.apply(this,arguments) : false;
+  };
+  var oldSave=window.saveProducts;
+  window.saveProducts=async function(next){
+    try{
+      var clean=(Array.isArray(next)?next:[]).map(function(p){
+        p=p||{};
+        var photos=unique(Array.isArray(p.photos)?p.photos:(p.img?[p.img]:[])).map(normalizePhotoPath);
+        p.photos=photos;
+        p.mainPhotoIndex=Math.max(0,Math.min(Number(p.mainPhotoIndex||0),Math.max(photos.length-1,0)));
+        p.img=photos[p.mainPhotoIndex]||photos[0]||p.img||'linear-gradient(135deg,#fff,#ddd)';
+        return p;
+      });
+      // If product photos are paths/URLs, the saved JSON stays small and Netlify will not reject large image files.
+      return oldSave ? await oldSave(clean) : false;
+    }catch(e){console.error(e); if(typeof msg==='function')msg('Product save failed. For very large images, put files in assets/products and use the file-name box.',false); return false;}
+  };
+  var oldEdit=window.previewEditPhotos;
+  window.previewEditPhotos=function(e,id){return oldEdit?oldEdit.apply(this,arguments):undefined};
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(injectAssetPhotoBox,500);setTimeout(injectAssetPhotoBox,1500)});
+  window.addEventListener('load',function(){setTimeout(injectAssetPhotoBox,800);setTimeout(injectAssetPhotoBox,2000)});
+  document.addEventListener('click',function(){setTimeout(injectAssetPhotoBox,300)});
+})();
