@@ -7336,3 +7336,100 @@ placeOrder=async function(){
   window.addEventListener('load',function(){[100,500,1000,1800,2800].forEach(function(t){setTimeout(replaceSections,t);});});
 })();
 /* === END NITA STYLE REAL FIX: account order launch bars + clean modal only === */
+
+/* === NITA ADD PRODUCT SAVE ERROR FIX ONLY 2026-06-13 ===
+   Fixes product add internal errors by compressing product images before cloud save.
+   Does not change layout/design or other website sections. */
+(function(){
+  function esc(v){return String(v||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function notifyUser(text, ok, sticky){
+    try{ if(typeof window.nitaNotify==='function') return window.nitaNotify(text, ok!==false, !!sticky); }catch(e){}
+    try{ if(typeof window.notify==='function') return window.notify(text, ok!==false, !!sticky); }catch(e){}
+    try{ if(typeof window.toast==='function') return window.toast(text); }catch(e){}
+    console[ok===false?'error':'log'](text);
+  }
+  function compressFile(file){
+    return new Promise(function(resolve){
+      try{
+        var reader = new FileReader();
+        reader.onload = function(ev){
+          var raw = ev.target && ev.target.result;
+          var img = new Image();
+          img.onload = function(){
+            try{
+              var maxSide = 900;
+              var w = img.naturalWidth || img.width;
+              var h = img.naturalHeight || img.height;
+              var ratio = Math.min(1, maxSide / Math.max(w,h));
+              w = Math.max(1, Math.round(w * ratio));
+              h = Math.max(1, Math.round(h * ratio));
+              var canvas = document.createElement('canvas');
+              canvas.width = w; canvas.height = h;
+              var ctx = canvas.getContext('2d');
+              ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h);
+              ctx.drawImage(img,0,0,w,h);
+              resolve(canvas.toDataURL('image/jpeg', 0.68));
+            }catch(err){ resolve(raw || ''); }
+          };
+          img.onerror = function(){ resolve(raw || ''); };
+          img.src = raw;
+        };
+        reader.onerror = function(){ resolve(''); };
+        reader.readAsDataURL(file);
+      }catch(err){ resolve(''); }
+    });
+  }
+  function unique(list){
+    var out=[];
+    (Array.isArray(list)?list:[]).forEach(function(u){u=String(u||''); if(u && out.indexOf(u)===-1) out.push(u);});
+    return out;
+  }
+  function renderPhotos(){
+    var box=document.getElementById('photoPreview');
+    if(!box) return;
+    var photos=unique(window.pendingAdminPhotos || []);
+    window.pendingAdminPhotos=photos;
+    box.innerHTML = photos.map(function(url,i){
+      return '<div class="admin-thumb photo-order-thumb">'
+        + '<img src="'+esc(url)+'" alt="Product photo '+(i+1)+'">'
+        + '<span>'+(i===0?'Photo 1':'Photo '+(i+1))+'</span>'
+        + '<div class="photo-order-controls">'
+        + '<button type="button" aria-label="Move photo left" onclick="movePendingPhoto('+i+',-1)" '+(i===0?'disabled':'')+'>←</button>'
+        + '<button type="button" aria-label="Move photo right" onclick="movePendingPhoto('+i+',1)" '+(i===photos.length-1?'disabled':'')+'>→</button>'
+        + '<button type="button" aria-label="Remove photo" onclick="removePendingPhoto('+i+')">×</button>'
+        + '</div></div>';
+    }).join('') + (photos.length ? '<p class="muted admin-photo-note">Photo 1 is the main product photo. Images are compressed so the product saves globally without Netlify errors.</p>' : '');
+  }
+  window.previewAdminPhotos = function(event){
+    var input = event && event.target;
+    var files = Array.prototype.slice.call((input && input.files) || []);
+    if(!files.length) return;
+    notifyUser('Preparing product photos...', true, false);
+    Promise.all(files.map(compressFile)).then(function(urls){
+      window.pendingAdminPhotos = unique((window.pendingAdminPhotos || []).concat(urls.filter(Boolean)));
+      window.pendingAdminMainIndex = 0;
+      renderPhotos();
+      if(input) input.value='';
+    });
+  };
+  window.movePendingPhoto = function(index, direction){
+    var photos=unique(window.pendingAdminPhotos || []);
+    index=Number(index); direction=Number(direction);
+    var target=index+direction;
+    if(target<0 || target>=photos.length) return;
+    var tmp=photos[index]; photos[index]=photos[target]; photos[target]=tmp;
+    window.pendingAdminPhotos=photos; window.pendingAdminMainIndex=0; renderPhotos();
+  };
+  window.removePendingPhoto = function(index){
+    var photos=unique(window.pendingAdminPhotos || []);
+    photos.splice(Number(index),1);
+    window.pendingAdminPhotos=photos; window.pendingAdminMainIndex=0; renderPhotos();
+  };
+  document.addEventListener('change', function(e){
+    var input=e.target && e.target.closest && e.target.closest('#pphotos');
+    if(!input) return;
+    e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    window.previewAdminPhotos({target:input});
+  }, true);
+})();
+/* === END NITA ADD PRODUCT SAVE ERROR FIX ONLY === */
