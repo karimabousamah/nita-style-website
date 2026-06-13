@@ -7271,3 +7271,68 @@ placeOrder=async function(){
   window.addEventListener('load',function(){setTimeout(makeClean,1100);});
 })();
 /* === END NITA FINAL ACCOUNT ORDER POPUP CLEAN FIX 20260613 === */
+
+/* === NITA STYLE REAL FIX: account order launch bars + clean modal only === */
+(function(){
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function read(k,f){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f));}catch(e){return f;}}
+  function currentEmail(){
+    try{ if(window.currentUser&&window.currentUser.email) return String(window.currentUser.email).toLowerCase(); }catch(e){}
+    const u=read('nitaCurrentUser',null)||read('currentUser',null)||read('nitaUser',null);
+    return u&&u.email?String(u.email).toLowerCase():'';
+  }
+  function fmtMoney(n){try{return typeof window.money==='function'?window.money(Number(n||0)):'$'+Number(n||0).toFixed(2);}catch(e){return '$'+Number(n||0).toFixed(2);}}
+  function allOrders(){
+    const email=currentEmail();
+    return read('nitaOrders',[]).filter(function(o){return String(o.email||'').toLowerCase()===email;}).sort(function(a,b){return String(b.id||'').localeCompare(String(a.id||''));});
+  }
+  function splitOrders(type){
+    const orders=allOrders();
+    const isPast=function(o){return /^(delivered|cancelled|canceled)$/i.test(String(o.status||''));};
+    return type==='past'?orders.filter(isPast):orders.filter(function(o){return !isPast(o);});
+  }
+  function itemsText(o){
+    const items=Array.isArray(o.items)?o.items:[];
+    if(!items.length) return '';
+    return items.map(function(it){return esc((it.name||it.title||it.productName||'Item'))+' × '+esc(it.qty||it.quantity||1);}).join(', ');
+  }
+  function orderCard(o){
+    const status=esc(o.status||'Order submitted');
+    const road=(typeof window.orderRoadmapHtml==='function')?window.orderRoadmapHtml(o.status||'Order submitted'):'';
+    return '<article class="nita-final-order-card">'
+      +'<div class="nita-final-order-main"><div><b>'+esc(o.id||'Order')+'</b><p>'+esc(o.date||'')+' · '+esc(o.payment||'Cash on Delivery')+'</p>'+(itemsText(o)?'<p>'+itemsText(o)+'</p>':'')+'</div><div class="nita-final-order-side"><strong>'+fmtMoney(o.total||0)+'</strong><span>'+status+'</span></div></div>'
+      +(road?'<div class="nita-final-order-road">'+road+'</div>':'')+'</article>';
+  }
+  function modalHtml(type){
+    const title=type==='past'?'Previous Orders':'Ongoing Orders';
+    const list=splitOrders(type);
+    return '<div class="nita-final-orders-box" role="dialog" aria-modal="true"><div class="nita-final-orders-head"><h2>'+title+'</h2><button type="button" class="nita-final-orders-close" onclick="nitaFinalCloseOrders()">×</button></div><div class="nita-final-orders-content">'+(list.length?list.map(orderCard).join(''):'<p class="muted">No '+(type==='past'?'previous':'ongoing')+' orders yet.</p>')+'</div></div>';
+  }
+  window.nitaFinalOpenOrders=function(type){
+    let ov=document.getElementById('nitaFinalOrdersOverlay');
+    if(!ov){ov=document.createElement('div');ov.id='nitaFinalOrdersOverlay';ov.className='nita-final-orders-overlay';document.body.appendChild(ov);}
+    ov.innerHTML=modalHtml(type);
+    ov.classList.add('show');
+  };
+  window.nitaFinalCloseOrders=function(){document.getElementById('nitaFinalOrdersOverlay')?.classList.remove('show');};
+  document.addEventListener('click',function(e){const ov=e.target.closest('#nitaFinalOrdersOverlay'); if(ov && e.target===ov) window.nitaFinalCloseOrders();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape') window.nitaFinalCloseOrders();});
+  function replaceSections(){
+    const root=document.getElementById('accountRoot'); if(!root) return;
+    const sections=[].slice.call(root.querySelectorAll('section.card.account-card.full-span, section.nita-account-order-popup-card, section.nita-clean-order-launch-card, section.nita-account-order-accordion, section'));
+    sections.forEach(function(sec){
+      const text=(sec.querySelector('h2')?.textContent || sec.querySelector('button span')?.textContent || sec.textContent || '').trim();
+      if(!/^(ongoing orders|previous orders)$/i.test(text.replace(/\s+/g,' ').slice(0,40))) return;
+      const type=/previous/i.test(text)?'past':'ongoing';
+      if(sec.dataset.nitaFinalOrderFixed==='1') return;
+      sec.dataset.nitaFinalOrderFixed='1';
+      sec.className='card account-card full-span nita-final-order-launch-card';
+      sec.innerHTML='<button type="button" class="nita-final-order-trigger" onclick="nitaFinalOpenOrders(\''+type+'\')"><span>'+(type==='past'?'Previous Orders':'Ongoing Orders')+'</span><b>+</b></button>';
+    });
+  }
+  const oldRender=window.renderAccount;
+  window.renderAccount=async function(){const r=oldRender?await oldRender.apply(this,arguments):undefined; [20,120,350,800,1400].forEach(function(t){setTimeout(replaceSections,t);}); return r;};
+  document.addEventListener('DOMContentLoaded',function(){[50,300,700,1300,2200].forEach(function(t){setTimeout(replaceSections,t);});});
+  window.addEventListener('load',function(){[100,500,1000,1800,2800].forEach(function(t){setTimeout(replaceSections,t);});});
+})();
+/* === END NITA STYLE REAL FIX: account order launch bars + clean modal only === */

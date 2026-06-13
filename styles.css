@@ -2716,3 +2716,30 @@ tr.admin-order-row .admin-premium-roadmap .order-roadmap span.done:before{backgr
 @keyframes nitaCleanModalIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
 @media(max-width:700px){.nita-clean-order-launch{font-size:18px!important;padding:22px!important}.nita-clean-orders-overlay{padding:14px!important}.nita-clean-orders-modal{padding:20px!important;border-radius:22px!important}.nita-clean-orders-head h2{font-size:22px!important}}
 /* === END NITA FINAL CLEAN ACCOUNT ORDER POPUPS 20260613 === */
+
+/* === NITA STYLE REAL FIX: simple account order buttons and modal === */
+body .nita-final-order-launch-card{padding:0!important;background:#fff!important;border:1px solid #e5e5e5!important;box-shadow:none!important;overflow:hidden!important;min-height:auto!important;}
+body .nita-final-order-trigger{width:100%!important;min-height:76px!important;border:0!important;background:#fff!important;color:#111!important;display:flex!important;align-items:center!important;justify-content:space-between!important;padding:0 30px!important;cursor:pointer!important;text-align:left!important;text-transform:uppercase!important;letter-spacing:.045em!important;font-weight:900!important;font-size:22px!important;line-height:1!important;transition:background .18s ease,color .18s ease,border-color .18s ease!important;}
+body .nita-final-order-trigger span,body .nita-final-order-trigger b{color:#111!important;opacity:1!important;visibility:visible!important;text-shadow:none!important;}
+body .nita-final-order-trigger b{width:28px!important;height:28px!important;border:1.5px solid currentColor!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;font-size:18px!important;line-height:1!important;font-weight:900!important;}
+body .nita-final-order-trigger:hover,body .nita-final-order-trigger:focus-visible,body .nita-final-order-trigger:active{background:#111!important;color:#fff!important;outline:none!important;}
+body .nita-final-order-trigger:hover span,body .nita-final-order-trigger:hover b,body .nita-final-order-trigger:focus-visible span,body .nita-final-order-trigger:focus-visible b,body .nita-final-order-trigger:active span,body .nita-final-order-trigger:active b{color:#fff!important;opacity:1!important;visibility:visible!important;}
+body .nita-final-orders-overlay{position:fixed!important;inset:0!important;background:rgba(255,255,255,.78)!important;backdrop-filter:blur(6px)!important;z-index:2147483000!important;display:none!important;align-items:center!important;justify-content:center!important;padding:28px!important;}
+body .nita-final-orders-overlay.show{display:flex!important;}
+body .nita-final-orders-box{width:min(920px,94vw)!important;max-height:82vh!important;overflow:auto!important;background:#fff!important;border:1px solid #dcdcdc!important;border-radius:0!important;box-shadow:0 24px 70px rgba(0,0,0,.13)!important;padding:26px!important;animation:nitaFinalOrdersIn .18s ease both!important;}
+body .nita-final-orders-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:20px!important;border-bottom:1px solid #ededed!important;padding-bottom:18px!important;margin-bottom:18px!important;}
+body .nita-final-orders-head h2{margin:0!important;text-transform:uppercase!important;letter-spacing:.045em!important;font-size:24px!important;line-height:1!important;}
+body .nita-final-orders-close{width:44px!important;height:44px!important;border:1.5px solid #111!important;background:#fff!important;color:#111!important;border-radius:999px!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:26px!important;line-height:1!important;cursor:pointer!important;transition:background .18s ease,color .18s ease!important;}
+body .nita-final-orders-close:hover,body .nita-final-orders-close:focus-visible{background:#111!important;color:#fff!important;outline:none!important;}
+body .nita-final-orders-content{display:grid!important;gap:12px!important;}
+body .nita-final-order-card{border:1px solid #e5e5e5!important;background:#fff!important;padding:18px!important;box-shadow:none!important;}
+body .nita-final-order-main{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:18px!important;}
+body .nita-final-order-main b{font-weight:900!important;}
+body .nita-final-order-main p{margin:6px 0 0!important;color:#777!important;font-size:13px!important;}
+body .nita-final-order-side{text-align:right!important;display:grid!important;gap:6px!important;}
+body .nita-final-order-side strong{font-weight:900!important;}
+body .nita-final-order-side span{display:inline-block!important;border:1px solid #111!important;padding:5px 8px!important;text-transform:uppercase!important;font-size:11px!important;font-weight:900!important;}
+body .nita-final-order-road{margin-top:16px!important;overflow:auto!important;}
+@keyframes nitaFinalOrdersIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(max-width:700px){body .nita-final-order-trigger{font-size:18px!important;min-height:68px!important;padding:0 20px!important}body .nita-final-orders-overlay{padding:14px!important}body .nita-final-orders-box{padding:20px!important}body .nita-final-order-main{display:grid!important}body .nita-final-order-side{text-align:left!important}}
+/* === END NITA STYLE REAL FIX: simple account order buttons and modal === */
