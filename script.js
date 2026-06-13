@@ -8146,66 +8146,122 @@ placeOrder=async function(){
   window.addEventListener('nita-store-ready',function(){setTimeout(function(){if(document.getElementById('detail'))window.productPage();if(document.getElementById('adminProducts'))window.renderAdminProducts();},260)});
 })();
 
-/* FINAL 20260613: full-quality product photos via static asset paths/URLs */
+/* FINAL 20260613: visible original-quality product file-name field for admin add/edit product */
 (function(){
   function $(id){return document.getElementById(id)}
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function cleanLines(v){return String(v||'').split(/\n|,/).map(function(s){return s.trim()}).filter(Boolean)}
-  function normalizePhotoPath(s){
-    s=String(s||'').trim(); if(!s) return '';
+  function normalizeProductAssetPath(s){
+    s=String(s||'').trim();
+    if(!s) return '';
     if(/^data:image\//i.test(s) || /^https?:\/\//i.test(s) || /^\//.test(s)) return s;
     if(/^assets\//i.test(s)) return s;
-    return 'assets/products/'+s.replace(/^\/+/, '');
+    return 'assets/products/' + s.replace(/^\/+/, '');
   }
-  function assetPhotos(){return cleanLines(($('pPhotoPaths')||{}).value).map(normalizePhotoPath).filter(Boolean)}
-  function unique(arr){var seen={};return (arr||[]).filter(function(x){x=String(x||'').trim();if(!x||seen[x])return false;seen[x]=1;return true;})}
-  function injectAssetPhotoBox(){
-    if(!$('adminProducts') && !$('pname')) return;
-    if($('pPhotoPaths')) return;
+  function getAssetPhotoLines(){return cleanLines(($('pPhotoPaths')||{}).value).map(normalizeProductAssetPath).filter(Boolean)}
+  function unique(arr){var seen={};return (arr||[]).map(function(x){return String(x||'').trim()}).filter(function(x){if(!x||seen[x]) return false; seen[x]=1; return true;});}
+  function renderAssetPreview(photos){
+    var box=$('photoPreview'); if(!box) return;
+    photos=unique(photos||[]);
+    if(!photos.length) return;
+    box.innerHTML=photos.map(function(u,i){return '<div class="admin-thumb photo-order-thumb asset-path-thumb"><img src="'+esc(u)+'" alt="Product photo '+(i+1)+'" loading="eager" onerror="this.closest(\'.admin-thumb\').classList.add(\'missing-asset\')"><span>'+(i===0?'Photo 1':'Photo '+(i+1))+'</span><small>'+esc(u)+'</small><div class="photo-order-controls"><button type="button" onclick="movePendingPhoto&&movePendingPhoto('+i+',-1)" '+(i===0?'disabled':'')+'>←</button><button type="button" onclick="movePendingPhoto&&movePendingPhoto('+i+',1)" '+(i===photos.length-1?'disabled':'')+'>→</button><button type="button" onclick="removePendingPhoto&&removePendingPhoto('+i+')">×</button></div></div>'}).join('');
+  }
+  function ensureAssetPhotoBox(){
+    var addBox=document.getElementById('addProductBox') || document.querySelector('.admin-add-product-form') || document.querySelector('[data-add-product-form="true"]');
     var input=$('pphotos');
-    var target=input ? input.closest('.upload-zone') || input.parentElement : null;
-    if(!target) return;
+    if(!input) return;
+    if($('pPhotoPaths')) return;
+    var upload=input.closest('.upload-zone') || input.parentElement;
+    if(!upload) return;
     var wrap=document.createElement('div');
-    wrap.className='asset-photo-box';
-    wrap.innerHTML='<label>Original image file names / links</label><p class="muted">For maximum quality, put photos in <b>assets/products</b> inside the ZIP, then write one file name per line here. This avoids Netlify upload-size limits and keeps exact original quality.</p><textarea id="pPhotoPaths" class="field" rows="4" placeholder="red-bag-1.jpg\nred-bag-2.jpg\nred-bag-3.jpg"></textarea><button type="button" class="btn light asset-preview-btn" onclick="previewAssetProductPhotos()">PREVIEW FILE PHOTOS</button><p class="muted">You may still use the normal photo upload for small images. For large professional photos, use this file-name method.</p>';
-    target.insertAdjacentElement('afterend', wrap);
+    wrap.className='asset-photo-box full';
+    wrap.innerHTML='<label>Original image file names / links</label><p class="muted"><b>Best quality method:</b> put your original product photos inside <b>assets/products</b> in the ZIP, then write the file names here, one per line. This avoids Netlify large-upload errors and keeps the original image quality.</p><textarea id="pPhotoPaths" class="field" rows="4" placeholder="red-bag-1.jpg\nred-bag-2.jpg\nred-bag-3.jpg"></textarea><button type="button" class="btn light asset-preview-btn" onclick="previewAssetProductPhotos()">PREVIEW FILE PHOTOS</button><p class="field-help">Use this box for large professional photos. You can still use the normal upload above for smaller images.</p>';
+    upload.insertAdjacentElement('afterend', wrap);
   }
   window.previewAssetProductPhotos=function(){
-    var photos=assetPhotos();
-    if(!photos.length){if(typeof msg==='function')msg('Add one image file name or link first.',false);return;}
-    window.pendingAdminPhotos=unique(photos.concat(window.pendingAdminPhotos||[]));
+    var paths=getAssetPhotoLines();
+    if(!paths.length){try{if(typeof msg==='function')msg('Write at least one image file name first.',false);else alert('Write at least one image file name first.')}catch(e){} return;}
+    window.pendingAdminPhotos=unique(paths.concat(window.pendingAdminPhotos||window.pendingPhotos||[]));
     window.pendingPhotos=window.pendingAdminPhotos;
-    var box=$('photoPreview');
-    if(box){box.innerHTML=window.pendingAdminPhotos.map(function(u,i){return '<div class="admin-thumb photo-order-thumb"><img src="'+esc(u)+'" alt="Product photo '+(i+1)+'" onerror="this.closest(\'.admin-thumb\').classList.add(\'missing-asset\')"><span>'+(i===0?'Photo 1':'Photo '+(i+1))+'</span><small>'+esc(u)+'</small><div class="photo-order-controls"><button type="button" onclick="movePendingPhoto&&movePendingPhoto('+i+',-1)" '+(i===0?'disabled':'')+'>←</button><button type="button" onclick="movePendingPhoto&&movePendingPhoto('+i+',1)" '+(i===window.pendingAdminPhotos.length-1?'disabled':'')+'>→</button><button type="button" onclick="removePendingPhoto&&removePendingPhoto('+i+')">×</button></div></div>'}).join('');}
-    if(typeof msg==='function')msg('File photos added. Make sure these files exist in assets/products before deploying.',true);
+    window.pendingAdminMainIndex=0;
+    renderAssetPreview(window.pendingAdminPhotos);
+    try{if(typeof msg==='function')msg('Original file photos added. Make sure the files exist in assets/products before deploying.',true);else if(typeof toast==='function')toast('Original file photos added.')}catch(e){}
   };
   var oldAdd=window.addProductAdmin;
   window.addProductAdmin=async function(){
-    var paths=assetPhotos();
+    var paths=getAssetPhotoLines();
     if(paths.length){
       window.pendingAdminPhotos=unique(paths.concat(window.pendingAdminPhotos||window.pendingPhotos||[]));
       window.pendingPhotos=window.pendingAdminPhotos;
+      window.pendingAdminMainIndex=0;
     }
-    return oldAdd ? oldAdd.apply(this,arguments) : false;
+    return oldAdd ? oldAdd.apply(this, arguments) : undefined;
   };
   var oldSave=window.saveProducts;
   window.saveProducts=async function(next){
-    try{
-      var clean=(Array.isArray(next)?next:[]).map(function(p){
-        p=p||{};
-        var photos=unique(Array.isArray(p.photos)?p.photos:(p.img?[p.img]:[])).map(normalizePhotoPath);
-        p.photos=photos;
-        p.mainPhotoIndex=Math.max(0,Math.min(Number(p.mainPhotoIndex||0),Math.max(photos.length-1,0)));
-        p.img=photos[p.mainPhotoIndex]||photos[0]||p.img||'linear-gradient(135deg,#fff,#ddd)';
+    if(Array.isArray(next)){
+      next=next.map(function(p){
+        if(!p) return p;
+        var photos=unique((Array.isArray(p.photos)?p.photos:(p.img?[p.img]:[])).map(normalizeProductAssetPath));
+        if(photos.length){
+          p.photos=photos;
+          p.mainPhotoIndex=Math.max(0,Math.min(Number(p.mainPhotoIndex||0),photos.length-1));
+          p.img=photos[p.mainPhotoIndex]||photos[0];
+        }
         return p;
       });
-      // If product photos are paths/URLs, the saved JSON stays small and Netlify will not reject large image files.
-      return oldSave ? await oldSave(clean) : false;
-    }catch(e){console.error(e); if(typeof msg==='function')msg('Product save failed. For very large images, put files in assets/products and use the file-name box.',false); return false;}
+    }
+    return oldSave ? oldSave.call(this,next) : false;
   };
-  var oldEdit=window.previewEditPhotos;
-  window.previewEditPhotos=function(e,id){return oldEdit?oldEdit.apply(this,arguments):undefined};
-  document.addEventListener('DOMContentLoaded',function(){setTimeout(injectAssetPhotoBox,500);setTimeout(injectAssetPhotoBox,1500)});
-  window.addEventListener('load',function(){setTimeout(injectAssetPhotoBox,800);setTimeout(injectAssetPhotoBox,2000)});
-  document.addEventListener('click',function(){setTimeout(injectAssetPhotoBox,300)});
+  ['DOMContentLoaded','click'].forEach(function(ev){document.addEventListener(ev,function(){setTimeout(ensureAssetPhotoBox,150);setTimeout(ensureAssetPhotoBox,700);});});
+  window.addEventListener('load',function(){setTimeout(ensureAssetPhotoBox,250);setTimeout(ensureAssetPhotoBox,1200);});
+})();
+
+/* One Size exclusive selection fix - 20260613 */
+(function(){
+  function normSizeText(el){return ((el && (el.dataset && el.dataset.size ? el.dataset.size : el.textContent || el.value || '')) || '').trim().toLowerCase().replace(/\s+/g,' ');}
+  function isOneSize(el){return normSizeText(el)==='one size' || normSizeText(el)==='onesize';}
+  function setOff(el){
+    if(!el) return;
+    el.classList.remove('on','active');
+    if(el.matches && el.matches('input')) el.checked=false;
+    var input = el.querySelector && el.querySelector('input');
+    if(input) input.checked=false;
+  }
+  function setOn(el){
+    if(!el) return;
+    el.classList.add('on','active');
+    if(el.matches && el.matches('input')) el.checked=true;
+    var input = el.querySelector && el.querySelector('input');
+    if(input) input.checked=true;
+  }
+  function itemSelector(container){
+    return Array.from(container.querySelectorAll('.pill, .size, button, input[type="checkbox"], input[type="radio"]'))
+      .filter(function(x){ return normSizeText(x); });
+  }
+  function normalizeSizePicker(picker, clicked){
+    if(!picker || !clicked) return;
+    var items = itemSelector(picker);
+    if(!items.length) return;
+    if(isOneSize(clicked)){
+      items.forEach(function(item){ if(item!==clicked) setOff(item); });
+      setOn(clicked);
+    } else {
+      items.forEach(function(item){ if(isOneSize(item)) setOff(item); });
+      if(clicked.classList && (clicked.classList.contains('pill') || clicked.classList.contains('size'))) clicked.classList.toggle('on');
+    }
+  }
+  document.addEventListener('click', function(e){
+    var clicked = e.target.closest && e.target.closest('.size-picker .pill, .size-picker .size, #sizePicker .pill, #sizePicker .size, .available-size-picker .pill, .available-size-picker .size');
+    if(!clicked) return;
+    var picker = clicked.closest('.size-picker, #sizePicker, .available-size-picker');
+    if(!picker) return;
+    setTimeout(function(){ normalizeSizePicker(picker, clicked); }, 0);
+  }, true);
+  window.nitaNormalizeOneSizePickers = function(root){
+    (root || document).querySelectorAll('.size-picker, #sizePicker, .available-size-picker').forEach(function(picker){
+      var ones = itemSelector(picker).filter(isOneSize).filter(function(x){return x.classList.contains('on') || x.classList.contains('active') || x.checked;});
+      if(ones.length) normalizeSizePicker(picker, ones[0]);
+    });
+  };
 })();

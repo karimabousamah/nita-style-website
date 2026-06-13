@@ -3477,12 +3477,11 @@ body .nita-final-order-road{margin-top:16px!important;overflow:auto!important;}
   .product-detail .product-actions .btn,.product-detail .product-actions .notify-btn{width:100%!important;}
 }
 
-/* FINAL 20260613: full-quality static product photo path box */
-.asset-photo-box{border:1px solid #e4e4e4;background:#fff;padding:20px;margin:16px 0 22px;display:block}
-.asset-photo-box label{display:block;font-weight:900;text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px;color:#111}
-.asset-photo-box textarea{width:100%;min-height:110px;font-family:inherit;line-height:1.6;resize:vertical;background:#fff!important;color:#111!important;border:1px solid #d9d9d9!important;padding:14px!important}
-.asset-photo-box .asset-preview-btn{margin-top:12px;background:#fff!important;color:#111!important;border:1px solid #111!important}
-.asset-photo-box .asset-preview-btn:hover{background:#111!important;color:#fff!important}
-.admin-thumb small{display:block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#777;font-size:10px;margin-top:4px}
-.admin-thumb.missing-asset{border-color:#b00020!important;background:#fff6f6!important}
-.admin-thumb.missing-asset:after{content:'File not found in deployed assets/products';display:block;color:#b00020;font-size:10px;line-height:1.25;margin-top:6px;text-align:center}
+/* FINAL 20260613: original image file-name field styling */
+.asset-photo-box{border:1px solid #111;padding:18px 20px;margin:16px 0 20px;background:#fff;grid-column:1/-1;}
+.asset-photo-box label{display:block;font-weight:900;text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px;color:#111;}
+.asset-photo-box .field{width:100%;min-height:110px;resize:vertical;font-family:inherit;border:1px solid #d7d7d7;background:#fff;color:#111;padding:14px;line-height:1.6;}
+.asset-preview-btn{margin-top:12px;}
+.asset-path-thumb small{display:block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#777;margin-top:4px;font-size:10px;}
+.asset-path-thumb.missing-asset{outline:2px solid #b00020;}
+.asset-path-thumb.missing-asset:after{content:'File not found in ZIP';display:block;color:#b00020;font-size:10px;margin-top:4px;font-weight:900;text-transform:uppercase;}
