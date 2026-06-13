@@ -7219,3 +7219,55 @@ placeOrder=async function(){
   document.addEventListener('DOMContentLoaded',()=>{setTimeout(enhanceAccountOrders,500); setTimeout(()=>window.renderAdminProducts?.(),700);});
 })();
 /* === END NITA STYLE FINAL FIX: admin product tabs without counts + account order popups === */
+
+/* === NITA FINAL ACCOUNT ORDER POPUP CLEAN FIX 20260613 === */
+(function(){
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  window.nitaCleanAccountOrderContent = window.nitaCleanAccountOrderContent || {};
+  function getTitle(sec){
+    return (sec.querySelector('.nita-account-order-popup-trigger span')?.textContent || sec.querySelector('.nita-account-order-toggle span')?.textContent || sec.querySelector('h2')?.textContent || '').trim();
+  }
+  function getContent(sec){
+    const existingModal = sec.querySelector('.nita-account-modal-body');
+    if(existingModal) return existingModal.innerHTML || '<p class="muted">No orders yet.</p>';
+    const body = sec.querySelector('.orders-list') || sec.querySelector('.nita-account-order-body');
+    if(body) return body.innerHTML || '<p class="muted">No orders yet.</p>';
+    const clone = sec.cloneNode(true);
+    clone.querySelectorAll('h2,.nita-account-order-toggle,.nita-account-order-popup-trigger,.nita-account-modal-backdrop').forEach(n=>n.remove());
+    return clone.innerHTML.trim() || '<p class="muted">No orders yet.</p>';
+  }
+  function makeClean(){
+    const root=document.getElementById('accountRoot'); if(!root) return;
+    const sections=[...root.querySelectorAll('section.card.account-card.full-span, section.nita-account-order-popup-card, section.nita-account-order-accordion')]
+      .filter(sec=>/^(ongoing orders|previous orders)$/i.test(getTitle(sec)) || /ongoing orders|previous orders/i.test(sec.textContent||''));
+    sections.forEach((sec,idx)=>{
+      const title=/previous/i.test(getTitle(sec)||sec.textContent)?'Previous orders':'Ongoing orders';
+      const key=title.toLowerCase().replace(/\s+/g,'-');
+      if(!window.nitaCleanAccountOrderContent[key]) window.nitaCleanAccountOrderContent[key]=getContent(sec);
+      sec.className='card account-card full-span nita-clean-order-launch-card';
+      sec.removeAttribute('data-nita-ready');
+      sec.innerHTML='<button type="button" class="nita-clean-order-launch" onclick="nitaOpenCleanAccountOrders(\''+key+'\')"><span>'+esc(title)+'</span><strong>+</strong></button>';
+    });
+  }
+  window.nitaOpenCleanAccountOrders=function(key){
+    const title=key==='previous-orders'?'Previous orders':'Ongoing orders';
+    const content=window.nitaCleanAccountOrderContent[key] || '<p class="muted">No orders yet.</p>';
+    let overlay=document.getElementById('nitaCleanAccountOrdersModal');
+    if(!overlay){
+      overlay=document.createElement('div');
+      overlay.id='nitaCleanAccountOrdersModal';
+      overlay.className='nita-clean-orders-overlay';
+      document.body.appendChild(overlay);
+    }
+    overlay.innerHTML='<div class="nita-clean-orders-modal" role="dialog" aria-modal="true"><div class="nita-clean-orders-head"><h2>'+esc(title)+'</h2><button type="button" class="nita-clean-orders-close" onclick="nitaCloseCleanAccountOrders()">×</button></div><div class="nita-clean-orders-body">'+content+'</div></div>';
+    overlay.classList.add('show');
+  };
+  window.nitaCloseCleanAccountOrders=function(){document.getElementById('nitaCleanAccountOrdersModal')?.classList.remove('show');};
+  document.addEventListener('click',function(e){const overlay=e.target.closest('#nitaCleanAccountOrdersModal'); if(overlay && e.target===overlay) window.nitaCloseCleanAccountOrders();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape') window.nitaCloseCleanAccountOrders();});
+  const old=window.renderAccount;
+  window.renderAccount=async function(){const r=old?await old.apply(this,arguments):undefined; setTimeout(makeClean,180); return r;};
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(makeClean,900);});
+  window.addEventListener('load',function(){setTimeout(makeClean,1100);});
+})();
+/* === END NITA FINAL ACCOUNT ORDER POPUP CLEAN FIX 20260613 === */
