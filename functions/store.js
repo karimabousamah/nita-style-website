@@ -22,15 +22,19 @@ function safeState(state) {
 }
 
 async function getBlobStore() {
-  const blobs = require('@netlify/blobs');
-  if (!blobs || !blobs.getStore) throw new Error('Netlify Blobs getStore unavailable.');
+  // @netlify/blobs is an ES Module in recent Netlify runtimes.
+  // Using dynamic import keeps this CommonJS Netlify Function compatible
+  // and fixes the require() of ES Module error that stopped product saving.
+  const blobs = await import('@netlify/blobs');
+  const getStore = blobs.getStore || (blobs.default && blobs.default.getStore);
+  if (!getStore) throw new Error('Netlify Blobs getStore unavailable.');
   try {
-    return blobs.getStore('nita-style-live-database');
+    return getStore('nita-style-live-database');
   } catch (err) {
     const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
     const token = process.env.NETLIFY_AUTH_TOKEN;
     if (!siteID || !token) throw err;
-    return blobs.getStore({ name: 'nita-style-live-database', siteID, token });
+    return getStore({ name: 'nita-style-live-database', siteID, token });
   }
 }
 
