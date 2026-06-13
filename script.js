@@ -8337,3 +8337,80 @@ placeOrder=async function(){
   };
   document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){if(document.getElementById('products')) renderProducts('#products', (typeof getProducts==='function'?getProducts():[])); if(document.getElementById('detail')) productPage(); if(document.getElementById('adminProducts')) renderAdminProducts();},700)});
 })();
+
+/* FINAL FINAL PRODUCT VISIBILITY + COMPACT DETAIL + DESCRIPTION LIMIT 20260613-1638 */
+(function(){
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function safe(v){return String(v==null?'':v).replace(/'/g,"\\'")}
+  function money(v){return '$'+Number(v||0).toFixed(2)}
+  function assetPath(src){
+    src=String(src||'').trim();
+    if(!src) return '';
+    if(/^data:image\//i.test(src)||/^https?:\/\//i.test(src)||/^\//.test(src)||/^assets\//i.test(src)) return src;
+    return 'assets/products/'+src.replace(/^\/+/, '');
+  }
+  function photosOf(p){
+    var arr=[];
+    if(p&&Array.isArray(p.photos)) arr=arr.concat(p.photos);
+    if(p&&p.img) arr.unshift(p.img);
+    var seen={};
+    return arr.map(assetPath).filter(function(x){if(!x||seen[x])return false;seen[x]=1;return true;});
+  }
+  function mainPhoto(p){var a=photosOf(p);var i=Math.max(0,Math.min(Number((p&&p.mainPhotoIndex)||0),Math.max(a.length-1,0)));return a[i]||a[0]||'';}
+  function stockValue(p){return String((p&&p.status)||'in-stock').toLowerCase()}
+  function isUnavailable(p){var q=(p&&p.quantity!==''&&p.quantity!=null)?Number(p.quantity):null;var s=stockValue(p);return s==='out-of-stock'||s==='sold-out'||s==='sold out'||q===0;}
+  function statusHtml(p){try{return window.stockStatusHtml?window.stockStatusHtml(stockValue(p)):'<span class="stock-status '+stockValue(p)+'"><span class="stock-dot"></span><span>'+esc(stockValue(p))+'</span></span>'}catch(e){return ''}}
+  function img(src,cls,alt){src=assetPath(src);return src?'<img class="'+cls+'" src="'+esc(src)+'" alt="'+esc(alt||'Product photo')+'" loading="eager" decoding="async" draggable="false" onerror="this.classList.add(\'image-error\');this.style.display=\'none\'">':'<span class="'+cls+' nita-image-placeholder"></span>'}
+  function priceRow(p){var sale=p&&p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price);return '<div class="nita-card-price-row"><span>'+(sale?'<span class="old-price">'+money(p.price)+'</span> <span class="price-drop">'+money(p.salePrice)+'</span>':money(p&&p.price))+'</span>'+statusHtml(p)+'</div>'}
+
+  window.productCard=function(p){
+    p=p||{};var ph=photosOf(p);var first=ph[0]||'';var second=ph[1]||'';var sale=p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price);
+    return '<article class="product nita-visible-product-card"><a class="product-hit" href="product.html?id='+encodeURIComponent(p.id||'')+'"><div class="product-img nita-card-img-wrap">'+img(first,'nita-card-img primary',p.name)+(second?img(second,'nita-card-img secondary',p.name+' second photo'):'')+(sale?'<span class="sale-badge">PRICE DROP</span>':'')+'</div><h3>'+esc(p.name||'Product')+'</h3>'+priceRow(p)+'</a><button class="quick-view-btn" type="button" onclick="event.stopPropagation();event.preventDefault();openQuickView&&openQuickView(\''+safe(p.id||'')+'\')">QUICK VIEW</button></article>';
+  };
+  window.renderProducts=function(el,list){var node=document.querySelector(el||'#products');if(!node)return;var arr=list||(typeof getProducts==='function'?getProducts():[]);node.innerHTML=(arr||[]).map(window.productCard).join('')||'<p class="muted">No products listed yet.</p>';};
+
+  function renderSizes(p){
+    var sizes=Array.isArray(p.sizes)&&p.sizes.length?p.sizes:['One Size'];
+    if(!window.selectedSize||sizes.indexOf(window.selectedSize)===-1) window.selectedSize=sizes[0];
+    return sizes.map(function(s){return '<button type="button" class="size nita-size-choice '+(s===window.selectedSize?'active':'')+'" onclick="nitaSelectSize(\''+safe(s)+'\')">'+esc(s)+'</button>'}).join('');
+  }
+  window.nitaSelectSize=function(s){window.selectedSize=s;document.querySelectorAll('.nita-size-choice').forEach(function(b){b.classList.toggle('active',b.textContent.trim()===s);});};
+  window.nitaDetailPhoto=function(dir){
+    var ph=window.nitaCurrentPhotos||[];if(!ph.length)return;
+    window.selectedPhoto=(Number(window.selectedPhoto||0)+Number(dir||0)+ph.length)%ph.length;
+    var im=document.querySelector('.nita-detail-real-img');if(im) im.src=ph[window.selectedPhoto];
+    document.querySelectorAll('.product-thumbs button').forEach(function(b,i){b.classList.toggle('active',i===window.selectedPhoto);});
+  };
+  window.nitaSetDetailPhoto=function(i){window.selectedPhoto=Number(i)||0;window.nitaDetailPhoto(0);};
+
+  window.productPage=function(){
+    var detail=document.getElementById('detail'); if(!detail)return;
+    var list=typeof getProducts==='function'?getProducts():(window.products||[]);
+    var id=new URL(location.href).searchParams.get('id');
+    var p=(list||[]).find(function(x){return String(x.id)===String(id)})||(list||[])[0];
+    if(!p){detail.innerHTML='<div class="card"><h1>Product not found</h1><a class="btn" href="shop.html">BACK TO SHOP</a></div>';return;}
+    var ph=photosOf(p);window.nitaCurrentPhotos=ph;window.selectedPhoto=Math.max(0,Math.min(Number(window.selectedPhoto||0),Math.max(ph.length-1,0)));
+    var can=!isUnavailable(p)&&stockValue(p)!=='coming-soon';
+    var arrows=ph.length>1?'<button type="button" class="detail-photo-arrow detail-photo-prev" aria-label="Previous product photo" onclick="nitaDetailPhoto(-1)"><span>‹</span></button><button type="button" class="detail-photo-arrow detail-photo-next" aria-label="Next product photo" onclick="nitaDetailPhoto(1)"><span>›</span></button>':'';
+    var actions=can?'<button class="btn nita-action-btn add" type="button" onclick="addToCart(\''+safe(p.id)+'\',window.selectedSize||\'One Size\')">ADD TO CART</button><a class="btn light nita-action-btn buy" href="checkout.html">BUY NOW</a>':'<button class="btn disabled nita-action-btn" disabled>'+(stockValue(p)==='coming-soon'?'COMING SOON':'OUT OF STOCK')+'</button><button class="notify-btn nita-action-btn" type="button" onclick="notifyMe&&notifyMe(\''+safe(p.id)+'\')">NOTIFY ME</button>';
+    var desc=esc(p.desc||'');
+    detail.innerHTML='<div class="product-media nita-premium-product-media compact-product-media"><div class="detail-img nita-premium-detail-img">'+img(ph[window.selectedPhoto]||'','nita-detail-real-img',p.name)+arrows+'</div><div class="product-thumbs">'+ph.map(function(x,i){return '<button type="button" class="'+(i===window.selectedPhoto?'active':'')+'" onclick="nitaSetDetailPhoto('+i+')">'+img(x,'nita-thumb-real-img',(p.name||'Product')+' photo '+(i+1))+'</button>'}).join('')+'</div></div><div class="product-info nita-premium-product-info"><p class="muted product-cat">'+esc(p.category||'')+'</p><h1>'+esc(p.name||'Product')+'</h1><div class="price-stock-line"><h2>'+money(p.salePrice||p.price)+'</h2><div class="inline-stock">'+statusHtml(p)+'</div></div><button class="btn light product-detail-fav" onclick="toggleLike&&toggleLike(\''+safe(p.id)+'\',event)">♡ ADD TO LIKED ITEMS</button><div class="sizes product-size-list">'+renderSizes(p)+'</div><div class="product-actions nita-premium-actions">'+actions+'</div><hr><p class="muted">Cash on delivery available. Online payment will be available soon.</p><div class="product-description-block"><h3>Product details</h3><p>'+desc+'</p></div></div>';
+  };
+
+  var oldRenderHome=window.renderHomeSections;
+  window.renderHomeSections=function(){ if(typeof oldRenderHome==='function') oldRenderHome(); setTimeout(function(){document.querySelectorAll('#trendingTrack,#newArrivalsTrack,#products,.product-grid,.grid').forEach(function(n){ if(n) n.querySelectorAll('.product').length&&n.querySelectorAll('.product').forEach(function(){}); });},50); };
+
+  window.renderAdminProducts=function(){
+    var box=document.getElementById('adminProducts'); if(!box)return;
+    var all=typeof getProducts==='function'?getProducts():[];var active=window.nitaProductAdminView==='out'?'out':'in';var list=all.filter(function(p){return active==='out'?isUnavailable(p):!isUnavailable(p)});
+    box.innerHTML='<div class="admin-toolbar nita-products-toolbar"><div><h2>'+(active==='out'?'Out-of-stock products':'In-stock products')+'</h2><p class="muted">Manage live products separately from products that are out of stock.</p></div><div class="nita-product-tabs"><button type="button" class="nita-product-tab '+(active==='in'?'active':'')+'" onclick="nitaProductAdminView=\'in\';renderAdminProducts()">In-stock products</button><button type="button" class="nita-product-tab '+(active==='out'?'active':'')+'" onclick="nitaProductAdminView=\'out\';renderAdminProducts()">Out-of-stock products</button></div></div>'+(list.length?list.map(function(p){var im=mainPhoto(p);return '<div class="admin-product-card" id="edit-'+esc(p.id)+'"><div class="admin-product-top"><div class="admin-product-photo nita-admin-preview-photo">'+(im?img(im,'nita-admin-preview-img',p.name):'<span>No photo</span>')+'</div><div><div class="admin-product-name">'+esc(p.name||'Product')+'</div><span class="muted">'+esc(p.category||'')+' · '+money(p.price||0)+' · Private stock: '+esc(p.quantity==null?'Not set':p.quantity)+'</span><div>'+statusHtml(p)+'</div></div><button type="button" onclick="toggleProductEditor(\''+safe(p.id)+'\')">Edit listing</button><button type="button" onclick="removeProduct(\''+safe(p.id)+'\')">Remove</button></div><div class="product-editor" id="editor-'+esc(p.id)+'">'+(typeof productEditorHTML==='function'?productEditorHTML(p):'')+'</div></div>'}).join(''):'<div class="admin-empty">'+(active==='out'?'No out-of-stock products yet.':'No in-stock products yet.')+'</div>');
+  };
+
+  function enforceDescriptionLimit(){
+    var t=document.getElementById('pdesc'); if(t){t.setAttribute('maxlength','500'); if(!t.nextElementSibling||!t.nextElementSibling.classList.contains('desc-limit-help')) t.insertAdjacentHTML('afterend','<p class="field-help desc-limit-help">Maximum 500 characters. Keep product details short, clean, and professional.</p>');}
+    document.querySelectorAll('textarea.edit-desc').forEach(function(x){x.setAttribute('maxlength','500');});
+  }
+  document.addEventListener('input',function(e){if(e.target&&e.target.matches('#pdesc, textarea.edit-desc')&&e.target.value.length>500)e.target.value=e.target.value.slice(0,500);},true);
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){if(document.getElementById('products')) renderProducts('#products', typeof getProducts==='function'?getProducts():[]); if(document.getElementById('detail')) productPage(); if(document.getElementById('adminProducts')) renderAdminProducts(); enforceDescriptionLimit();},900);});
+  document.addEventListener('click',function(){setTimeout(enforceDescriptionLimit,100);},true);
+})();
