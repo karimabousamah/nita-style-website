@@ -8050,3 +8050,60 @@ placeOrder=async function(){
   document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){if(document.getElementById('detail'))window.productPage();if(document.getElementById('adminProducts'))window.renderAdminProducts();},250)});
   window.addEventListener('nita-store-ready',function(){setTimeout(function(){if(document.getElementById('detail'))window.productPage();if(document.getElementById('adminProducts'))window.renderAdminProducts();},150)});
 })();
+
+/* TRUE FINAL 20260613-1535: premium product media/buttons + admin preview + original photo storage */
+(function(){
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function safe(v){return String(v==null?'':v).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
+  function read(k,f){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f))}catch(e){return f}}
+  function write(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+  function products(){try{return typeof window.getProducts==='function'?window.getProducts():read('nitaProducts',[])}catch(e){return read('nitaProducts',[])}}
+  function norm(p){try{return typeof window.normalizeProductStatus==='function'?window.normalizeProductStatus(p||{}):(p||{})}catch(e){return p||{}}}
+  function money(v){try{return typeof window.money==='function'?window.money(v):('$'+Number(v||0).toFixed(2))}catch(e){return '$'+Number(v||0).toFixed(2)}}
+  function statusHtml(p){try{return typeof window.stockStatusHtml==='function'?window.stockStatusHtml(p.status):'<span class="stock-status">'+esc(p.status||'In stock')+'</span>'}catch(e){return '<span class="stock-status">'+esc(p.status||'In stock')+'</span>'}}
+  function unique(arr){var out=[];(Array.isArray(arr)?arr:[]).forEach(function(v){v=String(v||''); if(v&&out.indexOf(v)===-1) out.push(v)});return out;}
+  function photos(p){p=norm(p);var a=unique(Array.isArray(p.photos)?p.photos:(p.img?[p.img]:[])); if(!a.length&&p.img)a=[p.img]; return a.filter(Boolean);}
+  function mainPhoto(p){var a=photos(p);var i=Math.max(0,Math.min(Number(p&&p.mainPhotoIndex||0),Math.max(a.length-1,0)));return a[i]||a[0]||'';}
+  function isImage(src){src=String(src||'');return src.indexOf('data:image')===0||/^https?:/i.test(src)||/^assets\//i.test(src);}
+  function imgTag(src,cls,alt){return isImage(src)?'<img class="'+cls+'" src="'+esc(src)+'" alt="'+esc(alt||'Product image')+'" loading="eager" decoding="sync" draggable="false">':'<div class="'+cls+' nita-image-placeholder"></div>';}
+  function sizeOOS(p,s){try{return typeof window.isSizeOOS==='function'?window.isSizeOOS(p,s):false}catch(e){return false}}
+  function priceRow(p){try{return typeof window.productPriceStatusRow==='function'?window.productPriceStatusRow(p,'h2'):'<h2>'+money(p.salePrice||p.price)+'</h2>'}catch(e){return '<h2>'+money(p.salePrice||p.price)+'</h2>'}}
+  function sizeButtons(p){p=norm(p);var list=Array.isArray(p.sizes)&&p.sizes.length?p.sizes:['One Size'];var active=list.find(function(s){return !sizeOOS(p,s)})||list[0];window.selectedSize=(window.selectedSize&&list.includes(window.selectedSize)&&!sizeOOS(p,window.selectedSize))?window.selectedSize:active;return list.map(function(s){var off=sizeOOS(p,s);return '<button type="button" class="size '+(s===window.selectedSize?'active':'')+' '+(off?'size-disabled':'')+'" '+(off?'disabled aria-disabled="true"':'onclick="selectedSize=\''+esc(s)+'\';productPage()"')+'>'+esc(s)+'</button>';}).join('')}
+  function outOfStock(p){var q=(p&&p.quantity!==''&&p.quantity!=null)?Number(p.quantity):null;var s=String(p&&p.status||'in-stock').toLowerCase();return s==='out-of-stock'||s==='sold-out'||s==='sold out'||q===0;}
+  function editor(p){try{return typeof window.productEditorHTML==='function'?window.productEditorHTML(p):'<p class="muted">Edit form unavailable. Refresh the page.</p>'}catch(e){return '<p class="muted">Edit form unavailable. Refresh the page.</p>'}}
+
+  function readOriginal(file){return new Promise(function(resolve){try{var r=new FileReader();r.onload=function(e){resolve(e.target.result||'')};r.onerror=function(){resolve('')};r.readAsDataURL(file)}catch(e){resolve('')}})}
+  window.fileToHighQualityDataURL=readOriginal;
+  window.fileToOriginalQualityDataURL=readOriginal;
+  window.previewAdminPhotos=function(event){
+    var input=event&&event.target; var files=Array.prototype.slice.call((input&&input.files)||[]); if(!files.length)return;
+    Promise.all(files.map(readOriginal)).then(function(urls){
+      window.pendingAdminPhotos=unique((window.pendingAdminPhotos||[]).concat(urls.filter(Boolean)));
+      window.pendingPhotos=window.pendingAdminPhotos; window.pendingAdminMainIndex=0; window.pendingMainIndex=0;
+      if(typeof window.renderPendingPhotos==='function') window.renderPendingPhotos();
+      if(input) input.value='';
+      try{if(typeof nitaNotify==='function') nitaNotify('Original-quality photos ready.',true,false); else if(typeof toast==='function') toast('Original-quality photos ready.')}catch(e){}
+    });
+  };
+  window.handleProductPhotos=window.previewAdminPhotos;
+
+  window.nitaDetailPhoto=function(dir){var id=new URL(location.href).searchParams.get('id');var p=norm(products().find(function(x){return String(x.id)===String(id)})||products()[0]);var a=photos(p);if(!a.length)return;window.selectedPhoto=(Number(window.selectedPhoto||0)+Number(dir||0)+a.length)%a.length;window.productPage&&window.productPage();};
+  window.productPage=function(){
+    var detail=document.getElementById('detail');if(!detail)return;
+    var id=new URL(location.href).searchParams.get('id');var p=norm(products().find(function(x){return String(x.id)===String(id)})||products()[0]);
+    if(!p||!p.id){detail.innerHTML='<div class="card"><h1>Product not found</h1><a class="btn" href="shop.html">BACK TO SHOP</a></div>';return;}
+    var a=photos(p);if(!a.length)a=[''];window.selectedPhoto=Math.max(0,Math.min(Number(window.selectedPhoto||0),a.length-1));var current=a[window.selectedPhoto];
+    var canBuy=String(p.status||'in-stock')==='in-stock'&&!sizeOOS(p,window.selectedSize);
+    var action=canBuy?'<button class="btn" onclick="addToCart(\''+safe(p.id)+'\',selectedSize||\'One Size\')">ADD TO CART</button><a class="btn light" href="checkout.html">BUY NOW</a>':'<button class="btn disabled" disabled>'+(p.status==='coming-soon'?'COMING SOON':'OUT OF STOCK')+'</button><button class="notify-btn" type="button" onclick="notifyMe&&notifyMe(\''+safe(p.id)+'\')">NOTIFY ME</button>';
+    var arrows=a.length>1?'<button type="button" class="detail-photo-arrow detail-photo-prev" aria-label="Previous product photo" onclick="nitaDetailPhoto(-1)"></button><button type="button" class="detail-photo-arrow detail-photo-next" aria-label="Next product photo" onclick="nitaDetailPhoto(1)"></button>':'';
+    detail.innerHTML='<div class="product-media nita-premium-product-media"><div class="detail-img nita-premium-detail-img">'+imgTag(current,'nita-detail-real-img',p.name)+arrows+'</div><div class="product-thumbs">'+a.map(function(ph,i){return '<button type="button" class="'+(i===window.selectedPhoto?'active':'')+'" onclick="selectedPhoto='+i+';productPage()">'+imgTag(ph,'nita-thumb-real-img',p.name+' photo '+(i+1))+'</button>';}).join('')+'</div></div><div class="product-info nita-premium-product-info"><p class="muted">'+esc(p.category||'')+'</p><h1>'+esc(p.name||'Product')+'</h1>'+priceRow(p)+'<button class="btn light product-detail-fav" onclick="toggleLike&&toggleLike(\''+safe(p.id)+'\',event)">♡ ADD TO LIKED ITEMS</button><p>'+esc(p.desc||'')+'</p><div class="sizes product-size-list">'+sizeButtons(p)+'</div><div class="product-actions">'+action+'</div><hr><p class="muted">Cash on delivery available. Online payment will be available soon.</p></div>';
+  };
+
+  window.nitaProductAdminView=window.nitaProductAdminView||'in';
+  window.nitaSwitchAdminProducts=function(view){window.nitaProductAdminView=view==='out'?'out':'in';window.renderAdminProducts&&window.renderAdminProducts();};
+  window.renderAdminProducts=function(){var box=document.getElementById('adminProducts');if(!box)return;var all=products().map(norm);var active=window.nitaProductAdminView==='out'?'out':'in';var list=all.filter(function(p){return active==='out'?outOfStock(p):!outOfStock(p)});box.innerHTML='<div class="admin-toolbar nita-products-toolbar"><div><h2>'+(active==='out'?'Out-of-stock products':'In-stock products')+'</h2><p class="muted">Manage live products separately from products that are out of stock.</p></div><div class="nita-product-tabs"><button type="button" class="nita-product-tab '+(active==='in'?'active':'')+'" onclick="nitaSwitchAdminProducts(\'in\')">In-stock products</button><button type="button" class="nita-product-tab '+(active==='out'?'active':'')+'" onclick="nitaSwitchAdminProducts(\'out\')">Out-of-stock products</button></div></div>'+(list.length?list.map(function(p){var im=mainPhoto(p);var style=isImage(im)?' style="background-image:url('+esc(im)+')"':'';return '<div class="admin-product-card" id="edit-'+esc(p.id)+'"><div class="admin-product-top"><div class="admin-product-photo '+(isImage(im)?'':'is-empty')+'"'+style+'>'+(isImage(im)?'<img src="'+esc(im)+'" alt="'+esc(p.name||'Product')+'" loading="eager" decoding="sync">':'')+'</div><div><div class="admin-product-name">'+esc(p.name||'Product')+'</div><span class="muted">'+esc(p.category||'')+' · '+money(p.price||0)+' · Private stock: '+esc(p.quantity??'Not set')+'</span><div>'+statusHtml(p)+'</div></div><button type="button" onclick="toggleProductEditor(\''+safe(p.id)+'\')">Edit listing</button><button type="button" onclick="removeProduct(\''+safe(p.id)+'\')">Remove</button></div><div class="product-editor" id="editor-'+esc(p.id)+'">'+editor(p)+'</div></div>';}).join(''):'<div class="admin-empty">'+(active==='out'?'No out-of-stock products yet.':'No in-stock products yet.')+'</div>')};
+
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){if(document.getElementById('detail'))window.productPage();if(document.getElementById('adminProducts'))window.renderAdminProducts();},450)});
+  window.addEventListener('load',function(){setTimeout(function(){if(document.getElementById('detail'))window.productPage();if(document.getElementById('adminProducts'))window.renderAdminProducts();},800)});
+  window.addEventListener('nita-store-ready',function(){setTimeout(function(){if(document.getElementById('detail'))window.productPage();if(document.getElementById('adminProducts'))window.renderAdminProducts();},220)});
+})();
