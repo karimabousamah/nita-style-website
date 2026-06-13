@@ -3775,3 +3775,27 @@ body .nita-final-order-road{margin-top:16px!important;overflow:auto!important;}
   .nita-premium-detail-img,.product-detail .detail-img{height:520px!important;min-height:420px!important;max-height:560px!important;}
   .product-img.nita-card-img-wrap,.nita-visible-product-card .product-img{height:270px!important;}
 }
+
+/* FINAL QUICK VIEW IMAGE + DESCRIPTION COUNTER FIX 20260613 */
+.nita-card-img-wrap{position:relative;overflow:hidden;background:#fff!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+.nita-card-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;transition:opacity .35s ease,transform .35s ease;background:#fff;}
+.nita-card-img.secondary{opacity:0;}
+.product:hover .nita-card-img.secondary{opacity:1;}
+.product:hover .nita-card-img.secondary + .sale-badge,.product:hover .nita-card-img.primary{opacity:0;}
+.nita-image-placeholder{display:block;width:100%;height:100%;background:#f7f7f7;}
+.quick-image.nita-quick-real-image{background:#fff!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden;min-height:420px;}
+.nita-quick-img{width:100%;height:100%;max-height:520px;object-fit:contain;object-position:center;display:block;background:#fff;}
+.compact-product-media .nita-premium-detail-img,.nita-premium-detail-img{background:#fff!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden;max-height:680px;min-height:520px;}
+.nita-detail-real-img{width:100%;height:100%;max-height:680px;object-fit:contain!important;object-position:center!important;display:block;background:#fff;}
+.product-thumbs button{background:#fff!important;overflow:hidden;}
+.nita-thumb-real-img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;}
+.desc-counter-wrap{position:relative;display:block;width:100%;}
+.desc-counter-wrap textarea{width:100%!important;padding-bottom:34px!important;box-sizing:border-box;}
+.desc-counter{position:absolute;right:12px;bottom:10px;font-size:11px;letter-spacing:.08em;font-weight:800;color:#8d8d8d;background:rgba(255,255,255,.92);padding:3px 6px;border-radius:999px;pointer-events:none;}
+.desc-counter-wrap:focus-within .desc-counter{color:#111;}
+@media(max-width:760px){.quick-image.nita-quick-real-image{min-height:280px}.nita-quick-img{max-height:340px}.compact-product-media .nita-premium-detail-img,.nita-premium-detail-img{min-height:360px;max-height:520px}.nita-detail-real-img{max-height:520px}}
+
+/* Material selector polish */
+.nita-material-field .field{width:100%;}
+.product-material-line{font-size:13px;letter-spacing:.02em;margin:0 0 12px;color:#111;}
+.product-material-line strong{font-weight:900;text-transform:uppercase;font-size:11px;letter-spacing:.08em;}

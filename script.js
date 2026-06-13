@@ -8414,3 +8414,237 @@ placeOrder=async function(){
   document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){if(document.getElementById('products')) renderProducts('#products', typeof getProducts==='function'?getProducts():[]); if(document.getElementById('detail')) productPage(); if(document.getElementById('adminProducts')) renderAdminProducts(); enforceDescriptionLimit();},900);});
   document.addEventListener('click',function(){setTimeout(enforceDescriptionLimit,100);},true);
 })();
+
+/* FINAL QUICK VIEW IMAGE + DESCRIPTION COUNTER FIX 20260613 */
+(function(){
+  const MAX_DESC = 500;
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function safe(v){return String(v==null?'':v).replace(/'/g,"\\'");}
+  function money(v){return '$'+Number(v||0).toFixed(2);}
+  function imgUrl(src){
+    src=String(src||'').trim();
+    if(!src || /^linear-gradient/i.test(src)) return '';
+    if(/^data:image\//i.test(src) || /^https?:\/\//i.test(src) || /^\//.test(src) || /^assets\//i.test(src)) return src;
+    return 'assets/products/' + src.replace(/^\/+/, '');
+  }
+  function photos(p){
+    let arr=[];
+    if(p && Array.isArray(p.photos)) arr=arr.concat(p.photos);
+    if(p && p.img) arr.unshift(p.img);
+    const seen={};
+    return arr.map(imgUrl).filter(x=>x && !seen[x] && (seen[x]=1));
+  }
+  function imageTag(src, cls, alt){
+    src=imgUrl(src);
+    return src ? `<img class="${cls}" src="${esc(src)}" alt="${esc(alt||'Product image')}" loading="eager" decoding="async" draggable="false">` : `<span class="${cls} nita-image-placeholder"></span>`;
+  }
+  function stockText(p){
+    const s=String(p?.status||'in-stock').toLowerCase();
+    if(typeof window.stockStatusHtml==='function') return window.stockStatusHtml(s);
+    return `<span class="stock-status ${esc(s)}"><span class="stock-dot"></span><span>${esc(s.replace(/-/g,' '))}</span></span>`;
+  }
+  function priceStatus(p){
+    const sale=p?.salePrice!=='' && p?.salePrice!=null && Number(p.salePrice)<Number(p.price);
+    return `<div class="nita-card-price-row"><span>${sale?`<span class="old-price">${money(p.price)}</span> <span class="price-drop">${money(p.salePrice)}</span>`:money(p?.price)}</span>${stockText(p)}</div>`;
+  }
+  function unavailable(p){
+    const s=String(p?.status||'in-stock').toLowerCase();
+    const q=(p?.quantity!==''&&p?.quantity!=null)?Number(p.quantity):null;
+    return s==='out-of-stock'||s==='sold-out'||s==='sold out'||q===0;
+  }
+  function comingSoon(p){return String(p?.status||'').toLowerCase()==='coming-soon';}
+  function renderSizeBtns(p){
+    const sizes=(Array.isArray(p?.sizes)&&p.sizes.length?p.sizes:['One Size']);
+    if(!window.selectedSize || !sizes.includes(window.selectedSize)) window.selectedSize=sizes[0];
+    return sizes.map(s=>`<button type="button" class="size nita-size-choice ${s===window.selectedSize?'active':''}" onclick="nitaSelectSize('${safe(s)}')">${esc(s)}</button>`).join('');
+  }
+  window.nitaSelectSize = window.nitaSelectSize || function(s){window.selectedSize=s;document.querySelectorAll('.nita-size-choice').forEach(b=>b.classList.toggle('active',b.textContent.trim()===s));};
+
+  // Product cards: show real image files everywhere, including homepage + shop + collections.
+  window.productCard=function(p){
+    p=p||{}; const ph=photos(p); const first=ph[0]||''; const second=ph[1]||''; const hasSale=p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price);
+    return `<article class="product nita-visible-product-card"><a class="product-hit" href="product.html?id=${encodeURIComponent(p.id||'')}"><div class="product-img nita-card-img-wrap">${imageTag(first,'nita-card-img primary',p.name)}${second?imageTag(second,'nita-card-img secondary',(p.name||'Product')+' second photo'):''}${hasSale?'<span class="sale-badge">PRICE DROP</span>':''}</div><h3>${esc(p.name||'Product')}</h3>${priceStatus(p)}</a><button class="quick-view-btn" type="button" onclick="event.stopPropagation();event.preventDefault();openQuickView('${safe(p.id||'')}')">QUICK VIEW</button></article>`;
+  };
+  window.renderProducts=function(el,list){const node=document.querySelector(el||'#products');if(!node)return;const arr=list||(typeof getProducts==='function'?getProducts():[]);node.innerHTML=(arr||[]).map(window.productCard).join('')||'<p class="muted">No products listed yet.</p>';};
+
+  // Quick view: show the same visible product image instead of a grey block.
+  window.openQuickView=function(id){
+    const p=(typeof getProducts==='function'?getProducts():[]).find(x=>String(x.id)===String(id)); if(!p) return;
+    const ph=photos(p); const can=!unavailable(p)&&!comingSoon(p);
+    const btn=can?`<button class="btn" onclick="addToCart('${safe(p.id)}',document.querySelector('#quickContent .size.active')?.textContent||'One Size');closeQuickView()">ADD TO CART</button>`:`<button class="btn disabled" disabled>${comingSoon(p)?'COMING SOON':'OUT OF STOCK'}</button>`;
+    const q=document.getElementById('quickContent'); if(!q)return;
+    q.innerHTML=`<div class="quick-grid"><div class="quick-image nita-quick-real-image">${imageTag(ph[0]||'','nita-quick-img',p.name)}</div><div class="quick-info"><p class="muted">${esc(p.category||'')}</p><h2>${esc(p.name||'Product')}</h2>${priceStatus(p)}<div class="sizes">${renderSizeBtns(p)}</div>${btn}<a class="btn light" href="product.html?id=${encodeURIComponent(p.id)}">VIEW FULL PRODUCT</a></div></div>`;
+    document.getElementById('quickModal')?.classList.add('open');
+    document.getElementById('quickModal')?.setAttribute('aria-hidden','false');
+  };
+
+  // Product page: build once; changing photo only changes image/thumb active, never re-renders product text/buttons.
+  window.nitaDetailPhoto=function(dir){
+    const ph=window.nitaCurrentPhotos||[]; if(!ph.length)return;
+    window.selectedPhoto=(Number(window.selectedPhoto||0)+Number(dir||0)+ph.length)%ph.length;
+    const im=document.querySelector('.nita-detail-real-img'); if(im) im.src=ph[window.selectedPhoto];
+    document.querySelectorAll('.product-thumbs button').forEach((b,i)=>b.classList.toggle('active',i===window.selectedPhoto));
+  };
+  window.nitaSetDetailPhoto=function(i){window.selectedPhoto=Number(i)||0;window.nitaDetailPhoto(0);};
+
+  window.productPage=function(){
+    const detail=document.getElementById('detail'); if(!detail)return;
+    const list=typeof getProducts==='function'?getProducts():(window.products||[]);
+    const id=new URL(location.href).searchParams.get('id');
+    const p=(list||[]).find(x=>String(x.id)===String(id))||(list||[])[0];
+    if(!p){detail.innerHTML='<div class="card"><h1>Product not found</h1><a class="btn" href="shop.html">BACK TO SHOP</a></div>';return;}
+    const ph=photos(p); window.nitaCurrentPhotos=ph; window.selectedPhoto=Math.max(0,Math.min(Number(window.selectedPhoto||0),Math.max(ph.length-1,0)));
+    const can=!unavailable(p)&&!comingSoon(p);
+    const arrows=ph.length>1?`<button type="button" class="detail-photo-arrow detail-photo-prev" aria-label="Previous product photo" onclick="nitaDetailPhoto(-1)"><span>‹</span></button><button type="button" class="detail-photo-arrow detail-photo-next" aria-label="Next product photo" onclick="nitaDetailPhoto(1)"><span>›</span></button>`:'';
+    const actions=can?`<button class="btn nita-action-btn add" type="button" onclick="addToCart('${safe(p.id)}',window.selectedSize||'One Size')">ADD TO CART</button><a class="btn light nita-action-btn buy" href="checkout.html">BUY NOW</a>`:`<button class="btn disabled nita-action-btn" disabled>${comingSoon(p)?'COMING SOON':'OUT OF STOCK'}</button><button class="notify-btn nita-action-btn" type="button" onclick="notifyMe&&notifyMe('${safe(p.id)}')">NOTIFY ME</button>`;
+    detail.innerHTML=`<div class="product-media nita-premium-product-media compact-product-media"><div class="detail-img nita-premium-detail-img">${imageTag(ph[window.selectedPhoto]||'','nita-detail-real-img',p.name)}${arrows}</div><div class="product-thumbs">${ph.map((x,i)=>`<button type="button" class="${i===window.selectedPhoto?'active':''}" onclick="nitaSetDetailPhoto(${i})">${imageTag(x,'nita-thumb-real-img',(p.name||'Product')+' photo '+(i+1))}</button>`).join('')}</div></div><div class="product-info nita-premium-product-info"><p class="muted product-cat">${esc(p.category||'')}</p><h1>${esc(p.name||'Product')}</h1><div class="price-stock-line"><h2>${money(p.salePrice||p.price)}</h2><div class="inline-stock">${stockText(p)}</div></div><button class="btn light product-detail-fav" onclick="toggleLike&&toggleLike('${safe(p.id)}',event)">♡ ADD TO LIKED ITEMS</button><div class="sizes product-size-list">${renderSizeBtns(p)}</div><div class="product-actions nita-premium-actions">${actions}</div><hr><p class="muted">Cash on delivery available. Online payment will be available soon.</p><div class="product-description-block"><h3>Product details</h3><p>${esc(p.desc||'')}</p></div></div>`;
+  };
+
+  function addCounter(textarea){
+    if(!textarea || textarea.dataset.nitaCounterReady==='1') return;
+    textarea.dataset.nitaCounterReady='1'; textarea.setAttribute('maxlength',String(MAX_DESC));
+    const wrap=document.createElement('div'); wrap.className='desc-counter-wrap';
+    textarea.parentNode.insertBefore(wrap,textarea); wrap.appendChild(textarea);
+    const c=document.createElement('div'); c.className='desc-counter'; wrap.appendChild(c);
+    const update=()=>{ if(textarea.value.length>MAX_DESC) textarea.value=textarea.value.slice(0,MAX_DESC); c.textContent=(MAX_DESC-textarea.value.length)+'/'+MAX_DESC; };
+    textarea.addEventListener('input',update); update();
+  }
+  function enhanceDescCounters(){
+    document.querySelectorAll('#pdesc, textarea.edit-desc, .product-editor textarea, textarea[name*="desc" i], textarea[id*="desc" i]').forEach(addCounter);
+  }
+  document.addEventListener('input',e=>{if(e.target&&e.target.matches('textarea')&&/desc/i.test((e.target.id||'')+' '+(e.target.name||'')+' '+(e.target.className||''))){if(e.target.value.length>MAX_DESC)e.target.value=e.target.value.slice(0,MAX_DESC);}},true);
+  document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{ if(document.getElementById('products')) window.renderProducts('#products',typeof getProducts==='function'?getProducts():[]); if(document.getElementById('detail')) window.productPage(); enhanceDescCounters(); },500); setTimeout(enhanceDescCounters,1500);});
+  document.addEventListener('click',()=>setTimeout(enhanceDescCounters,80),true);
+})();
+
+/* === NITA STYLE PRODUCT MATERIAL SELECTOR FIX 2026-06-13 ===
+   Adds product material selector to Add/Edit Product, saves material with product,
+   and shows it in product details. Does not change unrelated features. */
+(function(){
+  const MATERIALS = ['Leather','Faux leather','Suede','Linen','Cotton','Denim','Silk','Satin','Wool','Knit','Cashmere','Polyester','Viscose','Tweed','Crochet','Lace','Nylon','Canvas','Mixed materials','Other'];
+  window.NITA_MATERIAL_OPTIONS = MATERIALS;
+  const esc = (v='') => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const opts = (selected='') => MATERIALS.map(m => `<option value="${esc(m)}" ${String(selected||'')===m?'selected':''}>${esc(m)}</option>`).join('');
+
+  function materialField(id, cls, value){
+    return `<div class="nita-material-field"><label>Product material</label><select id="${id||''}" class="field ${cls||''}">${opts(value||'Leather')}</select><p class="field-help">Choose the main material shown in the product details.</p></div>`;
+  }
+
+  function insertAddMaterial(){
+    const addForm = document.querySelector('.admin-add-product-form');
+    if(!addForm || addForm.querySelector('#pmaterial')) return;
+    const category = addForm.querySelector('#pcat')?.closest('div');
+    if(category) category.insertAdjacentHTML('afterend', materialField('pmaterial','', 'Leather'));
+    else addForm.insertAdjacentHTML('beforeend', materialField('pmaterial','', 'Leather'));
+  }
+
+  function insertEditorMaterials(){
+    document.querySelectorAll('.product-editor').forEach(editor => {
+      if(editor.querySelector('.edit-material')) return;
+      const id = (editor.id || '').replace(/^editor-/,'');
+      let product = null;
+      try{
+        const list = typeof products === 'function' ? products() : (window.PRODUCTS || []);
+        product = (list || []).find(p => String(p.id) === String(id));
+      }catch(e){}
+      const current = product?.material || product?.productMaterial || 'Leather';
+      const category = editor.querySelector('.edit-category')?.closest('div');
+      if(category) category.insertAdjacentHTML('afterend', materialField('', 'edit-material', current));
+    });
+  }
+
+  function applyMaterialFields(){
+    insertAddMaterial();
+    insertEditorMaterials();
+  }
+
+  // Capture selected material before add/edit save, then attach it to the product array during saveProducts.
+  const oldAdd = window.addProductAdmin;
+  if(typeof oldAdd === 'function'){
+    window.addProductAdmin = async function(){
+      window.__nitaPendingAddMaterial = document.getElementById('pmaterial')?.value || 'Leather';
+      const result = await oldAdd.apply(this, arguments);
+      setTimeout(() => { window.__nitaPendingAddMaterial = null; applyMaterialFields(); }, 800);
+      return result;
+    };
+  }
+
+  const oldSaveEditor = window.saveProductEditor;
+  if(typeof oldSaveEditor === 'function'){
+    window.saveProductEditor = async function(id){
+      const root = document.getElementById('editor-' + id);
+      window.__nitaPendingEditMaterial = { id: String(id), material: root?.querySelector('.edit-material')?.value || 'Leather' };
+      const result = await oldSaveEditor.apply(this, arguments);
+      setTimeout(() => { window.__nitaPendingEditMaterial = null; applyMaterialFields(); }, 800);
+      return result;
+    };
+  }
+
+  const oldSaveProducts = window.saveProducts;
+  if(typeof oldSaveProducts === 'function'){
+    window.saveProducts = async function(list){
+      try{
+        if(Array.isArray(list)){
+          const addMat = window.__nitaPendingAddMaterial;
+          if(addMat){
+            const addName = document.getElementById('pname')?.value?.trim();
+            for(let i=list.length-1;i>=0;i--){
+              const p = list[i];
+              if(p && (!addName || String(p.name||'') === addName)) { p.material = addMat; p.productMaterial = addMat; break; }
+            }
+          }
+          const edit = window.__nitaPendingEditMaterial;
+          if(edit?.id){
+            const p = list.find(x => String(x.id) === edit.id);
+            if(p){ p.material = edit.material; p.productMaterial = edit.material; }
+          }
+        }
+      }catch(e){ console.warn('Material save helper skipped:', e); }
+      return oldSaveProducts.apply(this, arguments);
+    };
+  }
+
+  function addMaterialToProductDetails(){
+    const detailRoot = document.getElementById('productDetail') || document.querySelector('.product-detail, .product-page, .product-info');
+    const block = document.querySelector('.product-description-block');
+    if(!block || block.querySelector('.product-material-line')) return;
+    let material = '';
+    try{
+      const params = new URLSearchParams(location.search);
+      const id = params.get('id') || params.get('product') || window.currentProductId;
+      const list = typeof products === 'function' ? products() : (window.PRODUCTS || []);
+      const p = (list || []).find(x => String(x.id) === String(id)) || window.currentProduct;
+      material = p?.material || p?.productMaterial || '';
+    }catch(e){}
+    if(!material) return;
+    block.insertAdjacentHTML('afterbegin', `<p class="product-material-line"><strong>Material:</strong> ${esc(material)}</p>`);
+  }
+
+  const oldRenderAdmin = window.renderAdmin;
+  if(typeof oldRenderAdmin === 'function'){
+    window.renderAdmin = async function(){
+      const result = await oldRenderAdmin.apply(this, arguments);
+      setTimeout(applyMaterialFields, 0);
+      return result;
+    };
+  }
+  const oldShow = window.showAdminSection;
+  if(typeof oldShow === 'function'){
+    window.showAdminSection = function(){
+      const result = oldShow.apply(this, arguments);
+      setTimeout(applyMaterialFields, 0);
+      return result;
+    };
+  }
+  const oldProductPage = window.productPage;
+  if(typeof oldProductPage === 'function'){
+    window.productPage = function(){
+      const result = oldProductPage.apply(this, arguments);
+      setTimeout(addMaterialToProductDetails, 0);
+      return result;
+    };
+  }
+  document.addEventListener('DOMContentLoaded', () => { setTimeout(applyMaterialFields, 300); setTimeout(addMaterialToProductDetails, 500); });
+  window.addEventListener('load', () => { setTimeout(applyMaterialFields, 500); setTimeout(addMaterialToProductDetails, 700); });
+})();
+/* === END NITA STYLE PRODUCT MATERIAL SELECTOR FIX === */
