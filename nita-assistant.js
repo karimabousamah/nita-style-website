@@ -1,7 +1,7 @@
-/* === NITA STYLE AI ASSISTANT ONLY - PREMIUM V6 VERTICAL PRODUCT CARDS === */
+/* === NITA STYLE AI ASSISTANT ONLY - CATEGORIES PANTS + GIFT IDEAS 20260613 === */
 (function(){
   const STEPS=['order submitted','confirmed','packing','out for delivery','delivered'];
-  const QUICK=['Track my order','Gift under $100','Gift under $200','New arrivals','Show dresses','Show tops','Shipping & delivery','Size help','Return policy'];
+  const QUICK=['Track my order','Gift under $100','Gift ideas','New arrivals','Show dresses','Show tops','Shipping & delivery','Size help','Return policy'];
   const STOP=new Set(['product','products','search','find','shop','price','collection','want','with','what','recommend','suggest','budget','under','less','than','gift','present','show','most','expensive','latest','new','arrival','arrivals','please','need','looking','for','the','and','you','can','have']);
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
@@ -121,8 +121,7 @@
     if(/size|fit|xs|small|medium|large|measure/.test(q)) return bot('For sizing, choose your usual size for fitted pieces. If you are between sizes or want a relaxed fit, size up. For exact help, send Nita Style your measurements before ordering.');
     if(/contact|instagram|whatsapp|phone|support/.test(q)) return bot('You can contact Nita Style through the Contact page or Instagram. For order help, include your order number, email, and phone number so the team can find your order quickly.');
     if(/discount|coupon|code|promo|10/.test(q)) return bot('If there is an active sign-up discount or coupon, enter the code at checkout. Some codes are one-time use and may have start and end dates.');
-    if(/pants/.test(q)) return bot('Nita Style does not currently list pants as a shopping category. I can help you with dresses, skirts, t-shirts, tops, bags, scarves, and overalls.');
-    if(/dress|skirt|t-?shirt|top|bag|scarf|overall|accessor|product|shop|find|search|price|shirt|linen|knit|piece|pieces/.test(q)) return productHelp(q,{});
+    if(/dress|skirt|t-?shirt|top|pant|pants|bag|scarf|overall|accessor|product|shop|find|search|price|shirt|linen|knit|piece|pieces/.test(q)) return productHelp(q,{});
     if(/hello|hi|hey|bonjour|salut/.test(q)){const n=firstName(); return bot(`${n?`Hey ${n}`:'Hi'} — I can help you find the right product by budget, gift idea, category, size, or order status. What are you looking for?`);}
     bot('I can help you choose products by budget, gift idea, occasion, category, or size. You can also ask me about orders, shipping, discounts, size help, and contact details.');
   }
@@ -138,7 +137,7 @@
 
   function getBudget(q){ const m=q.match(/(?:\$|usd\s*)?(\d{2,5})(?:\s*(?:\$|usd|dollars))?/i); return m?Number(m[1]):null; }
   function productHelp(q,opts={}){
-    let ps=products().filter(Boolean).filter(p=>String(p.category||'').toLowerCase()!=='pants');
+    let ps=products().filter(Boolean).filter(Boolean);
     if(!ps.length) return bot('I could not find products yet. Please check the Shop page.');
     const words=q.split(/[^a-z0-9]+/).filter(w=>w.length>2&&!STOP.has(w));
     let list=ps.map((p,idx)=>({p,idx,score:scoreProduct(p,words,q,opts)}));
@@ -249,7 +248,7 @@
     words.forEach(w=>{ if(hay.includes(w)) s+=3; });
     if(q.includes(String(p.category||'').toLowerCase())) s+=4;
     if(q.includes(String(p.collection||'').toLowerCase())) s+=3;
-    if(/gift|present|birthday/.test(q) && /accessor|bag|top|shirt|dress/.test(hay)) s+=2;
+    if(/gift|present|birthday/.test(q) && /accessor|bag|top|shirt|dress|skirt|scarf|overall|pant/.test(hay)) s+=2;
     if(/summer|vacation|beach/.test(q) && /summer|linen|dress|shirt/.test(hay)) s+=3;
     if(/elegant|classy|formal|dinner/.test(q) && /dress|jacket|bag|elegant|refined/.test(hay)) s+=3;
     if(/casual|everyday|daily/.test(q) && /everyday|top|shirt|knit|dress|skirt/.test(hay)) s+=3;
@@ -258,4 +257,4 @@
   }
   document.addEventListener('DOMContentLoaded',create);
 })();
-/* === END NITA STYLE AI ASSISTANT ONLY - PREMIUM V6 VERTICAL PRODUCT CARDS === */
+/* === END NITA STYLE AI ASSISTANT ONLY - CATEGORIES PANTS + GIFT IDEAS 20260613 === */

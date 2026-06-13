@@ -2524,3 +2524,82 @@ tr.admin-order-row .admin-premium-roadmap .order-roadmap span.done:before{backgr
 .nita-phone-number:focus{border:0!important;box-shadow:none!important;}
 @media(max-width:640px){.nita-phone-row{min-height:52px}.nita-phone-code{min-width:132px;font-size:12px}.nita-phone-number{font-size:14px}}
 /* === END NITA PROFESSIONAL ACCOUNT VALIDATION + PHONE INPUT ONLY === */
+
+/* === NITA STYLE ADMIN PHOTO CONTROL HOVER FIX 2026-06-13 ===
+   Keeps the global premium button rule: white controls invert to black with white icons/text on hover.
+   Scope is admin photo upload/order controls only. */
+.photo-order-controls{
+  display:flex!important;
+  gap:6px!important;
+  justify-content:center!important;
+  align-items:center!important;
+  margin-top:10px!important;
+}
+.photo-order-controls button,
+.admin-thumb.photo-order-thumb .photo-order-controls button{
+  width:36px!important;
+  height:36px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border:2px solid #111!important;
+  background:#fff!important;
+  color:#111!important;
+  font-weight:900!important;
+  line-height:1!important;
+  cursor:pointer!important;
+  transition:background .22s ease,color .22s ease,border-color .22s ease,transform .22s ease,box-shadow .22s ease!important;
+  -webkit-appearance:none!important;
+  appearance:none!important;
+}
+.photo-order-controls button:hover:not(:disabled),
+.photo-order-controls button:focus-visible:not(:disabled),
+.admin-thumb.photo-order-thumb .photo-order-controls button:hover:not(:disabled),
+.admin-thumb.photo-order-thumb .photo-order-controls button:focus-visible:not(:disabled){
+  background:#111!important;
+  color:#fff!important;
+  border-color:#111!important;
+  transform:translateY(-1px)!important;
+  box-shadow:0 10px 22px rgba(0,0,0,.12)!important;
+  outline:none!important;
+}
+.photo-order-controls button:active:not(:disabled),
+.admin-thumb.photo-order-thumb .photo-order-controls button:active:not(:disabled){
+  transform:translateY(0)!important;
+  background:#111!important;
+  color:#fff!important;
+}
+.photo-order-controls button:disabled,
+.admin-thumb.photo-order-thumb .photo-order-controls button:disabled{
+  border-color:#cfcfcf!important;
+  background:#fff!important;
+  color:#aaa!important;
+  cursor:not-allowed!important;
+  opacity:1!important;
+  transform:none!important;
+  box-shadow:none!important;
+}
+.admin-thumb.photo-order-thumb{
+  border:2px solid #111!important;
+  transition:border-color .22s ease,box-shadow .22s ease,transform .22s ease!important;
+}
+.admin-thumb.photo-order-thumb:hover{
+  transform:translateY(-2px)!important;
+  box-shadow:0 14px 30px rgba(0,0,0,.08)!important;
+}
+
+/* === NITA STYLE ADMIN ORDERS ONGOING / PREVIOUS SPLIT ONLY === */
+.nita-orders-toolbar{align-items:flex-start;gap:22px;}
+.nita-order-tabs{margin-left:auto;display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}
+.nita-order-tab{appearance:none;border:1.5px solid #111;background:#fff;color:#111;padding:12px 18px;border-radius:999px;font:inherit;font-weight:900;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;transition:background .22s ease,color .22s ease,transform .22s ease,box-shadow .22s ease,border-color .22s ease;}
+.nita-order-tab span{display:inline-flex;align-items:center;justify-content:center;margin-left:8px;min-width:22px;height:22px;border-radius:999px;border:1px solid currentColor;font-size:11px;line-height:1;}
+.nita-order-tab:hover,.nita-order-tab:focus-visible,.nita-order-tab.active{background:#111;color:#fff;transform:translateY(-1px);box-shadow:0 14px 34px rgba(0,0,0,.10);outline:none;}
+.nita-admin-orders-list{display:grid;gap:14px;margin-top:18px;}
+.nita-admin-orders-list.empty{border:1px solid #e6e6e6;border-radius:18px;padding:28px;background:#fff;}
+.nita-admin-order-card{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;}
+.nita-admin-order-card:hover{transform:translateY(-2px);box-shadow:0 18px 42px rgba(0,0,0,.08);border-color:#111;}
+.nita-admin-order-main{min-width:0;}
+.nita-admin-order-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+.nita-admin-order-actions .admin-order-status{min-width:190px;}
+@media(max-width:760px){.nita-orders-toolbar{flex-direction:column}.nita-order-tabs{margin-left:0;width:100%;justify-content:flex-start}.nita-order-tab{width:100%;display:flex;justify-content:space-between;align-items:center}.nita-admin-order-actions{justify-content:flex-start}.nita-admin-order-actions .admin-order-status{width:100%;}}
+/* === END NITA STYLE ADMIN ORDERS ONGOING / PREVIOUS SPLIT ONLY === */
