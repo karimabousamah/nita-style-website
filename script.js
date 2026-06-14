@@ -9373,3 +9373,134 @@ placeOrder=async function(){
   }
 })();
 /* === END NITA COLORWAY POLISH FIX 20260614-2105 === */
+
+/* === NITA STYLE ADMIN IMAGE PREVIEW CACHE FIX 20260614-2128 ===
+   Direct asset links are correct, so the bug is Safari/admin preview caching thumbnails.
+   This only cache-busts the admin preview images. Saved product paths stay clean.
+*/
+(function(){
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]});}
+  function normalizeAsset(v){
+    v=String(v||'').trim();
+    if(!v) return '';
+    if(/^data:image\//i.test(v) || /^https?:\/\//i.test(v) || v.startsWith('/')) return v;
+    if(/^assets\/products\//i.test(v)) return '/' + v.replace(/^\/+/, '');
+    if(/^assets\//i.test(v)) return '/' + v.replace(/^\/+/, '');
+    return '/assets/products/' + v.replace(/^\/+/, '');
+  }
+  function cleanLines(v){return String(v||'').split(/\n|,/).map(function(s){return normalizeAsset(s)}).filter(Boolean);}
+  function unique(arr){var out=[],seen={};(arr||[]).forEach(function(x){x=String(x||'').trim();if(x&&!seen[x]){seen[x]=1;out.push(x)}});return out;}
+  function previewSrc(path,index){
+    if(/^data:image\//i.test(path)) return path;
+    var joiner = path.indexOf('?') === -1 ? '?' : '&';
+    return path + joiner + 'nitaPreview=' + Date.now() + '-' + index;
+  }
+  function renderPreview(box,photos){
+    photos=unique(photos);
+    box.innerHTML=photos.map(function(u,i){
+      return '<div class="admin-thumb photo-order-thumb asset-path-thumb">'
+        + '<img src="'+esc(previewSrc(u,i))+'" data-original-src="'+esc(u)+'" alt="Product photo '+(i+1)+'" loading="eager" decoding="sync" onerror="this.closest(\'.admin-thumb\').classList.add(\'missing-asset\')">'
+        + '<span>'+(i===0?'Photo 1':'Photo '+(i+1))+'</span>'
+        + '<small>'+esc(u)+'</small>'
+        + '<div class="photo-order-controls">'
+        + '<button type="button" onclick="movePendingPhoto&&movePendingPhoto('+i+',-1)" '+(i===0?'disabled':'')+'>←</button>'
+        + '<button type="button" onclick="movePendingPhoto&&movePendingPhoto('+i+',1)" '+(i===photos.length-1?'disabled':'')+'>→</button>'
+        + '<button type="button" onclick="removePendingPhoto&&removePendingPhoto('+i+')">×</button>'
+        + '</div></div>';
+    }).join('');
+  }
+  window.previewAssetProductPhotos=function(){
+    var input=document.getElementById('pPhotoPaths');
+    var box=document.getElementById('photoPreview');
+    var paths=cleanLines(input&&input.value);
+    if(!paths.length){try{typeof msg==='function'?msg('Write at least one image file name first.',false):alert('Write at least one image file name first.')}catch(e){} return;}
+    window.pendingAdminPhotos=unique(paths);
+    window.pendingPhotos=window.pendingAdminPhotos;
+    window.pendingAdminMainIndex=0;
+    if(box) renderPreview(box, window.pendingAdminPhotos);
+    try{typeof msg==='function'?msg('Preview refreshed with the latest original files.',true):(typeof toast==='function'&&toast('Preview refreshed.'))}catch(e){}
+  };
+  document.addEventListener('click',function(e){
+    var prevBtn=e.target.closest&&e.target.closest('.nita-colorway-preview-btn');
+    if(!prevBtn) return;
+    var panel=prevBtn.closest('.nita-colorway-photo-panel');
+    var preview=panel&&panel.querySelector('.nita-colorway-preview');
+    var files=cleanLines(panel&&panel.querySelector('.nita-colorway-paths')&&panel.querySelector('.nita-colorway-paths').value);
+    if(preview){
+      preview.innerHTML=files.length?files.map(function(src,i){return '<img src="'+esc(previewSrc(src,i))+'" data-original-src="'+esc(src)+'" alt="Color preview '+(i+1)+'" onerror="this.closest(\'.nita-colorway-preview\').insertAdjacentHTML(\'beforeend\',\'<p class=&quot;field-error&quot;>Photo not found: '+esc(src)+'<\/p>\'); this.remove();">';}).join(''):'<p class="muted">No file names written yet.</p>';
+    }
+  },true);
+})();
+/* === END NITA STYLE ADMIN IMAGE PREVIEW CACHE FIX === */
+
+/* === NITA FINAL: COLORWAY PHOTO INDEX + ADMIN PREVIEW NO-CACHE 20260614-2135 ===
+   Fixes: keep same photo index when switching product colorways and force admin previews to show the real image for each filename. */
+(function(){
+  function esc(s){return String(s==null?'':s).replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});}
+  function normalizeProductAssetPath(value){
+    var s=String(value||'').trim();
+    if(!s) return '';
+    if(/^data:image\//i.test(s) || /^https?:\/\//i.test(s) || s.indexOf('/')===0) return s;
+    if(s.indexOf('assets/products/')===0) return '/' + s;
+    return '/assets/products/' + s;
+  }
+  function noCacheSrc(src){
+    if(!src || /^data:image\//i.test(src) || /^https?:\/\//i.test(src)) return src;
+    return src + (src.indexOf('?')>-1?'&':'?') + 'v=' + Date.now() + '-' + Math.floor(Math.random()*99999);
+  }
+  window.nitaNormalizeProductAssetPath = normalizeProductAssetPath;
+  window.nitaNoCacheSrc = noCacheSrc;
+
+  function getColorways(product){
+    if(window.nitaProductColorways) return window.nitaProductColorways(product)||[];
+    if(product && Array.isArray(product.colorways)) return product.colorways;
+    return [];
+  }
+  function photosForColorway(cw){
+    return ((cw&&cw.photos)||[]).map(normalizeProductAssetPath).filter(Boolean);
+  }
+
+  const previousUseColorway = window.nitaUseSingleColorway;
+  window.nitaUseSingleColorway = function(color){
+    var currentIndex = Math.max(0, Number(window.selectedPhoto || 0));
+    var product = window.nitaCurrentProductForDetail;
+    if(!product && typeof products==='function'){
+      var id = new URL(location.href).searchParams.get('id');
+      product = products().find(function(p){return String(p.id)===String(id);}) || products()[0];
+    }
+    if(!product){ if(typeof previousUseColorway==='function') return previousUseColorway(color); return; }
+    var cws = getColorways(product);
+    var cw = cws.find(function(x){return String(x.color)===String(color);}) || cws[0];
+    var photos = photosForColorway(cw);
+    if(!photos.length && typeof previousUseColorway==='function') return previousUseColorway(color);
+    var nextIndex = Math.min(currentIndex, Math.max(photos.length-1, 0));
+    window.nitaSelectedColorway = color;
+    window.nitaCurrentPhotos = photos;
+    window.selectedPhoto = nextIndex;
+
+    var main = document.querySelector('.nita-detail-real-img');
+    if(main && photos[nextIndex]) main.src = photos[nextIndex];
+
+    var thumbs = document.querySelector('.product-thumbs');
+    if(thumbs){
+      thumbs.innerHTML = photos.map(function(src,i){
+        return '<button type="button" class="'+(i===nextIndex?'active':'')+'" onclick="nitaSetDetailPhoto('+i+')"><img class="nita-thumb-real-img" src="'+esc(src)+'" alt="Product photo '+(i+1)+'"></button>';
+      }).join('');
+    }
+    document.querySelectorAll('.nita-detail-color-btn').forEach(function(btn){
+      btn.classList.toggle('active', String(btn.dataset.color)===String(color));
+    });
+  };
+
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('#previewPhotoPaths,.nita-colorway-preview-btn');
+    if(!btn) return;
+    setTimeout(function(){
+      document.querySelectorAll('.photo-preview-card img, .nita-colorway-preview img, .admin-photo-preview img').forEach(function(img){
+        var src = img.getAttribute('src') || '';
+        if(src && !/^data:image\//i.test(src)) img.setAttribute('src', noCacheSrc(src.replace(/[?&]v=[^&]+/g,'')));
+      });
+    }, 80);
+  }, true);
+})();
+/* === END NITA FINAL: COLORWAY PHOTO INDEX + ADMIN PREVIEW NO-CACHE === */
