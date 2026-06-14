@@ -136,27 +136,36 @@
   }
 
   function getBudget(q){ const m=q.match(/(?:\$|usd\s*)?(\d{2,5})(?:\s*(?:\$|usd|dollars))?/i); return m?Number(m[1]):null; }
+  function requestedCategory(q){
+    const map=[['Dresses',/\bdresses?\b/],['Skirts',/\bskirts?\b/],['T-Shirts',/\b(t\s*-?shirts?|tee shirts?|tshirts?)\b/],['Tops',/\btops?\b/],['Pants',/\bpants?\b/],['Bags',/\bbags?\b/],['Scarves',/\b(scarves|scarfs?)\b/],['Overalls',/\boveralls?\b/]];
+    const hit=map.find(([cat,re])=>re.test(q)); return hit?hit[0]:'';
+  }
   function productHelp(q,opts={}){
-    let ps=products().filter(Boolean).filter(Boolean);
+    let ps=products().filter(Boolean);
     if(!ps.length) return bot('I could not find products yet. Please check the Shop page.');
+    const wanted=requestedCategory(q);
+    if(wanted){
+      ps=ps.filter(p=>String(p.category||'').toLowerCase()===wanted.toLowerCase());
+      if(!ps.length) return bot('There are no '+wanted.toLowerCase()+' available on Nita Style yet. Please check again later or explore another category.');
+    }
     const words=q.split(/[^a-z0-9]+/).filter(w=>w.length>2&&!STOP.has(w));
     let list=ps.map((p,idx)=>({p,idx,score:scoreProduct(p,words,q,opts)}));
     if(opts.budget) list=list.filter(x=>priceOf(x.p)<=opts.budget);
-    if(opts.collection) list=list.filter(x=>String(x.p.collection||'').toLowerCase().includes(opts.collection));
+    if(opts.collection) list=list.filter(x=>String(x.p.collection||x.p.homeSection||x.p.displaySection||'').toLowerCase().includes('new') || String(x.p.collection||'').toLowerCase().includes(opts.collection));
     if(opts.sort==='expensive') list=list.sort((a,b)=>priceOf(b.p)-priceOf(a.p));
     else if(opts.sort==='cheap') list=list.sort((a,b)=>priceOf(a.p)-priceOf(b.p));
     else list=list.sort((a,b)=>b.score-a.score || priceOf(b.p)-priceOf(a.p));
-    list=list.slice(0,opts.sort?3:4).map(x=>x.p);
+    list=list.filter(x=>wanted || x.score>0 || opts.budget || opts.collection || opts.sort).slice(0,opts.sort?4:6).map(x=>x.p);
     if(!list.length && opts.budget){
-      list=ps.slice().sort((a,b)=>priceOf(a)-priceOf(b)).slice(0,4);
-      bot(`I did not find exact matches under ${money(opts.budget)}, but here are the closest lower-price options available:`);
-      return renderProducts(list);
+      bot('I do not have an exact match for that budget/category yet. Here are the closest available options:');
+      return renderProducts(ps.slice().sort((a,b)=>priceOf(a)-priceOf(b)).slice(0,4));
     }
-    if(!list.length) list=ps.slice(0,4);
+    if(!list.length) return bot('I could not find products that match this request yet. Try another category, color, material, size, or budget.');
     if(opts.sort==='expensive') bot('Here are the highest-priced Nita Style pieces available now:');
     else if(opts.sort==='cheap') bot('Here are the lowest-priced Nita Style pieces available now:');
-    else if(opts.budget && opts.gift) bot(`For a gift under ${money(opts.budget)}, I would recommend these pieces:`);
-    else if(opts.budget) bot(`Here are Nita Style pieces within your ${money(opts.budget)} budget:`);
+    else if(wanted) bot('Here are the '+wanted.toLowerCase()+' available now:');
+    else if(opts.budget && opts.gift) bot('Here are gift ideas within your '+money(opts.budget)+' budget:');
+    else if(opts.budget) bot('Here are Nita Style pieces within your '+money(opts.budget)+' budget:');
     else if(opts.collection) bot('Here are the latest/new arrival pieces:');
     else bot('Here are pieces that match what you asked for:');
     renderProducts(list);
