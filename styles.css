@@ -3980,3 +3980,152 @@ body .nita-final-order-road{margin-top:16px!important;overflow:auto!important;}
     gap: 12px !important;
   }
 }
+
+/* === NITA STYLE MINIMAL SHOP FILTER + ASSET FILENAME FIX 20260614 === */
+.nita-filter-shell{margin:24px 0 38px!important;border-bottom:1px solid #eee!important;padding-bottom:14px!important}
+.nita-filter-bar{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:18px!important;margin-bottom:0!important}
+.nita-filter-toggle,.nita-sort-toggle{appearance:none!important;border:0!important;background:transparent!important;color:#111!important;padding:10px 0!important;font-size:15px!important;font-weight:600!important;letter-spacing:.02em!important;text-transform:none!important;display:flex!important;align-items:center!important;gap:10px!important;cursor:pointer!important;box-shadow:none!important}
+.nita-filter-toggle b{font-size:18px!important;font-weight:500!important;line-height:1!important;transition:transform .2s ease!important}.nita-filter-toggle.open b{transform:rotate(180deg)!important}
+.nita-sort-wrap{position:relative!important}.nita-sort-menu{position:absolute!important;right:0!important;top:100%!important;min-width:190px!important;background:#fff!important;border:1px solid #eee!important;box-shadow:0 18px 45px rgba(0,0,0,.08)!important;padding:10px 0!important;z-index:80!important;display:none!important}.nita-sort-menu.open{display:block!important}.nita-sort-menu button{display:block!important;width:100%!important;border:0!important;background:#fff!important;color:#111!important;text-align:left!important;padding:12px 18px!important;font-size:14px!important;cursor:pointer!important}.nita-sort-menu button:hover{background:#f7f7f7!important}
+.nita-filter-panel{display:none!important;grid-template-columns:repeat(6,minmax(120px,1fr)) auto!important;gap:16px!important;align-items:end!important;margin:12px 0 0!important;padding:18px 0 4px!important;border:0!important;background:transparent!important;box-shadow:none!important}.nita-filter-panel.open{display:grid!important}.nita-filter-panel label{font-size:11px!important;font-weight:700!important;letter-spacing:.06em!important;text-transform:none!important;color:#666!important;margin-bottom:8px!important}.nita-filter-panel .field{height:42px!important;border:0!important;border-bottom:1px solid #ddd!important;background:transparent!important;padding-left:0!important;padding-right:22px!important}.nita-clear-filters{height:42px!important;padding:0 22px!important;border:1px solid #111!important;background:#fff!important;color:#111!important}.nita-clear-filters:hover{background:#111!important;color:#fff!important}
+@media(max-width:900px){.nita-filter-panel{grid-template-columns:repeat(2,minmax(0,1fr))!important}.nita-clear-filters{grid-column:1/-1!important;width:100%!important}}
+@media(max-width:650px){.nita-filter-shell{margin:18px 0 28px!important;padding-bottom:10px!important}.nita-filter-bar{padding:0 2px!important}.nita-filter-toggle,.nita-sort-toggle{font-size:14px!important}.nita-filter-panel{grid-template-columns:1fr!important;gap:12px!important;padding-top:10px!important}.nita-filter-panel .field{height:40px!important;font-size:14px!important}.nita-sort-menu{right:0!important;min-width:170px!important}.mobile-pro-logo,.mobile-brand-logo{max-width:178px!important;width:auto!important;line-height:1!important}.mobile-pro-header{min-height:72px!important;align-items:center!important}}
+/* === END NITA STYLE MINIMAL SHOP FILTER + ASSET FILENAME FIX 20260614 === */
+
+/* === NITA STYLE FILTER CLARITY + INTRO FIRST FIX 20260614-1805 === */
+/* Keep the homepage completely hidden until JavaScript adds the intro/header. This prevents Trending/New Arrivals from flashing before the Nita Style animation. */
+body:not(.nita-ready) > main,
+body:not(.nita-ready) > .category-strip,
+body:not(.nita-ready) > .section,
+body:not(.nita-ready) > .trending-scroll,
+body:not(.nita-ready) > .new-arrivals-scroll,
+body:not(.nita-ready) > .banner,
+body:not(.nita-ready) > footer,
+body:not(.nita-ready) > .copyright{
+  opacity:0!important;
+  visibility:hidden!important;
+}
+body:not(.nita-ready){background:#fff!important;}
+
+/* Minimal filter drawer: the user can apply one filter alone or combine category + color + material + size + price together. */
+.nita-filter-shell{max-width:100%!important;}
+.nita-filter-bar{border-bottom:1px solid #eee!important;padding-bottom:12px!important;}
+.nita-filter-toggle,.nita-sort-toggle{min-height:38px!important;}
+.nita-filter-panel.open{animation:nitaFilterDrop .22s ease both!important;}
+@keyframes nitaFilterDrop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.nita-filter-panel .field:focus{outline:none!important;border-bottom-color:#111!important;box-shadow:none!important;}
+.nita-filter-panel .field::placeholder{color:#999!important;}
+.nita-clear-filters{font-size:12px!important;font-weight:800!important;letter-spacing:.04em!important;}
+@media(max-width:650px){
+  .nita-filter-shell{margin-top:10px!important;}
+  .nita-filter-bar{position:relative!important;}
+  .nita-filter-panel.open{padding-bottom:12px!important;}
+  .nita-filter-panel label{font-size:10px!important;}
+}
+/* === END NITA STYLE FILTER CLARITY + INTRO FIRST FIX 20260614-1805 === */
+
+/* === NITA STYLE MOBILE MENU MOTION + LOGO MICRO ALIGN + STABLE MARQUEE 20260614-1825 === */
+@media(max-width:850px){
+  .mobile-menu-backdrop{
+    display:block!important;
+    opacity:0!important;
+    visibility:hidden!important;
+    pointer-events:none!important;
+    transition:opacity .32s ease, visibility .32s ease!important;
+  }
+  .mobile-menu-open .mobile-menu-backdrop{
+    opacity:1!important;
+    visibility:visible!important;
+    pointer-events:auto!important;
+  }
+  .mobile-menu-drawer{
+    display:block!important;
+    transform:translate3d(-104%,0,0)!important;
+    opacity:.98!important;
+    visibility:hidden!important;
+    transition:transform .42s cubic-bezier(.2,.85,.18,1), visibility .42s ease!important;
+    will-change:transform!important;
+  }
+  .mobile-menu-open .mobile-menu-drawer{
+    transform:translate3d(0,0,0)!important;
+    visibility:visible!important;
+  }
+  .mobile-menu-head,
+  .mobile-menu-row{
+    transform:translateX(-10px)!important;
+    opacity:.88!important;
+    transition:transform .38s cubic-bezier(.2,.85,.18,1), opacity .38s ease!important;
+  }
+  .mobile-menu-open .mobile-menu-head,
+  .mobile-menu-open .mobile-menu-row{
+    transform:translateX(0)!important;
+    opacity:1!important;
+  }
+  .mobile-menu-open .mobile-menu-row:nth-of-type(1){transition-delay:.04s!important;}
+  .mobile-menu-open .mobile-menu-row:nth-of-type(2){transition-delay:.08s!important;}
+  .mobile-submenu{
+    display:block!important;
+    max-height:0!important;
+    overflow:hidden!important;
+    opacity:0!important;
+    transform:translateY(-8px)!important;
+    padding:0!important;
+    border-bottom:1px solid #eee!important;
+    transition:max-height .38s cubic-bezier(.2,.85,.18,1), opacity .26s ease, transform .32s ease, padding .32s ease!important;
+  }
+  .mobile-submenu.open{
+    display:block!important;
+    max-height:520px!important;
+    opacity:1!important;
+    transform:translateY(0)!important;
+    padding:4px 0 18px!important;
+  }
+  .mobile-submenu a{
+    transform:translateY(-4px)!important;
+    opacity:0!important;
+    transition:transform .26s ease, opacity .26s ease, background .2s ease!important;
+  }
+  .mobile-submenu.open a{
+    transform:translateY(0)!important;
+    opacity:1!important;
+  }
+  .mobile-submenu.open a:nth-child(1){transition-delay:.03s!important;}
+  .mobile-submenu.open a:nth-child(2){transition-delay:.05s!important;}
+  .mobile-submenu.open a:nth-child(3){transition-delay:.07s!important;}
+  .mobile-submenu.open a:nth-child(4){transition-delay:.09s!important;}
+  .mobile-submenu.open a:nth-child(5){transition-delay:.11s!important;}
+  .mobile-submenu.open a:nth-child(6){transition-delay:.13s!important;}
+  .mobile-submenu.open a:nth-child(7){transition-delay:.15s!important;}
+  .mobile-submenu.open a:nth-child(8){transition-delay:.17s!important;}
+  .mobile-menu-row b{transition:transform .28s ease!important;}
+  .mobile-menu-row.open b{transform:rotate(45deg)!important;}
+  .topbar.mobile-pro-header .brand img{
+    transform:translateY(2px)!important;
+  }
+}
+
+.trending-scroll .product-marquee.nita-ultra-stable-marquee,
+.new-arrivals-scroll .product-marquee.nita-ultra-stable-marquee{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  width:max-content!important;
+  min-width:max-content!important;
+  gap:28px!important;
+  animation:nitaUltraStableMarquee var(--nita-marquee-duration,44s) linear infinite!important;
+  will-change:transform!important;
+  transform:translate3d(0,0,0)!important;
+  backface-visibility:hidden!important;
+  transition:none!important;
+}
+.trending-scroll .product-marquee.nita-ultra-stable-marquee:hover,
+.new-arrivals-scroll .product-marquee.nita-ultra-stable-marquee:hover{animation-play-state:running!important;}
+@keyframes nitaUltraStableMarquee{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+@media(max-width:900px){
+  .trending-scroll .product-marquee.nita-ultra-stable-marquee,
+  .new-arrivals-scroll .product-marquee.nita-ultra-stable-marquee{gap:20px!important;--nita-marquee-duration:36s;}
+}
+/* === END NITA STYLE MOBILE MENU MOTION + LOGO MICRO ALIGN + STABLE MARQUEE 20260614-1825 === */
+
+/* === NITA STYLE COLORWAY WORKFLOW + SMOOTH MARQUEE FINAL 20260614-1815 === */
+.nita-colorway-admin-box{border:1px solid #e3e3e3;padding:18px;background:#fff;margin-top:8px}.nita-colorway-pill-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-top:12px}.nita-colorway-pill{display:flex;align-items:center;gap:10px;border:1px solid #d8d8d8;background:#fff;color:#111;min-height:44px;padding:9px 12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;transition:background .18s ease,color .18s ease,border-color .18s ease,transform .18s ease}.nita-colorway-pill:hover,.nita-colorway-pill.on{background:#111;color:#fff;border-color:#111;transform:translateY(-1px)}.nita-colorway-photo-panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:18px}.nita-colorway-photo-panel{border:1px solid #e2e2e2;background:#fafafa;padding:14px}.nita-colorway-panel-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}.nita-colorway-file{margin-top:10px}.nita-colorway-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.nita-colorway-preview img{width:58px;height:70px;object-fit:cover;border:1px solid #ddd;background:#fff}.nita-color-swatch{display:inline-block;width:18px;height:18px;border:1px solid #bbb;background:var(--swatch);box-shadow:inset 0 0 0 2px rgba(255,255,255,.75);vertical-align:middle}.nita-card-colorways{display:flex;align-items:center;gap:7px;margin:7px 0 4px;color:#777;font-weight:800;text-transform:uppercase;letter-spacing:.05em;font-size:12px}.nita-card-colorways.single span{display:none}.nita-detail-colorways{margin:18px 0 14px}.nita-detail-colorways p{margin:0 0 10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}.nita-detail-colorways>div{display:flex;gap:9px;flex-wrap:wrap}.nita-detail-color-btn{width:auto;min-width:42px;height:42px;border:1px solid #cfcfcf;background:#fff;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 10px;cursor:pointer;transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}.nita-detail-color-btn span:not(.nita-color-swatch){font-weight:800;text-transform:uppercase;font-size:11px;letter-spacing:.04em}.nita-detail-color-btn.active{border-color:#111;box-shadow:0 0 0 2px #111 inset;transform:translateY(-1px)}.nita-smooth-auto-marquee{display:flex!important;gap:28px;will-change:transform;animation:nitaSmoothProductMarquee 38s linear infinite;transform:translate3d(0,0,0);backface-visibility:hidden}.nita-smooth-auto-marquee:hover{animation-play-state:paused}@keyframes nitaSmoothProductMarquee{from{transform:translate3d(0,0,0)}to{transform:translate3d(-33.333%,0,0)}}@media(max-width:700px){.nita-colorway-pill-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.nita-colorway-photo-panels{grid-template-columns:1fr}.nita-detail-color-btn span:not(.nita-color-swatch){display:none}.nita-detail-color-btn{min-width:38px;width:38px;padding:0}.nita-smooth-auto-marquee{gap:18px;animation-duration:34s}.mobile-pro-header .brand{transform:translateY(2px)!important}}
+/* === END NITA STYLE COLORWAY WORKFLOW + SMOOTH MARQUEE FINAL 20260614-1815 === */
