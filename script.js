@@ -8844,10 +8844,11 @@ placeOrder=async function(){
     grid.innerHTML=names.map(name=>{let items=ps.filter(p=>matchesCollection(p,name)); if(!items.length)items=ps.slice(0,3); const imgs=items.slice(0,4).map(p=>photos(p)[0]).filter(Boolean); const preview=imgs.length?'<div class="nita-collection-preview '+(imgs.length>1?'multi':'')+'">'+imgs.map(src=>'<img src="'+esc(src)+'" alt="'+esc(name)+' preview" loading="lazy">').join('')+'</div>':'<div class="nita-collection-preview empty"><img src="assets/logo-cropped.png" alt="Nita Style"></div>'; return '<a class="nita-collection-card" href="'+collectionUrl(name)+'">'+preview+'<div class="nita-collection-title"><h3>'+esc(name)+'</h3><span>'+items.length+' piece'+(items.length===1?'':'s')+'</span></div></a>';}).join('');
   };
   function applyVisibleFlags(){
-    document.querySelectorAll('.nita-phone-row').forEach(row=>{
-      const sel=row.querySelector('.nita-phone-code'); if(!sel)return;
-      if(!row.querySelector('.nita-phone-flag-visual')) sel.insertAdjacentHTML('beforebegin','<span class="nita-phone-flag-visual" aria-hidden="true"></span>');
-      const flag=row.querySelector('.nita-phone-flag-visual'); const update=()=>{flag.textContent=PHONE_COUNTRIES[sel.value]||'🌐'}; update(); sel.addEventListener('change',update,{passive:true});
+    // Keep only one visible country flag: the flag inside the selected option text.
+    // Remove the separate visual flag span that made the flag appear twice.
+    document.querySelectorAll('.nita-phone-flag-visual').forEach(el=>el.remove());
+    document.querySelectorAll('.nita-phone-row .nita-phone-code').forEach(sel=>{
+      sel.classList.add('nita-phone-code-single-flag');
     });
   }
   function forceSignupPhoneFlags(){
@@ -8892,3 +8893,123 @@ placeOrder=async function(){
   };
 })();
 /* === END NITA STYLE MOBILE HEADER / SLIDE MENU FINAL === */
+
+
+/* === NITA STYLE REMOVE LIKES + MOBILE NAV ALIGNMENT 20260614 === */
+(function(){
+  const SHOP_CATEGORIES=[['Dresses','shop.html?cat=Dresses'],['Skirts','shop.html?cat=Skirts'],['T-Shirts','shop.html?cat=T-Shirts'],['Tops','shop.html?cat=Tops'],['Pants','shop.html?cat=Pants'],['Bags','shop.html?cat=Bags'],['Scarves','shop.html?cat=Scarves'],['Overalls','shop.html?cat=Overalls']];
+  const COLLECTION_LINKS=[['Latest Added','collections.html'],['Everyday Boutique','shop.html?collection=Everyday%20Edit'],['Minimal','shop.html?collection=Minimal'],['Essential','shop.html?cat=Essentials'],['Daywear','shop.html?cat=Daywear'],['Evening','shop.html?cat=Evening'],['Accessories','shop.html?cat=Bags']];
+  function esc(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+  function activeUser(){try{return window.nitaActiveUser?window.nitaActiveUser():JSON.parse(localStorage.getItem('nitaUser')||'null')}catch(e){return null}}
+  function links(items){return items.map(([label,href])=>`<a href="${href}" onclick="closeMobileMenu()">${esc(label)}</a>`).join('');}
+  window.openMobileMenu=function(){document.body.classList.add('mobile-menu-open');document.getElementById('mobileMenuDrawer')?.setAttribute('aria-hidden','false');};
+  window.closeMobileMenu=function(){document.body.classList.remove('mobile-menu-open');document.getElementById('mobileMenuDrawer')?.setAttribute('aria-hidden','true');};
+  window.toggleMobileSubmenu=function(id){const panel=document.getElementById(id); if(!panel)return; const open=panel.classList.toggle('open'); const btn=document.querySelector(`[data-mobile-toggle="${id}"]`); if(btn){btn.classList.toggle('open',open);btn.setAttribute('aria-expanded',open?'true':'false'); const plus=btn.querySelector('b'); if(plus)plus.textContent=open?'−':'+';}};
+  function mobileDrawer(){return `<div class="mobile-menu-backdrop" onclick="closeMobileMenu()"></div><aside class="mobile-menu-drawer" id="mobileMenuDrawer" aria-hidden="true"><div class="mobile-menu-head"><span>Menu</span><button type="button" onclick="closeMobileMenu()" aria-label="Close menu">×</button></div><button type="button" class="mobile-menu-row" data-mobile-toggle="mobileShopSub" onclick="toggleMobileSubmenu('mobileShopSub')"><span>Shop</span><b>+</b></button><div class="mobile-submenu" id="mobileShopSub">${links(SHOP_CATEGORIES)}</div><button type="button" class="mobile-menu-row" data-mobile-toggle="mobileCollectionsSub" onclick="toggleMobileSubmenu('mobileCollectionsSub')"><span>Collections</span><b>+</b></button><div class="mobile-submenu" id="mobileCollectionsSub">${links(COLLECTION_LINKS)}</div><a class="mobile-menu-row link" href="about.html" onclick="closeMobileMenu()">About</a></aside>`;}
+  function userIcon(){return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.5" r="4"></circle><path d="M4.5 21a7.5 7.5 0 0 1 15 0"></path></svg>`;}
+  function cartIcon(){return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"></path><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"></path></svg>`;}
+  header=function(){
+    const user=activeUser();
+    const isAdmin=(typeof ADMIN_EMAILS!=='undefined')&&ADMIN_EMAILS.includes(String(user?.email||'').toLowerCase());
+    const admin=isAdmin?'<a class="admin-link" href="admin.html">ADMIN</a>':'';
+    const desktopNav=`<nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links">${links(SHOP_CATEGORIES)}</div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav>`;
+    const mobileLeft=`<div class="mobile-header-left"><button type="button" class="mobile-icon-btn mobile-menu-btn" onclick="openMobileMenu()" aria-label="Open menu"><span></span><span></span><span></span></button><button type="button" class="mobile-icon-btn mobile-search-btn" onclick="openSearch()" aria-label="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M15.5 15.5 21 21"></path></svg></button></div>`;
+    const desktopActions=`<div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a class="account-nav-link" href="${user?'account.html':'login.html'}">${user?'ACCOUNT':'SIGN IN'}</a>${admin}<button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true">${cartIcon()}</span><span class="cart-count">0</span></button></div>`;
+    const mobileRight=`<div class="mobile-header-right"><a class="mobile-icon-btn mobile-account-btn" href="${user?'account.html':'login.html'}" aria-label="Account">${userIcon()}</a><button class="mobile-icon-btn mobile-cart-btn" type="button" onclick="openCart()" aria-label="Cart">${cartIcon()}<span class="cart-count">0</span></button></div>`;
+    return `<header class="topbar mobile-pro-header nita-no-like-header">${mobileLeft}${desktopNav}<a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a>${desktopActions}${mobileRight}</header>${mobileDrawer()}<aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, skirts, t-shirts, tops, pants, bags..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`;
+  };
+  window.toggleLike=function(){return false;};
+  window.likedIds=function(){return [];};
+  document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){document.querySelectorAll('.liked-nav-link,.mobile-liked-btn,.favorite-btn,.product-detail-fav,.liked-remove-btn,[data-like-id]').forEach(el=>el.remove());},300);
+  });
+})();
+/* === END NITA STYLE REMOVE LIKES + MOBILE NAV ALIGNMENT 20260614 === */
+
+
+/* === NITA STYLE SINGLE PHONE FLAG PATCH 20260614 === */
+(function(){
+  function removeDuplicatePhoneFlags(){
+    document.querySelectorAll('.nita-phone-flag-visual').forEach(el=>el.remove());
+    document.querySelectorAll('.nita-phone-row .nita-phone-code').forEach(sel=>sel.classList.add('nita-phone-code-single-flag'));
+  }
+  document.addEventListener('DOMContentLoaded',function(){ removeDuplicatePhoneFlags(); setTimeout(removeDuplicatePhoneFlags,400); setTimeout(removeDuplicatePhoneFlags,1200); });
+  window.addEventListener('load',function(){ removeDuplicatePhoneFlags(); setTimeout(removeDuplicatePhoneFlags,600); });
+  document.addEventListener('change',function(e){ if(e.target && e.target.classList && e.target.classList.contains('nita-phone-code')) removeDuplicatePhoneFlags(); });
+})();
+/* === END NITA STYLE SINGLE PHONE FLAG PATCH === */
+
+
+/* === NITA STYLE PREMIUM COLLECTION PREVIEWS + MOBILE HEADER ALIGN FIX 20260614 === */
+(function(){
+  function esc(v){return String(v??'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function norm(v){return String(v??'').trim().toLowerCase();}
+  function allProducts(){try{return typeof getProducts==='function'?getProducts():JSON.parse(localStorage.getItem('nitaProducts')||'[]')}catch(e){return []}}
+  function imgUrl(v){
+    v=String(v||'').trim();
+    if(!v || /^linear-gradient/i.test(v)) return '';
+    var m=v.match(/url\((['"]?)(.*?)\1\)/i); if(m) v=m[2];
+    if(/^data:image\//i.test(v)||/^https?:\/\//i.test(v)||/^assets\//i.test(v)||v.startsWith('/')) return v;
+    if(/\.(png|jpe?g|webp|gif|avif)$/i.test(v)) return 'assets/products/'+v;
+    return '';
+  }
+  function productPhotos(p){
+    var arr=[];
+    if(Array.isArray(p&&p.photos)) arr=arr.concat(p.photos);
+    if(Array.isArray(p&&p.images)) arr=arr.concat(p.images);
+    if(p&&p.img) arr.unshift(p.img);
+    if(p&&p.image) arr.unshift(p.image);
+    var seen={};
+    return arr.map(imgUrl).filter(function(x){return x && !seen[x] && (seen[x]=1);});
+  }
+  function visible(p){try{return typeof nitaProductIsPublicVisible==='function'?nitaProductIsPublicVisible(p):true}catch(e){return true}}
+  function matches(p,name){
+    var cat=norm(p&&p.category), col=norm(p&&p.collection), home=norm(p&&(p.homeSection||p.displaySection)), text=[cat,col,home,norm(p&&p.name)].join(' ');
+    if(name==='New Arrivals') return home==='new-arrivals' || /new|arrival|drop|latest/.test(text);
+    if(name==='Everyday Edit') return /everyday|edit|daily|daywear/.test(text);
+    if(name==='Summer Pieces') return /summer|linen|cotton|light|beach|vacation/.test(text);
+    if(name==='Accessories') return /accessor|bags|bag|scarf|scarves/.test(text);
+    return false;
+  }
+  function collectionUrl(name){
+    if(name==='New Arrivals') return 'shop.html?collection=New%20Arrivals';
+    if(name==='Everyday Edit') return 'shop.html?collection=Everyday%20Edit';
+    if(name==='Summer Pieces') return 'shop.html?collection=Summer%20Pieces';
+    if(name==='Accessories') return 'shop.html?cat=Bags';
+    return 'shop.html';
+  }
+  function tile(product, fallbackName, index){
+    var src=productPhotos(product)[0];
+    var name=product&&product.name?product.name:fallbackName;
+    if(src){
+      return '<div class="nita-premium-collection-tile tile-'+index+'"><img src="'+esc(src)+'" alt="'+esc(name)+'" loading="lazy"><span>'+esc(name)+'</span></div>';
+    }
+    return '<div class="nita-premium-collection-tile tile-'+index+' empty"><img src="assets/logo-cropped.png" alt="Nita Style"><span>'+esc(fallbackName)+'</span></div>';
+  }
+  window.nitaRenderCollectionsPage=function(){
+    var grid=document.getElementById('nitaCollectionsGrid');
+    if(!grid) return;
+    var ps=allProducts().filter(visible);
+    var names=[
+      {name:'New Arrivals',sub:'Freshly added pieces'},
+      {name:'Everyday Edit',sub:'Clean daily wardrobe'},
+      {name:'Summer Pieces',sub:'Light seasonal styling'},
+      {name:'Accessories',sub:'Bags, scarves and finishers'}
+    ];
+    grid.innerHTML=names.map(function(meta){
+      var items=ps.filter(function(p){return matches(p,meta.name)});
+      var previews=(items.length?items:ps).slice(0,3);
+      var count=items.length;
+      return '<a class="nita-premium-collection-card" href="'+collectionUrl(meta.name)+'" aria-label="Open '+esc(meta.name)+'">'
+        + '<div class="nita-premium-collection-media">'
+        + tile(previews[0],meta.name,1)+tile(previews[1]||previews[0],meta.name,2)+tile(previews[2]||previews[0],meta.name,3)
+        + '<div class="nita-premium-collection-overlay"><small>'+esc(meta.sub)+'</small><strong>'+esc(meta.name)+'</strong><em>'+count+' piece'+(count===1?'':'s')+'</em></div>'
+        + '</div>'
+        + '<div class="nita-premium-collection-footer"><span>Explore edit</span><b>→</b></div>'
+        + '</a>';
+    }).join('');
+  };
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){if(document.getElementById('nitaCollectionsGrid')) window.nitaRenderCollectionsPage();},250);});
+  window.addEventListener('load',function(){setTimeout(function(){if(document.getElementById('nitaCollectionsGrid')) window.nitaRenderCollectionsPage();},600);});
+})();
+/* === END NITA STYLE PREMIUM COLLECTION PREVIEWS + MOBILE HEADER ALIGN FIX === */

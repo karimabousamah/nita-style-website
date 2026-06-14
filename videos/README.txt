@@ -1,1 +1,0 @@
-Explore Collections video is currently loaded from the Google Drive direct link in index.html. For best performance, download the MP4 and place it here as explore-bg.mp4, then update the video source to assets/videos/explore-bg.mp4.
