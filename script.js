@@ -9264,3 +9264,87 @@ placeOrder=async function(){
   window.addEventListener('load',()=>{setTimeout(ensureColorwayAdminUI,500);setTimeout(smoothHomeRows,700);});
 })();
 /* === END NITA STYLE COLORWAY WORKFLOW + SMOOTH MARQUEE FINAL 20260614-1815 === */
+
+/* === NITA STYLE COLORWAYS VISIBLE IN ADMIN FORM FIX 20260614-2045 ===
+   Makes the Available colorways section appear reliably in Add Product, even after admin page rerenders. */
+(function(){
+  const COLORS = window.NITA_COLOR_OPTIONS || ['Black','White','Ivory','Cream','Beige','Taupe','Grey','Silver','Gold','Rose Gold','Bronze','Brown','Cognac','Camel','Navy','Dark Blue','Blue','Denim Blue','Cyan','Red','Burgundy','Pink','Green','Olive','Khaki','Yellow','Orange','Purple','Print / Pattern','Multi-color'];
+  function esc(v){return String(v||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+  function swatch(c){
+    const map={'Black':'#111','White':'#fff','Ivory':'#f8f4e8','Cream':'#f2ead7','Beige':'#d6c1a6','Taupe':'#9b8b7a','Grey':'#777','Silver':'#c9c9c9','Gold':'#d4af37','Rose Gold':'#b76e79','Bronze':'#8c6239','Brown':'#6b3f25','Cognac':'#9a5a25','Camel':'#c19a6b','Navy':'#111a3a','Dark Blue':'#0c2250','Blue':'#2f6fbd','Denim Blue':'#496f9e','Cyan':'#00bcd4','Red':'#e00022','Burgundy':'#6d001a','Pink':'#f2a0b9','Green':'#168a52','Olive':'#6b7d33','Khaki':'#b6aa7c','Yellow':'#f0d332','Orange':'#f47b20','Purple':'#5a3b82','Print / Pattern':'linear-gradient(45deg,#111 25%,#fff 25%,#fff 50%,#111 50%,#111 75%,#fff 75%)','Multi-color':'linear-gradient(90deg,#e00,#fc0,#0a6,#06c,#70c)'};
+    return '<span class="nita-swatch" style="background:'+esc(map[c]||'#ddd')+'"></span>';
+  }
+  function selectedColors(){
+    return Array.from(document.querySelectorAll('.nita-colorway-pill.on')).map(b=>b.dataset.color).filter(Boolean);
+  }
+  function normaliseFileName(v){
+    v=String(v||'').trim(); if(!v) return '';
+    if(/^https?:\/\//i.test(v) || v.startsWith('/')) return v;
+    if(v.startsWith('assets/products/')) return '/' + v;
+    return '/assets/products/' + v.replace(/^\/+/, '');
+  }
+  function renderPanels(){
+    const box=document.getElementById('nitaColorwayPhotoPanels'); if(!box) return;
+    const colors=selectedColors();
+    box.innerHTML = colors.map(c=>`<div class="nita-colorway-photo-panel" data-color="${esc(c)}">
+      <div class="nita-colorway-panel-head">${swatch(c)}<b>${esc(c)} photos</b></div>
+      <p class="field-help">Write photo file names for ${esc(c)}, one per line. Example: ${esc(c.toLowerCase().replace(/\s+/g,'-'))}-1.jpg</p>
+      <textarea class="field nita-colorway-paths" data-color="${esc(c)}" rows="3" placeholder="${esc(c.toLowerCase().replace(/\s+/g,'-'))}-1.jpg\n${esc(c.toLowerCase().replace(/\s+/g,'-'))}-2.jpg"></textarea>
+      <button type="button" class="btn light nita-colorway-preview-btn">PREVIEW ${esc(c)} PHOTOS</button>
+      <div class="nita-colorway-preview"></div>
+    </div>`).join('');
+  }
+  function html(){
+    return `<div class="full nita-colorway-admin-box">
+      <label>Available colorways</label>
+      <p class="field-help">Choose one or multiple colorways for this product. If you choose more than one, photo boxes appear for each color.</p>
+      <div class="nita-colorway-pill-grid">${COLORS.map((c,i)=>`<button type="button" class="nita-colorway-pill ${i===0?'on':''}" data-color="${esc(c)}">${swatch(c)}<span>${esc(c)}</span></button>`).join('')}</div>
+      <div id="nitaColorwayPhotoPanels" class="nita-colorway-photo-panels"></div>
+    </div>`;
+  }
+  function ensureVisibleColorways(){
+    const form=document.querySelector('.admin-add-product-form');
+    if(!form || form.querySelector('.nita-colorway-admin-box')) return;
+    const assetBox=document.querySelector('.nita-asset-photo-box') || Array.from(form.children).find(el=>String(el.textContent||'').toLowerCase().includes('original image file names'));
+    if(assetBox) assetBox.insertAdjacentHTML('afterend', html());
+    else {
+      const firstFull=form.querySelector('.full');
+      if(firstFull) firstFull.insertAdjacentHTML('afterend', html()); else form.insertAdjacentHTML('afterbegin', html());
+    }
+    renderPanels();
+  }
+  window.nitaEnsureVisibleColorways = ensureVisibleColorways;
+  window.nitaGetAdminColorways = function(){
+    const selected=selectedColors();
+    return selected.map(c=>{
+      const panel=document.querySelector('.nita-colorway-photo-panel[data-color="'+(window.CSS&&CSS.escape?CSS.escape(c):c.replace(/"/g,'\\"'))+'"]');
+      const text=panel?.querySelector('.nita-colorway-paths')?.value || '';
+      const photos=text.split(/\n+/).map(normaliseFileName).filter(Boolean);
+      return { color:c, photos };
+    }).filter(cw=>cw.color);
+  };
+  document.addEventListener('click',function(e){
+    const pill=e.target.closest && e.target.closest('.nita-colorway-pill');
+    if(pill){
+      pill.classList.toggle('on');
+      if(!document.querySelector('.nita-colorway-pill.on')) pill.classList.add('on');
+      renderPanels();
+      return;
+    }
+    const prevBtn=e.target.closest && e.target.closest('.nita-colorway-preview-btn');
+    if(prevBtn){
+      const panel=prevBtn.closest('.nita-colorway-photo-panel');
+      const preview=panel?.querySelector('.nita-colorway-preview');
+      const files=(panel?.querySelector('.nita-colorway-paths')?.value||'').split(/\n+/).map(normaliseFileName).filter(Boolean);
+      if(preview){ preview.innerHTML = files.length ? files.map(src=>`<img src="${esc(src)}" alt="Color preview" onerror="this.closest('.nita-colorway-preview').insertAdjacentHTML('beforeend','<p class=&quot;field-error&quot;>Photo not found: ${esc(src)}</p>'); this.remove();">`).join('') : '<p class="muted">No file names written yet.</p>'; }
+    }
+  });
+  const oldShow=window.showAdminSection;
+  if(typeof oldShow==='function') window.showAdminSection=function(){ const r=oldShow.apply(this,arguments); setTimeout(ensureVisibleColorways,60); setTimeout(ensureVisibleColorways,350); return r; };
+  const oldRender=window.renderAdmin;
+  if(typeof oldRender==='function') window.renderAdmin=async function(){ const r=await oldRender.apply(this,arguments); setTimeout(ensureVisibleColorways,80); setTimeout(ensureVisibleColorways,400); return r; };
+  document.addEventListener('DOMContentLoaded',()=>{ setTimeout(ensureVisibleColorways,250); setTimeout(ensureVisibleColorways,900); });
+  window.addEventListener('load',()=>{ setTimeout(ensureVisibleColorways,300); setTimeout(ensureVisibleColorways,1000); });
+  try{ new MutationObserver(()=>ensureVisibleColorways()).observe(document.documentElement,{childList:true,subtree:true}); }catch(e){}
+})();
+/* === END NITA STYLE COLORWAYS VISIBLE IN ADMIN FORM FIX === */
