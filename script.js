@@ -9231,7 +9231,7 @@ placeOrder=async function(){
     window.nitaCurrentProductForDetail=p; window.nitaSelectedColorway=(colorways(p)[0]||{}).color; if(oldProductPage) oldProductPage();
     const info=document.querySelector('.product-info,.nita-premium-product-info'); if(info && colorways(p).length){
       const existing=info.querySelector('.nita-detail-colorways'); if(existing) existing.remove();
-      const html='<div class="nita-detail-colorways"><p>Colour</p><div>'+colorways(p).map((cw,i)=>'<button type="button" class="nita-detail-color-btn '+(i===0?'active':'')+'" data-color="'+esc(cw.color)+'" onclick="nitaUseSingleColorway(\''+safe(cw.color)+'\')">'+swatch(cw.color)+'<span>'+esc(cw.color)+'</span></button>').join('')+'</div></div>';
+      const html='<div class="nita-detail-colorways"><p>Colour</p><div>'+colorways(p).map((cw,i)=>'<button type="button" aria-label="'+esc(cw.color)+'" title="'+esc(cw.color)+'" class="nita-detail-color-btn '+(i===0?'active':'')+'" data-color="'+esc(cw.color)+'" onclick="nitaUseSingleColorway(\''+safe(cw.color)+'\')">'+swatch(cw.color)+'</button>').join('')+'</div></div>';
       const sizeBlock=info.querySelector('.sizes,.product-size-list'); if(sizeBlock) sizeBlock.insertAdjacentHTML('beforebegin',html); else info.insertAdjacentHTML('beforeend',html);
     }
     setTimeout(()=>window.nitaUseSingleColorway(window.nitaSelectedColorway),30);
@@ -9348,3 +9348,28 @@ placeOrder=async function(){
   try{ new MutationObserver(()=>ensureVisibleColorways()).observe(document.documentElement,{childList:true,subtree:true}); }catch(e){}
 })();
 /* === END NITA STYLE COLORWAYS VISIBLE IN ADMIN FORM FIX === */
+
+
+/* === NITA COLORWAY POLISH FIX 20260614-2105 ===
+   Keep admin buttons readable, show clear swatches, and display product-page color choices as swatches only. */
+(function(){
+  function cleanDetailColorButtons(){
+    document.querySelectorAll('.nita-detail-color-btn').forEach(function(btn){
+      const color = btn.getAttribute('data-color') || btn.getAttribute('title') || 'Colour';
+      btn.setAttribute('aria-label', color);
+      btn.setAttribute('title', color);
+      btn.querySelectorAll('span:not(.nita-color-swatch):not(.nita-swatch)').forEach(function(label){ label.remove(); });
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(cleanDetailColorButtons, 300); });
+  document.addEventListener('click', function(){ setTimeout(cleanDetailColorButtons, 80); }, true);
+  const oldUse = window.nitaUseSingleColorway;
+  if(typeof oldUse === 'function'){
+    window.nitaUseSingleColorway = function(){
+      const r = oldUse.apply(this, arguments);
+      setTimeout(cleanDetailColorButtons, 20);
+      return r;
+    };
+  }
+})();
+/* === END NITA COLORWAY POLISH FIX 20260614-2105 === */
