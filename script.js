@@ -9504,3 +9504,316 @@ placeOrder=async function(){
   }, true);
 })();
 /* === END NITA FINAL: COLORWAY PHOTO INDEX + ADMIN PREVIEW NO-CACHE === */
+
+/* === NITA FINAL STABILITY: ADMIN PHOTO ORDER + MOBILE FILTER SELECT CLEAN 20260614-2148 === */
+(function(){
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function normalizeAsset(v){
+    v=String(v||'').trim();
+    if(!v) return '';
+    if(/^data:image\//i.test(v) || /^https?:\/\//i.test(v) || v.startsWith('/')) return v;
+    if(/^assets\//i.test(v)) return '/' + v.replace(/^\/+/, '');
+    return '/assets/products/' + v.replace(/^\/+/, '');
+  }
+  function cleanLines(v){return String(v||'').split(/\n|,/).map(normalizeAsset).filter(Boolean)}
+  function stripAsset(path){
+    path=String(path||'').trim();
+    return path.replace(/^\/assets\/products\//,'').replace(/^assets\/products\//,'');
+  }
+  function unique(arr){var out=[],seen={};(arr||[]).forEach(function(x){x=normalizeAsset(x);if(x&&!seen[x]){seen[x]=1;out.push(x)}});return out;}
+  function cacheBust(src,i){
+    if(!src || /^data:image\//i.test(src)) return src;
+    var base=src.replace(/([?&])(nitaPreview|v|cache)=[^&]*/g,'').replace(/[?&]$/,'');
+    return base + (base.indexOf('?')>-1?'&':'?') + 'nitaPreview=' + Date.now() + '-' + i + '-' + Math.floor(Math.random()*9999);
+  }
+  function syncTextarea(photos){
+    var ta=document.getElementById('pPhotoPaths');
+    if(ta) ta.value=(photos||[]).map(stripAsset).join('\n');
+  }
+  function renderOriginalPhotoPreview(photos){
+    var box=document.getElementById('photoPreview'); if(!box) return;
+    photos=unique(photos||window.pendingAdminPhotos||[]);
+    window.pendingAdminPhotos=photos; window.pendingPhotos=photos;
+    box.innerHTML=photos.length?photos.map(function(src,i){
+      return '<div class="admin-thumb photo-order-thumb asset-path-thumb" data-index="'+i+'">'
+        + '<img src="'+esc(cacheBust(src,i))+'" data-clean-src="'+esc(src)+'" alt="Product photo '+(i+1)+'" loading="eager" decoding="sync" onload="this.closest(\'.admin-thumb\').classList.remove(\'missing-asset\')" onerror="this.closest(\'.admin-thumb\').classList.add(\'missing-asset\')">'
+        + '<span>'+(i===0?'Photo 1':'Photo '+(i+1))+'</span>'
+        + '<small>'+esc(src)+'</small>'
+        + '<div class="photo-order-controls">'
+        + '<button type="button" aria-label="Move photo left" onclick="movePendingPhoto('+i+',-1)" '+(i===0?'disabled':'')+'>←</button>'
+        + '<button type="button" aria-label="Move photo right" onclick="movePendingPhoto('+i+',1)" '+(i===photos.length-1?'disabled':'')+'>→</button>'
+        + '<button type="button" aria-label="Remove photo" onclick="removePendingPhoto('+i+')">×</button>'
+        + '</div></div>';
+    }).join(''):'<p class="muted">No photos previewed yet.</p>';
+  }
+  window.previewAssetProductPhotos=function(){
+    var ta=document.getElementById('pPhotoPaths');
+    var photos=unique(cleanLines(ta&&ta.value));
+    if(!photos.length){try{toast&&toast('Write at least one image file name first.')}catch(e){} return;}
+    window.pendingAdminPhotos=photos; window.pendingPhotos=photos; window.pendingAdminMainIndex=0;
+    renderOriginalPhotoPreview(photos);
+  };
+  window.movePendingPhoto=function(index,direction){
+    var photos=unique(window.pendingAdminPhotos&&window.pendingAdminPhotos.length?window.pendingAdminPhotos:cleanLines(document.getElementById('pPhotoPaths')&&document.getElementById('pPhotoPaths').value));
+    index=Number(index); direction=Number(direction); var next=index+direction;
+    if(next<0||next>=photos.length) return;
+    var tmp=photos[index]; photos[index]=photos[next]; photos[next]=tmp;
+    window.pendingAdminPhotos=photos; window.pendingPhotos=photos; window.pendingAdminMainIndex=0;
+    syncTextarea(photos); renderOriginalPhotoPreview(photos);
+  };
+  window.removePendingPhoto=function(index){
+    var photos=unique(window.pendingAdminPhotos&&window.pendingAdminPhotos.length?window.pendingAdminPhotos:cleanLines(document.getElementById('pPhotoPaths')&&document.getElementById('pPhotoPaths').value));
+    photos.splice(Number(index),1);
+    window.pendingAdminPhotos=photos; window.pendingPhotos=photos; window.pendingAdminMainIndex=0;
+    syncTextarea(photos); renderOriginalPhotoPreview(photos);
+  };
+  document.addEventListener('change',function(e){
+    if(e.target && e.target.id==='pPhotoPaths'){
+      window.pendingAdminPhotos=unique(cleanLines(e.target.value)); window.pendingPhotos=window.pendingAdminPhotos;
+    }
+  },true);
+})();
+/* === END NITA FINAL STABILITY: ADMIN PHOTO ORDER + MOBILE FILTER SELECT CLEAN === */
+
+/* === NITA FINAL CLEAN: ROCK-SOLID ADMIN PRODUCT PHOTO PREVIEW / ORDER 20260614-2355 === */
+(function(){
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function normalize(v){
+    v=String(v||'').trim();
+    if(!v) return '';
+    if(/^data:image\//i.test(v)||/^https?:\/\//i.test(v)||v.charAt(0)==='/') return v;
+    if(/^assets\//i.test(v)) return '/' + v.replace(/^\/+/, '');
+    return '/assets/products/' + v.replace(/^\/+/, '');
+  }
+  function strip(v){return String(v||'').trim().replace(/^\/assets\/products\//i,'').replace(/^assets\/products\//i,'')}
+  function fromText(){
+    var ta=document.getElementById('pPhotoPaths');
+    return String(ta&&ta.value||'').split(/\n|,/).map(normalize).filter(Boolean);
+  }
+  function uniqueKeepOrder(arr){
+    var out=[],seen={};
+    (arr||[]).forEach(function(x){x=normalize(x); if(x&&!seen[x]){seen[x]=1;out.push(x)}});
+    return out;
+  }
+  function writeText(arr){
+    var ta=document.getElementById('pPhotoPaths');
+    if(ta) ta.value=(arr||[]).map(strip).join('\n');
+  }
+  function bust(src,i){
+    if(!src || /^data:image\//i.test(src)) return src;
+    var clean=src.replace(/([?&])(nitaPreview|nitaAdminPreview|v|cache|t)=[^&]*/g,'').replace(/[?&]$/,'');
+    return clean + (clean.indexOf('?')>-1?'&':'?') + 'nitaAdminPreview=' + Date.now() + '-' + i + '-' + Math.random().toString(16).slice(2);
+  }
+  function render(arr){
+    arr=uniqueKeepOrder(arr&&arr.length?arr:fromText());
+    window.pendingAdminPhotos=arr;
+    window.pendingPhotos=arr;
+    window.pendingAdminMainIndex=0;
+    var box=document.getElementById('photoPreview');
+    if(!box) return;
+    if(!arr.length){box.innerHTML='<p class="muted">No photos previewed yet.</p>';return;}
+    box.innerHTML=arr.map(function(src,i){return ''+
+      '<div class="admin-thumb photo-order-thumb asset-path-thumb" data-index="'+i+'">'+
+        '<img src="'+esc(bust(src,i))+'" data-clean-src="'+esc(src)+'" alt="Product photo '+(i+1)+'" loading="eager" decoding="async" onload="this.closest(\'.admin-thumb\').classList.remove(\'missing-asset\')" onerror="this.closest(\'.admin-thumb\').classList.add(\'missing-asset\')">'+
+        '<span>'+(i===0?'Photo 1':'Photo '+(i+1))+'</span>'+ 
+        '<small>'+esc(src)+'</small>'+ 
+        '<div class="photo-order-controls">'+
+          '<button type="button" data-nita-photo-move="left" data-index="'+i+'" '+(i===0?'disabled':'')+'>←</button>'+ 
+          '<button type="button" data-nita-photo-move="right" data-index="'+i+'" '+(i===arr.length-1?'disabled':'')+'>→</button>'+ 
+          '<button type="button" data-nita-photo-remove="1" data-index="'+i+'">×</button>'+ 
+        '</div>'+ 
+      '</div>';}).join('');
+  }
+  window.nitaRenderAdminPhotoPreview=render;
+  window.previewAssetProductPhotos=function(){
+    var arr=uniqueKeepOrder(fromText());
+    if(!arr.length){try{toast&&toast('Write at least one image file name first.')}catch(e){}return;}
+    writeText(arr);
+    render(arr);
+  };
+  window.movePendingPhoto=function(index,direction){
+    var arr=uniqueKeepOrder((window.pendingAdminPhotos&&window.pendingAdminPhotos.length)?window.pendingAdminPhotos:fromText());
+    index=Number(index); direction=Number(direction); var next=index+direction;
+    if(!arr.length||next<0||next>=arr.length) return;
+    var tmp=arr[index]; arr[index]=arr[next]; arr[next]=tmp;
+    writeText(arr); render(arr);
+  };
+  window.removePendingPhoto=function(index){
+    var arr=uniqueKeepOrder((window.pendingAdminPhotos&&window.pendingAdminPhotos.length)?window.pendingAdminPhotos:fromText());
+    index=Number(index); if(index<0||index>=arr.length) return;
+    arr.splice(index,1); writeText(arr); render(arr);
+  };
+  document.addEventListener('click',function(e){
+    var left=e.target.closest && e.target.closest('[data-nita-photo-move="left"]');
+    var right=e.target.closest && e.target.closest('[data-nita-photo-move="right"]');
+    var rem=e.target.closest && e.target.closest('[data-nita-photo-remove]');
+    if(left||right||rem){
+      e.preventDefault(); e.stopPropagation();
+      var btn=left||right||rem; var i=Number(btn.getAttribute('data-index'));
+      if(rem) window.removePendingPhoto(i); else window.movePendingPhoto(i,left?-1:1);
+    }
+  },true);
+  document.addEventListener('input',function(e){
+    if(e.target&&e.target.id==='pPhotoPaths'){
+      window.pendingAdminPhotos=uniqueKeepOrder(fromText());
+      window.pendingPhotos=window.pendingAdminPhotos;
+    }
+  },true);
+})();
+/* === END NITA FINAL CLEAN: ROCK-SOLID ADMIN PRODUCT PHOTO PREVIEW / ORDER === */
+
+/* === NITA FINAL PRO: 100% ADMIN PHOTO WORKFLOW + CLEAR COLORWAY PHOTO PANELS 20260615-0015 === */
+(function(){
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function normalise(v){
+    v=String(v||'').trim();
+    if(!v) return '';
+    if(/^data:image\//i.test(v) || /^https?:\/\//i.test(v) || v.charAt(0)==='/') return v;
+    if(/^assets\//i.test(v)) return '/' + v.replace(/^\/+/, '');
+    return '/assets/products/' + v.replace(/^\/+/, '');
+  }
+  function cleanFileName(v){return String(v||'').trim().replace(/^\/assets\/products\//i,'').replace(/^assets\/products\//i,'')}
+  function readLines(textarea){
+    return String(textarea && textarea.value || '').split(/\n|,/).map(normalise).filter(Boolean);
+  }
+  function uniqueKeepOrder(arr){
+    var out=[], seen={};
+    (arr||[]).forEach(function(x){x=normalise(x); if(x && !seen[x]){seen[x]=1; out.push(x);}});
+    return out;
+  }
+  function writeLines(textarea, arr){
+    if(textarea) textarea.value = (arr||[]).map(cleanFileName).join('\n');
+  }
+  function freshSrc(src,i){
+    if(!src || /^data:image\//i.test(src)) return src;
+    var clean = src.replace(/([?&])(nitaPreview|nitaAdminPreview|v|cache|t)=[^&]*/g,'').replace(/[?&]$/,'');
+    return clean + (clean.indexOf('?')>-1?'&':'?') + 'nitaAdminPreview=' + Date.now() + '-' + i + '-' + Math.random().toString(16).slice(2);
+  }
+  function renderCards(target, arr, opts){
+    if(!target) return;
+    opts = opts || {};
+    arr = uniqueKeepOrder(arr);
+    if(!arr.length){ target.innerHTML = '<p class="muted">No photos previewed yet.</p>'; return; }
+    target.innerHTML = arr.map(function(src,i){
+      var label = opts.color ? (opts.color + ' photo ' + (i+1)) : ('Photo ' + (i+1));
+      return '<div class="admin-thumb photo-order-thumb asset-path-thumb nita-photo-manager-card" data-index="'+i+'">'
+        + '<img src="'+esc(freshSrc(src,i))+'" data-clean-src="'+esc(src)+'" alt="'+esc(label)+'" loading="eager" decoding="async" onload="this.closest(\'.admin-thumb\').classList.remove(\'missing-asset\')" onerror="this.closest(\'.admin-thumb\').classList.add(\'missing-asset\')">'
+        + '<span>'+(i===0?(opts.color?opts.color+' main photo':'Photo 1'):(opts.color?opts.color+' photo '+(i+1):'Photo '+(i+1)))+'</span>'
+        + '<small>'+esc(src)+'</small>'
+        + '<div class="photo-order-controls">'
+        + '<button type="button" data-nita-photo-left="1" data-index="'+i+'" '+(i===0?'disabled':'')+'>←</button>'
+        + '<button type="button" data-nita-photo-right="1" data-index="'+i+'" '+(i===arr.length-1?'disabled':'')+'>→</button>'
+        + '<button type="button" data-nita-photo-delete="1" data-index="'+i+'">×</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+  function renderMain(){
+    var ta=document.getElementById('pPhotoPaths');
+    var box=document.getElementById('photoPreview');
+    var arr=uniqueKeepOrder(window.pendingAdminPhotos && window.pendingAdminPhotos.length ? window.pendingAdminPhotos : readLines(ta));
+    window.pendingAdminPhotos = arr;
+    window.pendingPhotos = arr;
+    window.pendingAdminMainIndex = 0;
+    writeLines(ta, arr);
+    renderCards(box, arr, {});
+  }
+  window.previewAssetProductPhotos = function(){
+    var ta=document.getElementById('pPhotoPaths');
+    var arr=uniqueKeepOrder(readLines(ta));
+    if(!arr.length){ try{toast&&toast('Write at least one image file name first.')}catch(e){} return; }
+    window.pendingAdminPhotos = arr;
+    window.pendingPhotos = arr;
+    window.pendingAdminMainIndex = 0;
+    writeLines(ta, arr);
+    renderCards(document.getElementById('photoPreview'), arr, {});
+  };
+  window.movePendingPhoto = function(index, direction){
+    var ta=document.getElementById('pPhotoPaths');
+    var arr=uniqueKeepOrder(window.pendingAdminPhotos && window.pendingAdminPhotos.length ? window.pendingAdminPhotos : readLines(ta));
+    index=Number(index); direction=Number(direction); var next=index+direction;
+    if(next<0 || next>=arr.length) return;
+    var tmp=arr[index]; arr[index]=arr[next]; arr[next]=tmp;
+    window.pendingAdminPhotos=arr; window.pendingPhotos=arr; window.pendingAdminMainIndex=0;
+    writeLines(ta, arr); renderCards(document.getElementById('photoPreview'), arr, {});
+  };
+  window.removePendingPhoto = function(index){
+    var ta=document.getElementById('pPhotoPaths');
+    var arr=uniqueKeepOrder(window.pendingAdminPhotos && window.pendingAdminPhotos.length ? window.pendingAdminPhotos : readLines(ta));
+    index=Number(index); if(index<0 || index>=arr.length) return;
+    arr.splice(index,1); window.pendingAdminPhotos=arr; window.pendingPhotos=arr; window.pendingAdminMainIndex=0;
+    writeLines(ta, arr); renderCards(document.getElementById('photoPreview'), arr, {});
+  };
+  function panelParts(panel){
+    return {
+      panel: panel,
+      color: panel ? (panel.getAttribute('data-color') || 'Color') : 'Color',
+      ta: panel && panel.querySelector('.nita-colorway-paths'),
+      box: panel && panel.querySelector('.nita-colorway-preview')
+    };
+  }
+  function renderColorPanel(panel){
+    var p=panelParts(panel); if(!p.panel || !p.ta || !p.box) return;
+    var arr=uniqueKeepOrder(readLines(p.ta));
+    p.panel._nitaColorwayPhotos = arr;
+    writeLines(p.ta, arr);
+    renderCards(p.box, arr, {color:p.color});
+  }
+  function moveColorPanel(panel, index, direction){
+    var p=panelParts(panel); if(!p.panel || !p.ta || !p.box) return;
+    var arr=uniqueKeepOrder(p.panel._nitaColorwayPhotos && p.panel._nitaColorwayPhotos.length ? p.panel._nitaColorwayPhotos : readLines(p.ta));
+    index=Number(index); direction=Number(direction); var next=index+direction;
+    if(next<0 || next>=arr.length) return;
+    var tmp=arr[index]; arr[index]=arr[next]; arr[next]=tmp;
+    p.panel._nitaColorwayPhotos = arr; writeLines(p.ta, arr); renderCards(p.box, arr, {color:p.color});
+  }
+  function removeColorPanel(panel, index){
+    var p=panelParts(panel); if(!p.panel || !p.ta || !p.box) return;
+    var arr=uniqueKeepOrder(p.panel._nitaColorwayPhotos && p.panel._nitaColorwayPhotos.length ? p.panel._nitaColorwayPhotos : readLines(p.ta));
+    index=Number(index); if(index<0 || index>=arr.length) return;
+    arr.splice(index,1); p.panel._nitaColorwayPhotos = arr; writeLines(p.ta, arr); renderCards(p.box, arr, {color:p.color});
+  }
+  document.addEventListener('click', function(e){
+    var previewBtn = e.target.closest && e.target.closest('.nita-colorway-preview-btn');
+    if(previewBtn){ e.preventDefault(); renderColorPanel(previewBtn.closest('.nita-colorway-photo-panel')); return; }
+    var cardBtn = e.target.closest && e.target.closest('[data-nita-photo-left],[data-nita-photo-right],[data-nita-photo-delete]');
+    if(!cardBtn) return;
+    e.preventDefault(); e.stopPropagation();
+    var i=Number(cardBtn.getAttribute('data-index'));
+    var colorPanel = cardBtn.closest('.nita-colorway-photo-panel');
+    if(colorPanel){
+      if(cardBtn.hasAttribute('data-nita-photo-delete')) removeColorPanel(colorPanel, i);
+      else moveColorPanel(colorPanel, i, cardBtn.hasAttribute('data-nita-photo-left')?-1:1);
+      return;
+    }
+    if(cardBtn.hasAttribute('data-nita-photo-delete')) window.removePendingPhoto(i);
+    else window.movePendingPhoto(i, cardBtn.hasAttribute('data-nita-photo-left')?-1:1);
+  }, true);
+  document.addEventListener('input', function(e){
+    if(e.target && e.target.id==='pPhotoPaths'){
+      window.pendingAdminPhotos = uniqueKeepOrder(readLines(e.target));
+      window.pendingPhotos = window.pendingAdminPhotos;
+    }
+    if(e.target && e.target.classList && e.target.classList.contains('nita-colorway-paths')){
+      var panel=e.target.closest('.nita-colorway-photo-panel');
+      if(panel) panel._nitaColorwayPhotos = uniqueKeepOrder(readLines(e.target));
+    }
+  }, true);
+  // Make colorway photo panels clearer after they are generated.
+  function polishColorPanels(){
+    document.querySelectorAll('.nita-colorway-photo-panel').forEach(function(panel){
+      if(panel.dataset.nitaClearPolished==='1') return;
+      panel.dataset.nitaClearPolished='1';
+      var color=panel.getAttribute('data-color') || 'Color';
+      var head=panel.querySelector('.nita-colorway-panel-head');
+      if(head){
+        head.insertAdjacentHTML('afterend','<p class="nita-colorway-clear-note">Add only the photos for the <b>'+esc(color)+'</b> version here. The first photo is the main photo for this color. Use the arrows to reorder.</p>');
+      }
+      var btn=panel.querySelector('.nita-colorway-preview-btn');
+      if(btn) btn.textContent='PREVIEW / ORDER '+String(color).toUpperCase()+' PHOTOS';
+    });
+  }
+  new MutationObserver(polishColorPanels).observe(document.documentElement,{childList:true,subtree:true});
+  document.addEventListener('DOMContentLoaded', function(){setTimeout(polishColorPanels,250);});
+})();
+/* === END NITA FINAL PRO ADMIN PHOTO WORKFLOW === */

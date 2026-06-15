@@ -4185,3 +4185,99 @@ body:not(.nita-ready){background:#fff!important;}
   transform:none !important;
 }
 /* === END NITA COLORWAY POLISH FIX 20260614-2105 === */
+
+/* === NITA FINAL STABILITY: MOBILE FILTER CLEAN + ADMIN PHOTO ORDER 20260614-2148 === */
+.photo-order-thumb img{display:block!important;width:100%!important;height:86px!important;object-fit:cover!important;background:#f6f6f6!important;}
+.photo-order-thumb.missing-asset img{opacity:.35!important;}
+.photo-order-thumb.missing-asset::after{content:'Photo not found';display:block;color:#b00020;font-size:9px;font-weight:900;text-transform:uppercase;margin-top:4px;}
+.photo-order-controls{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:4px!important;margin-top:6px!important;}
+.photo-order-controls button{height:28px!important;border:1px solid #111!important;background:#fff!important;color:#111!important;display:flex!important;align-items:center!important;justify-content:center!important;font-weight:900!important;line-height:1!important;padding:0!important;}
+.photo-order-controls button:hover:not(:disabled),.photo-order-controls button:focus-visible:not(:disabled){background:#111!important;color:#fff!important;}
+.photo-order-controls button:disabled{opacity:.25!important;cursor:not-allowed!important;}
+@media(max-width:650px){
+  .nita-filter-panel{overflow:visible!important;}
+  .nita-filter-panel .field,
+  .nita-filter-panel select.field,
+  .nita-filter-panel input.field{width:100%!important;min-width:0!important;box-sizing:border-box!important;color:#111!important;-webkit-text-fill-color:#111!important;text-indent:0!important;overflow:visible!important;text-overflow:clip!important;white-space:nowrap!important;font-size:15px!important;line-height:44px!important;height:48px!important;padding:0 42px 0 14px!important;border:1px solid #e7e7e7!important;border-radius:999px!important;background-color:#fff!important;}
+  .nita-filter-panel select.field{appearance:auto!important;-webkit-appearance:menulist!important;}
+  .nita-filter-panel label{display:block!important;margin-bottom:7px!important;color:#777!important;font-size:11px!important;font-weight:900!important;letter-spacing:.08em!important;}
+  .nita-filter-panel.open{gap:18px!important;animation:nitaFilterDrop .2s ease both!important;}
+  .nita-clear-filters{border-radius:0!important;margin-top:8px!important;}
+}
+/* === END NITA FINAL STABILITY: MOBILE FILTER CLEAN + ADMIN PHOTO ORDER === */
+
+/* === NITA FINAL CLEAN: MOBILE FILTER TEXT REMOVAL + ADMIN PHOTO STABILITY 20260614-2355 === */
+@media (max-width:650px){
+  .nita-filter-panel select.field,
+  .nita-filter-panel select.field:focus,
+  .nita-filter-panel select.field:active{
+    color:transparent!important;
+    -webkit-text-fill-color:transparent!important;
+    text-shadow:none!important;
+    text-indent:-9999px!important;
+    background-color:#fff!important;
+    border:1px solid #e5e5e5!important;
+    border-radius:999px!important;
+    height:48px!important;
+    line-height:48px!important;
+    padding-left:0!important;
+    overflow:hidden!important;
+  }
+  .nita-filter-panel select.field option{
+    color:#111!important;
+    -webkit-text-fill-color:#111!important;
+    text-indent:0!important;
+  }
+  .nita-filter-panel input.field{
+    color:#111!important;
+    -webkit-text-fill-color:#111!important;
+    text-indent:0!important;
+  }
+}
+.admin-thumb.photo-order-thumb img{display:block!important;width:100%!important;height:96px!important;object-fit:cover!important;background:#f6f6f6!important;}
+.admin-thumb.photo-order-thumb.missing-asset img{opacity:.18!important;}
+.photo-order-controls button:disabled{opacity:.3!important;cursor:not-allowed!important;}
+/* === END NITA FINAL CLEAN === */
+
+/* === NITA FINAL PRO: MOBILE FILTER TEXT REMOVED + CLEAR ADMIN PHOTO WORKFLOW 20260615-0015 === */
+@media(max-width:650px){
+  .nita-filter-panel select.field,
+  .nita-filter-panel select.field:focus,
+  .nita-filter-panel select.field:active{
+    font-size:0!important;
+    color:transparent!important;
+    -webkit-text-fill-color:transparent!important;
+    text-shadow:none!important;
+    text-indent:-9999px!important;
+    line-height:0!important;
+    background:#fff!important;
+    border:1px solid #e7e7e7!important;
+    border-radius:999px!important;
+    height:48px!important;
+    padding:0 42px 0 0!important;
+    overflow:hidden!important;
+  }
+  .nita-filter-panel select.field option{
+    font-size:15px!important;
+    color:#111!important;
+    -webkit-text-fill-color:#111!important;
+    text-indent:0!important;
+  }
+}
+.nita-photo-manager-card{width:112px!important;min-width:112px!important;border:1px solid #111!important;background:#fff!important;padding:8px!important;display:flex!important;flex-direction:column!important;gap:6px!important;align-items:stretch!important;justify-content:flex-start!important;}
+.nita-photo-manager-card img{width:100%!important;height:104px!important;object-fit:cover!important;background:#f7f7f7!important;display:block!important;}
+.nita-photo-manager-card span{display:block!important;text-align:center!important;font-size:10px!important;font-weight:900!important;text-transform:uppercase!important;line-height:1.15!important;color:#111!important;}
+.nita-photo-manager-card small{display:block!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;text-align:center!important;font-size:8px!important;color:#777!important;text-transform:none!important;}
+.nita-photo-manager-card.missing-asset{border-color:#b00020!important;background:#fffafa!important;}
+.nita-photo-manager-card.missing-asset:after{content:'Photo not found';display:block!important;text-align:center!important;color:#b00020!important;font-size:9px!important;font-weight:900!important;text-transform:uppercase!important;}
+.nita-colorway-photo-panel{border:1px solid #e6e6e6!important;background:#fff!important;padding:18px!important;margin-top:14px!important;}
+.nita-colorway-panel-head{display:flex!important;align-items:center!important;gap:10px!important;margin-bottom:6px!important;}
+.nita-colorway-clear-note{font-size:12px!important;line-height:1.45!important;color:#666!important;margin:0 0 12px!important;}
+.nita-colorway-photo-panel textarea.field{min-height:98px!important;font-family:ui-monospace,SFMono-Regular,Menlo,monospace!important;font-size:12px!important;line-height:1.55!important;}
+.nita-colorway-preview{display:flex!important;flex-wrap:wrap!important;gap:10px!important;margin-top:12px!important;align-items:flex-start!important;}
+.nita-colorway-preview .nita-photo-manager-card{width:118px!important;min-width:118px!important;}
+.photo-order-controls{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:4px!important;margin-top:4px!important;}
+.photo-order-controls button{height:28px!important;border:1px solid #111!important;background:#fff!important;color:#111!important;display:flex!important;align-items:center!important;justify-content:center!important;font-weight:900!important;padding:0!important;line-height:1!important;cursor:pointer!important;}
+.photo-order-controls button:hover:not(:disabled),.photo-order-controls button:focus-visible:not(:disabled){background:#111!important;color:#fff!important;}
+.photo-order-controls button:disabled{opacity:.25!important;cursor:not-allowed!important;background:#fff!important;color:#111!important;}
+/* === END NITA FINAL PRO === */
