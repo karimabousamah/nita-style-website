@@ -4392,3 +4392,72 @@ body:not(.nita-ready){background:#fff!important;}
 .nita-clear-filters-pro:hover{background:#111!important;color:#fff!important;}
 @media(max-width:1000px){.nita-filter-range-final .nita-filter-panel-pro{grid-template-columns:repeat(2,minmax(0,1fr))!important}.nita-price-range-field,.nita-clear-filters-pro{grid-column:1/-1!important}.nita-clear-filters-pro{width:100%!important}}
 @media(max-width:650px){#nitaFilterShell.nita-filter-range-final{margin:18px 0 28px!important}.nita-filter-range-final .nita-filter-bar-pro{padding-bottom:14px!important}.nita-filter-range-final .nita-filter-panel-pro{grid-template-columns:1fr!important;gap:20px!important;padding:20px 0 24px!important}.nita-filter-range-final .nita-filter-field select{height:44px!important;font-size:15px!important}.nita-price-range-head{margin-bottom:14px!important}.nita-price-slider{height:40px!important}.nita-price-slider input[type=range]::-webkit-slider-thumb{width:18px!important;height:18px!important}.nita-price-slider input[type=range]::-moz-range-thumb{width:18px!important;height:18px!important}.nita-clear-filters-pro{height:48px!important}}
+
+/* === NITA VERIFIED PATCH: FILTER RESPONSIVE CLEANUP 20260615-1205 === */
+.nita-filter-field.is-page-locked select{opacity:.65;background:#f7f7f7;cursor:not-allowed}
+.nita-filter-shell-pro{width:100%;box-sizing:border-box}
+.nita-filter-bar-pro{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.nita-filter-toggle-pro,.nita-sort-toggle-pro{min-height:42px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.nita-filter-panel-pro{width:100%;box-sizing:border-box}
+.nita-price-slider{position:relative;min-height:34px;padding:12px 0 6px}
+.nita-price-slider input[type=range]{position:absolute;left:0;right:0;top:8px;width:100%;pointer-events:none;background:transparent;appearance:none;-webkit-appearance:none}
+.nita-price-slider input[type=range]::-webkit-slider-thumb{pointer-events:auto;-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;background:#111;border:2px solid #fff;box-shadow:0 0 0 1px #111;cursor:pointer}
+.nita-price-slider input[type=range]::-moz-range-thumb{pointer-events:auto;width:16px;height:16px;border-radius:50%;background:#111;border:2px solid #fff;box-shadow:0 0 0 1px #111;cursor:pointer}
+.nita-price-track,.nita-price-fill{position:absolute;left:0;right:0;top:15px;height:2px;border-radius:99px;background:#ddd}
+.nita-price-fill{background:#111;left:0;right:0}
+@media(max-width:760px){.nita-filter-bar-pro{align-items:stretch}.nita-filter-toggle-pro,.nita-sort-wrap,.nita-sort-toggle-pro{width:100%}.nita-filter-panel-pro.open{display:grid;grid-template-columns:1fr;gap:12px}.nita-clear-filters-pro{width:100%}.nita-price-range-head{display:flex;justify-content:space-between;gap:8px;align-items:center}}
+/* === END NITA VERIFIED PATCH === */
+
+
+/* === NITA FINAL AUDIT PATCH: CROSS-PAGE CONTROLS + ADMIN PHOTO SAFETY 20260615-1315 === */
+.nita-control-clean,
+.filter-toggle,
+.sort-select,
+.shop-filter-button,
+.shop-sort-select{
+  min-height:42px;
+  border:1px solid #111 !important;
+  border-radius:999px !important;
+  background:#fff !important;
+  color:#111 !important;
+  font-size:11px !important;
+  font-weight:800 !important;
+  letter-spacing:.12em !important;
+  text-transform:uppercase !important;
+  padding:0 18px !important;
+  transition:background .18s ease,color .18s ease,border-color .18s ease,transform .18s ease;
+}
+.nita-control-clean:hover,
+.filter-toggle:hover,
+.sort-select:hover,
+.shop-filter-button:hover,
+.shop-sort-select:hover{
+  background:#111 !important;
+  color:#fff !important;
+}
+.existing-photos .admin-thumb img,
+.photo-preview .admin-thumb img{
+  display:block !important;
+  width:100%;
+  height:120px;
+  object-fit:cover;
+  background:#f7f7f7;
+}
+.admin-thumb.main,
+.admin-thumb.selected-main{
+  outline:2px solid #111;
+  outline-offset:2px;
+}
+@media(max-width:700px){
+  .nita-control-clean,
+  .filter-toggle,
+  .sort-select,
+  .shop-filter-button,
+  .shop-sort-select{min-height:44px;padding:0 16px !important;}
+  .quick-view-btn,.quick-view-button{left:50% !important;right:auto !important;transform:translateX(-50%) !important;top:auto !important;bottom:14px !important;}
+}
+
+/* === NITA STYLE EDIT LISTED PRODUCT PHOTO MANAGER 20260615 === */
+.nita-edit-photo-manager{border:1px solid #e8e2da;background:#fff;border-radius:18px;padding:18px;margin:14px 0 18px;box-shadow:0 12px 32px rgba(0,0,0,.035)}
+.nita-edit-photo-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}.nita-edit-photo-head strong{font-family:var(--serif,serif);font-size:18px;letter-spacing:.02em}.nita-edit-photo-head p{margin:4px 0 0}.nita-edit-photo-count{font-size:11px;letter-spacing:.12em;text-transform:uppercase;border:1px solid #111;border-radius:999px;padding:7px 10px;white-space:nowrap}.nita-edit-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px}.nita-edit-photo-card{border:1px solid #eee8df;border-radius:14px;background:#faf8f5;overflow:hidden;position:relative}.nita-edit-photo-card.is-main{border-color:#111;background:#fff}.nita-edit-photo-card.is-main:before{content:'MAIN';position:absolute;top:8px;left:8px;z-index:2;background:#111;color:#fff;border-radius:999px;font-size:9px;letter-spacing:.12em;padding:5px 7px}.nita-edit-photo-img{height:142px;background:#f4f0ea;display:flex;align-items:center;justify-content:center}.nita-edit-photo-img img{width:100%;height:100%;object-fit:cover;display:block}.nita-edit-empty-img,.nita-edit-no-photos{padding:26px;text-align:center;color:#8a8278;font-size:13px}.nita-edit-photo-meta{padding:10px 10px 8px;display:flex;flex-direction:column;gap:2px}.nita-edit-photo-meta span{font-size:12px;font-weight:700}.nita-edit-photo-meta small{font-size:10px;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nita-edit-photo-actions{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid #eee8df}.nita-edit-photo-actions button{border:0;border-right:1px solid #eee8df;background:#fff;height:34px;cursor:pointer;font-size:14px}.nita-edit-photo-actions button:last-child{border-right:0}.nita-edit-photo-actions button:hover:not(:disabled){background:#111;color:#fff}.nita-edit-photo-actions button:disabled{opacity:.35;cursor:not-allowed}.nita-edit-photo-actions .danger:hover{background:#7d1d1d!important;color:#fff}.nita-edit-add-row{margin-top:16px}.nita-edit-add-row label{display:block;margin-bottom:8px}.nita-edit-add-inline{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.nita-edit-add-inline .btn{height:44px;padding:0 18px}@media(max-width:700px){.nita-edit-photo-manager{padding:14px;border-radius:14px}.nita-edit-photo-head{display:block}.nita-edit-photo-count{display:inline-flex;margin-top:10px}.nita-edit-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.nita-edit-photo-img{height:128px}.nita-edit-add-inline{grid-template-columns:1fr}.nita-edit-add-inline .btn{width:100%}}
+/* === END NITA STYLE EDIT LISTED PRODUCT PHOTO MANAGER === */

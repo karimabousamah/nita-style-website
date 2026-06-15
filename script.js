@@ -9,7 +9,7 @@ function updateCartCount(){document.querySelectorAll('.cart-count').forEach(e=>e
 function header(){
  const isAdmin = ADMIN_EMAILS.includes(currentUser?.email);
  const admin = isAdmin ? '<a class="admin-link" href="admin.html">ADMIN</a>' : '';
- return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Skirts">Skirts</a><a href="shop.html?cat=T-Shirts">T-Shirts</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Bags">Bags</a><a href="shop.html?cat=Scarves">Scarves</a><a href="shop.html?cat=Overalls">Overalls</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a href="${currentUser?'account.html':'login.html'}">${currentUser?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, skirts, t-shirts, tops, pants, bags..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`
+ return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Skirts">Skirts</a><a href="shop.html?cat=T-Shirts">T-Shirts</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Bags">Bags</a><a href="shop.html?cat=Scarves">Scarves</a><a href="shop.html?cat=Overalls">Overalls</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a href="${currentUser?'account.html':'login.html'}">${currentUser?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, skirts, t-shirts, tops, pants, bags..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`
 }
 
 function siteFooter(){return `<footer class="footer site-footer"><div><img class="footer-logo-img" src="assets/logo-cropped.png" alt="Nita Style"><p class="muted">Founded by Nicole and Tania, Nita Style curates Italian-made pieces for women who value clean silhouettes, refined textures, and effortless everyday elegance.</p></div><div><h4>Shop</h4><a href="shop.html">All products</a><a href="collections.html">Collections</a><a href="cart.html">Cart</a><a href="checkout.html">Checkout</a></div><div><h4>Support</h4><a href="contact.html">Contact</a><a href="about.html">About</a><a href="checkout.html">Cash on delivery</a><a href="checkout.html">Online payment coming soon</a><a class="footer-instagram" href="https://www.instagram.com/thenitastyle/" target="_blank" rel="noopener noreferrer" aria-label="Nita Style Instagram"><img class="footer-instagram-icon" src="assets/instagram-icon.webp" alt="Instagram"><span>thenitastyle</span></a></div><div><h4>Join the style</h4><p class="muted">Receive your first-order code and new drop updates.</p><div class="footer-newsletter"><input placeholder="Email address"><button onclick="toast('Use code NITA10 for 10% off')">SIGN UP</button></div></div></footer><div class="copyright site-footer"><span>© 2026 Nita Style. All rights reserved. <span class="footer-codeviq">Developed by CODEVIQ.</span></span><span class="footer-legal-links"><a href="privacy-policy.html">Privacy Policy</a><span>·</span><a href="terms.html">Terms and Conditions</a><span>·</span><a href="shipping.html">Shipping</a></span></div>`}
@@ -47,7 +47,7 @@ function removeProduct(id){saveProducts(getProducts().filter(p=>p.id!==id));rend
 let pendingAdminPhotos=[];
 let editingPhotoBuffers={};
 const ADMIN_CATEGORIES=['Dresses','Skirts','T-Shirts','Tops','Pants','Bags','Scarves','Overalls'];
-const ADMIN_COLLECTIONS=['New Arrivals','Everyday Edit','Summer Pieces','Minimal Essentials','Accessories','Sale'];
+const ADMIN_COLLECTIONS=['New Arrivals','Everyday Edit','Summer Pieces','Minimal Essentials','Sale'];
 const ADMIN_SIZES=['XS','S','M','L','XL','One Size'];
 function renderOptions(list,current){return list.map(x=>`<option ${x===current?'selected':''}>${x}</option>`).join('')}
 function renderSizeButtons(selected=[]){return ADMIN_SIZES.map(x=>`<button type="button" class="pill ${selected.includes(x)?'on':''}" onclick="this.classList.toggle('on')">${x}</button>`).join('')}
@@ -1713,7 +1713,7 @@ placeOrder=async function(){
 
   // Make sure admin forms always have dropdown category / color / style / homepage section controls.
   window.NITA_ADMIN_CATEGORY_OPTIONS = ['Dresses','Skirts','T-Shirts','Tops','Pants','Bags','Scarves','Overalls'];
-  window.NITA_ADMIN_COLLECTION_OPTIONS = ['Everyday Edit','Minimal Essentials','Evening Pieces','Accessories','Price Drops'];
+  window.NITA_ADMIN_COLLECTION_OPTIONS = ['Everyday Edit','Minimal Essentials','Evening Pieces','Price Drops'];
   window.NITA_COLOR_OPTIONS = ['Black','White','Ivory','Cream','Beige','Taupe','Grey','Silver','Gold','Rose Gold','Bronze','Brown','Cognac','Camel','Navy','Blue','Denim Blue','Red','Burgundy','Pink','Green','Olive','Khaki','Yellow','Orange','Purple','Print / Pattern','Multi-color'];
   window.NITA_STYLE_OPTIONS = ['Clean everyday piece','Elegant evening piece','Minimal essential','Soft feminine silhouette','Relaxed boutique fit','Premium casual look','Statement piece','Light summer piece','Structured tailored style'];
 })();
@@ -1746,7 +1746,7 @@ placeOrder=async function(){
     const user = activeUser();
     const isAdmin = ADMIN_EMAILS.includes(String(user?.email||'').toLowerCase());
     const admin = isAdmin ? '<a class="admin-link" href="admin.html">ADMIN</a>' : '';
-    return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Skirts">Skirts</a><a href="shop.html?cat=T-Shirts">T-Shirts</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Bags">Bags</a><a href="shop.html?cat=Scarves">Scarves</a><a href="shop.html?cat=Overalls">Overalls</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a class="account-nav-link" href="${user?'account.html':'login.html'}">${user?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, skirts, t-shirts, tops, pants, bags..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`;
+    return `<header class="topbar"><nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links"><a href="shop.html?cat=Dresses">Dresses</a><a href="shop.html?cat=Skirts">Skirts</a><a href="shop.html?cat=T-Shirts">T-Shirts</a><a href="shop.html?cat=Tops">Tops</a><a href="shop.html?cat=Pants">Pants</a><a href="shop.html?cat=Bags">Bags</a><a href="shop.html?cat=Scarves">Scarves</a><a href="shop.html?cat=Overalls">Overalls</a></div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a></div></div></div></div><a href="about.html">ABOUT</a></nav><a class="brand" href="index.html"><img src="assets/logo-cropped.png" alt="Nita Style"></a><div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a class="account-nav-link" href="${user?'account.html':'login.html'}">${user?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div></header><aside class="search-panel" id="searchPanel"><button class="close" onclick="closeSearch()">×</button><h2>Search</h2><input class="field" id="searchInput" placeholder="Search dresses, skirts, t-shirts, tops, pants, bags..." oninput="renderSearch()"><div id="searchResults"></div></aside><aside class="cart-panel" id="cartPanel"><button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2><div id="cartItems"></div><a class="btn" href="checkout.html" style="display:block;text-align:center;margin-top:20px">CHECKOUT</a></aside>`;
   };
 
   function statusStepClass(orderStatus, step){
@@ -2037,7 +2037,7 @@ placeOrder=async function(){
       <div><label>Regular price</label><input class="field edit-price" type="number" step="0.01" value="${Number(p.price||0)}"></div>
       <div><label>Sale / price-drop price</label><input class="field edit-sale" type="number" step="0.01" value="${p.salePrice||''}" placeholder="Optional"></div>
       <div><label>Product category</label><select class="field edit-category">${opts(window.ADMIN_CATEGORIES||['Dresses','Skirts','T-Shirts','Tops','Pants','Bags','Scarves','Overalls'],p.category)}</select></div>
-      <div><label>Collection</label><select class="field edit-collection">${opts(window.ADMIN_COLLECTIONS||['Everyday Edit','Minimal Essentials','Evening Pieces','Accessories','Price Drops'],p.collection)}</select></div>
+      <div><label>Collection</label><select class="field edit-collection">${opts(window.ADMIN_COLLECTIONS||['Everyday Edit','Minimal Essentials','Evening Pieces','Price Drops'],p.collection)}</select></div>
       <div><label>Color</label><select class="field edit-color">${opts(COLORS,note.color)}</select></div>
       <div><label>Style note</label><select class="field edit-style">${opts(STYLES,note.style)}</select></div>
       <div><label>Homepage display section</label><select class="field edit-home-section">${opts(HOME,homeSection(p))}</select></div>
@@ -2173,7 +2173,7 @@ placeOrder=async function(){
     const p = normalizeProduct(raw);
     const photos = (Array.isArray(p.photos) && p.photos.length ? p.photos : [p.img]).filter(Boolean);
     const main = Math.max(0, Math.min(Number(p.mainPhotoIndex || 0), Math.max(photos.length - 1, 0)));
-    const thumbs = photos.map((u,i)=>`<button type="button" class="admin-thumb ${i===main?'main':''}" onclick="this.closest('.product-editor').dataset.mainIndex='${i}';this.parentElement.querySelectorAll('.admin-thumb').forEach(x=>x.classList.remove('main'));this.classList.add('main')"><img src="${String(u).startsWith('data:') ? u : ''}" style="${String(u).startsWith('data:') ? '' : 'display:none'}"><span>${i===main?'Main photo':'Set as main'}</span></button>`).join('');
+    const thumbs = photos.map((u,i)=>`<button type="button" class="admin-thumb ${i===main?'main':''}" onclick="this.closest('.product-editor').dataset.mainIndex='${i}';this.parentElement.querySelectorAll('.admin-thumb').forEach(x=>x.classList.remove('main'));this.classList.add('main')"><img src="${safe(freshImg(u))}" alt="Product photo"><span>${i===main?'Main photo':'Set as main'}</span></button>`).join('');
     const opts = (arr,val) => arr.map(x => Array.isArray(x) ? `<option value="${safe(x[0])}" ${x[0]===val?'selected':''}>${safe(x[1])}</option>` : `<option ${x===val?'selected':''}>${safe(x)}</option>`).join('');
     const home = p.displaySection || p.homeSection || (p.collection === 'New Arrivals' ? 'new-arrivals' : 'trending-now');
     return `<div class="admin-form">
@@ -2182,7 +2182,7 @@ placeOrder=async function(){
       <div><label>Sale / price-drop price</label><input class="field edit-sale" type="number" step="0.01" value="${p.salePrice || ''}" placeholder="Optional"></div>
       <div><label>Availability status</label><select class="field edit-status"><option value="in-stock" ${p.status==='in-stock'?'selected':''}>In stock</option><option value="coming-soon" ${p.status==='coming-soon'?'selected':''}>Coming soon</option><option value="out-of-stock" ${p.status==='out-of-stock'?'selected':''}>Out of stock</option></select></div>
       <div><label>Product category</label><select class="field edit-category">${opts(['Dresses','Skirts','T-Shirts','Tops','Pants','Bags','Scarves','Overalls'], p.category || 'Tops')}</select></div>
-      <div><label>Collection</label><select class="field edit-collection">${opts(['Everyday Edit','Minimal Essentials','Evening Pieces','Accessories','Price Drops','New Arrivals'], p.collection || 'Everyday Edit')}</select></div>
+      <div><label>Collection</label><select class="field edit-collection">${opts(['Everyday Edit','Minimal Essentials','Evening Pieces','Price Drops','New Arrivals'], p.collection || 'Everyday Edit')}</select></div>
       <div><label>Homepage display section</label><select class="field edit-home-section">${opts([['trending-now','Trending Now'],['new-arrivals','New Arrivals']], home)}</select></div>
       <div><label>Color</label><select class="field edit-color">${opts(['Black','White','Ivory','Cream','Beige','Taupe','Grey','Silver','Gold','Rose Gold','Bronze','Brown','Cognac','Camel','Navy','Blue','Denim Blue','Red','Burgundy','Pink','Green','Olive','Khaki','Yellow','Orange','Purple','Print / Pattern','Multi-color'], (p.note||'').split(' · ')[0] || 'Black')}</select></div>
       <div><label>Style note</label><select class="field edit-style">${opts(['Clean everyday piece','Elegant evening piece','Minimal essential','Soft feminine silhouette','Relaxed boutique fit','Premium casual look','Statement piece','Light summer piece','Structured tailored style'], (p.note||'').split(' · ')[1] || 'Clean everyday piece')}</select></div>
@@ -8900,7 +8900,7 @@ placeOrder=async function(){
     const user=activeUser();
     const isAdmin=ADMIN_EMAILS.includes(String(user?.email||'').toLowerCase());
     const admin=isAdmin?'<a class="admin-link" href="admin.html">ADMIN</a>':'';
-    const desktopNav=`<nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links">${lineLinks(SHOP_CATEGORIES)}</div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav>`;
+    const desktopNav=`<nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links">${lineLinks(SHOP_CATEGORIES)}</div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a></div></div></div></div><a href="about.html">ABOUT</a></nav>`;
     const mobileLeft=`<div class="mobile-header-left"><button type="button" class="mobile-icon-btn mobile-menu-btn" onclick="openMobileMenu()" aria-label="Open menu"><span></span><span></span><span></span></button><button type="button" class="mobile-icon-btn mobile-search-btn" onclick="openSearch()" aria-label="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M15.5 15.5 21 21"></path></svg></button></div>`;
     const desktopActions=`<div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a class="account-nav-link" href="${user?'account.html':'login.html'}">${user?'ACCOUNT':'SIGN IN'}</a>${admin}<a class="liked-nav-link" href="liked.html" aria-label="Liked items" title="Liked items"><span class="heart-nav">♡</span><span class="liked-label">LIKED</span><span class="liked-count">0</span></a><button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></span><span class="cart-count">0</span></button></div>`;
     const mobileRight=`<div class="mobile-header-right"><a class="mobile-icon-btn mobile-liked-btn" href="liked.html" aria-label="Liked items"><span>♡</span><span class="liked-count">0</span></a><button class="mobile-icon-btn mobile-cart-btn" type="button" onclick="openCart()" aria-label="Cart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 8.5h11l.8 11H5.7l.8-11Z"></path><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"></path></svg><span class="cart-count">0</span></button></div>`;
@@ -8927,7 +8927,7 @@ placeOrder=async function(){
     const user=activeUser();
     const isAdmin=(typeof ADMIN_EMAILS!=='undefined')&&ADMIN_EMAILS.includes(String(user?.email||'').toLowerCase());
     const admin=isAdmin?'<a class="admin-link" href="admin.html">ADMIN</a>':'';
-    const desktopNav=`<nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links">${links(SHOP_CATEGORIES)}</div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a><a href="shop.html?cat=Accessories">Accessories</a></div></div></div></div><a href="about.html">ABOUT</a></nav>`;
+    const desktopNav=`<nav class="nav"><div class="nav-item"><a href="shop.html">SHOP</a><div class="mega compact-mega"><div class="mega-block"><h4>SHOP BY CATEGORY</h4><div class="mega-links">${links(SHOP_CATEGORIES)}</div></div><div class="mega-block"><h4>SHOP BY EDIT</h4><div class="mega-links"><a href="collections.html">New Arrivals</a><a href="shop.html?cat=Essentials">Essentials</a><a href="shop.html?cat=Evening">Evening Pieces</a><a href="shop.html?cat=Sale">Price Drops</a></div></div></div></div><div class="nav-item"><a href="collections.html">COLLECTIONS</a><div class="mega compact-mega"><div class="mega-block"><h4>FEATURED</h4><div class="mega-links"><a href="collections.html">Latest Edit</a><a href="collections.html">Everyday Boutique</a><a href="collections.html">Minimal Essentials</a></div></div><div class="mega-block"><h4>OCCASION</h4><div class="mega-links"><a href="shop.html?cat=Daywear">Daywear</a><a href="shop.html?cat=Evening">Evening</a></div></div></div></div><a href="about.html">ABOUT</a></nav>`;
     const mobileLeft=`<div class="mobile-header-left"><button type="button" class="mobile-icon-btn mobile-menu-btn" onclick="openMobileMenu()" aria-label="Open menu"><span></span><span></span><span></span></button><button type="button" class="mobile-icon-btn mobile-search-btn" onclick="openSearch()" aria-label="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M15.5 15.5 21 21"></path></svg></button></div>`;
     const desktopActions=`<div class="actions"><button onclick="openSearch()" style="border:0;background:0;font-weight:800;cursor:pointer">SEARCH</button><a class="account-nav-link" href="${user?'account.html':'login.html'}">${user?'ACCOUNT':'SIGN IN'}</a>${admin}<button class="cart-icon-btn" aria-label="Cart" onclick="openCart()"><span class="cart-icon" aria-hidden="true">${cartIcon()}</span><span class="cart-count">0</span></button></div>`;
     const mobileRight=`<div class="mobile-header-right"><a class="mobile-icon-btn mobile-account-btn" href="${user?'account.html':'login.html'}" aria-label="Account">${userIcon()}</a><button class="mobile-icon-btn mobile-cart-btn" type="button" onclick="openCart()" aria-label="Cart">${cartIcon()}<span class="cart-count">0</span></button></div>`;
@@ -10006,10 +10006,42 @@ placeOrder=async function(){
   const productList=()=>{try{return typeof getProducts==='function'?getProducts():JSON.parse(localStorage.getItem('nitaProducts')||'[]')}catch(e){return []}};
   const priceOf=p=>Number((p&&p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price))?p.salePrice:p?.price||0);
   const statusOf=p=>{try{return typeof productStatusValue==='function'?productStatusValue(p):String(p.status||'in-stock')}catch(e){return String(p.status||'in-stock')}};
-  const maxPrice=()=>Math.max(100,...productList().map(priceOf).filter(n=>Number.isFinite(n)&&n>0));
+  function collectionMatches(p,name){
+    const q=norm(name).replace(/-/g,' ');
+    const c=norm([p?.collection,p?.displaySection,p?.homeSection,p?.category,p?.name].filter(Boolean).join(' ')).replace(/-/g,' ');
+    if(!q)return true;
+    if(q.includes('new')) return /new|arrival|latest|drop/.test(c);
+    if(q.includes('everyday')) return /everyday|edit|boutique/.test(c);
+    if(q.includes('summer')) return /summer/.test(c);
+    if(q.includes('minimal')) return /minimal|essential/.test(c);
+    if(q.includes('daywear')) return /daywear/.test(c);
+    if(q.includes('evening')) return /evening/.test(c);
+    return c.includes(q);
+  }
+  function pageBaseProducts(){
+    const params=new URL(location.href).searchParams;
+    const pageCat=params.get('cat');
+    const pageCollection=params.get('collection');
+    let arr=productList().filter(p=>p && statusOf(p)!=='hidden');
+    if(pageCat) arr=arr.filter(p=>norm(p.category)===norm(pageCat));
+    if(pageCollection) arr=arr.filter(p=>collectionMatches(p,pageCollection));
+    return arr;
+  }
+  const maxPrice=(arr)=>{const vals=(arr&&arr.length?arr:pageBaseProducts()).map(priceOf).filter(n=>Number.isFinite(n)&&n>0); return vals.length?Math.max(...vals):0;};
   function formatPrice(n){try{if(typeof money==='function')return money(Number(n)||0)}catch(e){} return '$'+String(Number(n)||0)}
+  function updatePriceLimit(preserve){
+    const limit=Math.max(0,Math.ceil(maxPrice(pageBaseProducts())));
+    const a=document.getElementById('nitaPriceMinRange'), b=document.getElementById('nitaPriceMaxRange');
+    if(!a||!b) return limit;
+    const oldMax=Number(b.max||0);
+    const oldMin=Number(a.value||0), oldHigh=Number(b.value||oldMax||limit);
+    a.max=String(limit); b.max=String(limit);
+    if(!preserve || oldHigh===oldMax){a.value='0'; b.value=String(limit);} else {a.value=String(Math.min(oldMin,limit)); b.value=String(Math.min(oldHigh,limit));}
+    syncRangeUI();
+    return limit;
+  }
   function rangeVals(){
-    const max=Number(document.getElementById('nitaPriceMaxRange')?.max||maxPrice());
+    const max=Number(document.getElementById('nitaPriceMaxRange')?.max||maxPrice(pageBaseProducts()));
     let min=Number(document.getElementById('nitaPriceMinRange')?.value||0);
     let high=Number(document.getElementById('nitaPriceMaxRange')?.value||max);
     if(min>high){const tmp=min; min=high; high=tmp;}
@@ -10051,10 +10083,10 @@ placeOrder=async function(){
     const tools=document.querySelector('.shop-tools'); if(!tools)return;
     const oldSelect=tools.querySelector('select#filter'); if(oldSelect)oldSelect.style.display='none';
     let shell=document.getElementById('nitaFilterShell');
-    if(shell && shell.dataset.priceRangeFinal==='1'){syncRangeUI();return;}
+    if(shell && shell.dataset.priceRangeFinal==='1'){updatePriceLimit(true);return;}
     if(shell)shell.remove();
     const currentCat=(new URL(location.href).searchParams.get('cat')||oldSelect?.value||'All');
-    const limit=Math.ceil(maxPrice()/10)*10;
+    const limit=Math.max(0,Math.ceil(maxPrice(pageBaseProducts())));
     tools.insertAdjacentHTML('afterend',`
       <section id="nitaFilterShell" class="nita-filter-shell nita-filter-shell-pro nita-filter-range-final" data-price-range-final="1">
         <div class="nita-filter-bar-pro">
@@ -10094,7 +10126,7 @@ placeOrder=async function(){
     const open=!panel.classList.contains('open'); panel.classList.toggle('open',open); if(btn){btn.classList.toggle('open',open); btn.setAttribute('aria-expanded',String(open)); const s=btn.querySelector('span'); if(s)s.textContent=open?'−':'+';} syncRangeUI();
   };
   window.nitaToggleSortMenu=function(){document.getElementById('nitaSortMenu')?.classList.toggle('open');};
-  window.nitaClearShopFilters=function(){['nitaFilterCategory','nitaFilterColor','nitaFilterMaterial','nitaFilterSize'].forEach(id=>{const e=document.getElementById(id); if(e)e.value='All'}); const max=Number(document.getElementById('nitaPriceMaxRange')?.max||maxPrice()); const a=document.getElementById('nitaPriceMinRange'), b=document.getElementById('nitaPriceMaxRange'); if(a)a.value=0; if(b)b.value=max; syncRangeUI(); window.nitaShopSort='new'; history.replaceState(null,'','shop.html'); window.shopPage();};
+  window.nitaClearShopFilters=function(){['nitaFilterCategory','nitaFilterColor','nitaFilterMaterial','nitaFilterSize'].forEach(id=>{const e=document.getElementById(id); if(e)e.value='All'}); const max=Number(document.getElementById('nitaPriceMaxRange')?.max||maxPrice(pageBaseProducts())); const a=document.getElementById('nitaPriceMinRange'), b=document.getElementById('nitaPriceMaxRange'); if(a)a.value=0; if(b)b.value=max; syncRangeUI(); window.nitaShopSort='new'; history.replaceState(null,'','shop.html'); window.shopPage();};
   window.shopPage=function(){
     window.nitaEnsureShopFilters(); const f=readFilters(); let arr=productList().filter(p=>filterProduct(p,f));
     const sort=window.nitaShopSort||'new';
@@ -10104,3 +10136,319 @@ placeOrder=async function(){
   document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{window.nitaEnsureShopFilters(); if(document.getElementById('products'))window.shopPage();},300));
   window.addEventListener('load',()=>setTimeout(()=>{window.nitaEnsureShopFilters(); if(document.getElementById('products'))window.shopPage();},550));
 })();
+
+/* === NITA VERIFIED PATCH: PAGE-SPECIFIC FILTER + SORT EVERY SHOP CONTEXT 20260615-1205 === */
+(function(){
+  'use strict';
+  const norm=s=>String(s||'').toLowerCase().trim().replace(/\s+/g,' ');
+  const moneyFmt=n=>{try{return typeof money==='function'?money(Number(n)||0):'$'+String(Number(n)||0)}catch(e){return '$'+String(Number(n)||0)}};
+  const getList=()=>{try{return (typeof getProducts==='function'?getProducts():JSON.parse(localStorage.getItem('nitaProducts')||'[]')).filter(Boolean)}catch(e){return []}};
+  const statusOf=p=>{try{return typeof productStatusValue==='function'?productStatusValue(p):String(p.status||'in-stock')}catch(e){return String(p.status||'in-stock')}};
+  const priceOf=p=>{const price=Number(p&&p.price||0); const sale=Number(p&&p.salePrice||0); return sale>0 && price>0 && sale<price ? sale : price;};
+  function collectionMatches(p,name){
+    const q=norm(name).replace(/-/g,' ');
+    const text=norm([p&&p.collection,p&&p.displaySection,p&&p.homeSection,p&&p.category,p&&p.name,p&&p.desc,p&&p.description].filter(Boolean).join(' ')).replace(/-/g,' ');
+    if(!q)return true;
+    if(q.includes('new')) return /new|arrival|latest|drop/.test(text);
+    if(q.includes('everyday')) return /everyday|edit|daily|daywear/.test(text);
+    if(q.includes('summer')) return /summer|vacation|beach|linen|light/.test(text);
+    if(q.includes('minimal')) return /minimal|essential/.test(text);
+    if(q.includes('evening')) return /evening/.test(text);
+    return text.includes(q);
+  }
+  function pageContext(){
+    const params=new URL(location.href).searchParams;
+    return {cat:params.get('cat')||'', collection:params.get('collection')||''};
+  }
+  function pageProducts(){
+    const ctx=pageContext();
+    let arr=getList().filter(p=>p && statusOf(p)!=='hidden');
+    if(ctx.cat) arr=arr.filter(p=>norm(p.category)===norm(ctx.cat));
+    if(ctx.collection) arr=arr.filter(p=>collectionMatches(p,ctx.collection));
+    return arr;
+  }
+  function maxPriceForCurrentPage(){
+    const vals=pageProducts().map(priceOf).filter(n=>Number.isFinite(n)&&n>0);
+    return vals.length ? Math.max(...vals) : 0;
+  }
+  function syncPriceRangeLabel(){
+    const minEl=document.getElementById('nitaPriceMinRange');
+    const maxEl=document.getElementById('nitaPriceMaxRange');
+    const fill=document.getElementById('nitaPriceRangeFill');
+    const label=document.getElementById('nitaPriceRangeLabel');
+    if(!minEl || !maxEl)return;
+    let min=Number(minEl.value||0), high=Number(maxEl.value||maxEl.max||0), lim=Number(maxEl.max||1)||1;
+    if(min>high){ if(document.activeElement===minEl) maxEl.value=min; else minEl.value=high; min=Number(minEl.value); high=Number(maxEl.value); }
+    if(fill){ fill.style.left=(min/lim*100)+'%'; fill.style.right=(100-(high/lim*100))+'%'; }
+    if(label) label.textContent=moneyFmt(min)+' – '+moneyFmt(high);
+  }
+  function resetPriceRangeToPageMax(){
+    const limit=Math.max(0,Math.ceil(maxPriceForCurrentPage()));
+    const minEl=document.getElementById('nitaPriceMinRange');
+    const maxEl=document.getElementById('nitaPriceMaxRange');
+    if(minEl){ minEl.min='0'; minEl.max=String(limit); minEl.value='0'; }
+    if(maxEl){ maxEl.min='0'; maxEl.max=String(limit); maxEl.value=String(limit); }
+    syncPriceRangeLabel();
+    return limit;
+  }
+  function readFiltersStable(){
+    const minEl=document.getElementById('nitaPriceMinRange');
+    const maxEl=document.getElementById('nitaPriceMaxRange');
+    const ctx=pageContext();
+    return {
+      cat:ctx.cat || document.getElementById('nitaFilterCategory')?.value || 'All',
+      color:document.getElementById('nitaFilterColor')?.value || 'All',
+      material:document.getElementById('nitaFilterMaterial')?.value || 'All',
+      size:document.getElementById('nitaFilterSize')?.value || 'All',
+      min:Number(minEl&&minEl.value||0),
+      max:Number(maxEl&&maxEl.value||maxPriceForCurrentPage())
+    };
+  }
+  function passesFilters(p,f){
+    if(!p || statusOf(p)==='hidden')return false;
+    const ctx=pageContext();
+    // Page context is already applied before this function. Category dropdown applies only on full shop pages.
+    if(!ctx.cat && f.cat && f.cat!=='All' && norm(p.category)!==norm(f.cat))return false;
+    if(f.color && f.color!=='All'){
+      const colorways=Array.isArray(p.colorways)?p.colorways.map(c=>norm(c && (c.color||c.name))).filter(Boolean):[];
+      if(!norm(p.color).includes(norm(f.color)) && !colorways.includes(norm(f.color)))return false;
+    }
+    if(f.material && f.material!=='All' && !norm(p.material||p.productMaterial).includes(norm(f.material)))return false;
+    if(f.size && f.size!=='All'){
+      const sizes=Array.isArray(p.sizes)?p.sizes.map(norm):[];
+      const sizeText=norm(p.size||p.productSize||'');
+      if(!sizes.includes(norm(f.size)) && !sizeText.includes(norm(f.size)))return false;
+    }
+    const pr=priceOf(p);
+    if(pr<f.min)return false;
+    if(Number.isFinite(f.max) && pr>f.max)return false;
+    return true;
+  }
+  function sortProducts(arr){
+    const sort=window.nitaShopSort || 'new';
+    if(sort==='low') return arr.sort((a,b)=>priceOf(a)-priceOf(b));
+    if(sort==='high') return arr.sort((a,b)=>priceOf(b)-priceOf(a));
+    return arr.sort((a,b)=>String(b.id||b.createdAt||'').localeCompare(String(a.id||a.createdAt||'')));
+  }
+  const previousEnsure=window.nitaEnsureShopFilters;
+  window.nitaEnsureShopFilters=function(){
+    if(typeof previousEnsure==='function') previousEnsure.apply(this,arguments);
+    if(!document.getElementById('products'))return;
+    const ctx=pageContext();
+    const cat=document.getElementById('nitaFilterCategory');
+    if(cat && ctx.cat){ cat.value=ctx.cat; cat.disabled=true; cat.closest('.nita-filter-field')?.classList.add('is-page-locked'); }
+    resetPriceRangeToPageMax();
+    ['nitaFilterCategory','nitaFilterColor','nitaFilterMaterial','nitaFilterSize'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el && !el.dataset.nitaVerifiedFilter){ el.dataset.nitaVerifiedFilter='1'; el.addEventListener('change',()=>window.shopPage()); }
+    });
+    ['nitaPriceMinRange','nitaPriceMaxRange'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el && !el.dataset.nitaVerifiedFilter){ el.dataset.nitaVerifiedFilter='1'; el.addEventListener('input',()=>{syncPriceRangeLabel(); window.shopPage();}); }
+    });
+    const menu=document.getElementById('nitaSortMenu');
+    if(menu && !menu.dataset.nitaVerifiedSort){
+      menu.dataset.nitaVerifiedSort='1';
+      menu.addEventListener('click',function(e){const b=e.target.closest('[data-sort]'); if(!b)return; window.nitaShopSort=b.dataset.sort||'new'; menu.classList.remove('open'); window.shopPage();});
+    }
+  };
+  window.shopPage=function(){
+    window.nitaEnsureShopFilters();
+    const filters=readFiltersStable();
+    let arr=pageProducts().filter(p=>passesFilters(p,filters));
+    sortProducts(arr);
+    const grid=document.getElementById('products');
+    if(grid) grid.innerHTML=arr.length ? arr.map(p=>window.productCard?window.productCard(p):'').join('') : '<div class="nita-empty-products"><h3>No products found</h3><p class="muted">Try changing the filters.</p></div>';
+  };
+  window.nitaClearShopFilters=function(){
+    const ctx=pageContext();
+    const cat=document.getElementById('nitaFilterCategory');
+    if(cat) cat.value=ctx.cat || 'All';
+    ['nitaFilterColor','nitaFilterMaterial','nitaFilterSize'].forEach(id=>{const el=document.getElementById(id); if(el)el.value='All';});
+    window.nitaShopSort='new';
+    resetPriceRangeToPageMax();
+    window.shopPage();
+  };
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{if(document.getElementById('products')){window.nitaEnsureShopFilters(); window.shopPage();}},750));
+  window.addEventListener('load',()=>setTimeout(()=>{if(document.getElementById('products')){window.nitaEnsureShopFilters(); window.shopPage();}},900));
+})();
+/* === END NITA VERIFIED PATCH === */
+
+
+/* === NITA FINAL AUDIT PATCH: GLOBAL WORKFLOW STABILITY 20260615-1315 === */
+(function(){
+  'use strict';
+  const VERSION='audit-20260615-1315';
+  const noAcc = ['New Arrivals','Everyday Edit','Summer Pieces','Minimal Essentials','Price Drops','Sale'];
+  window.ADMIN_COLLECTIONS = noAcc.slice();
+  window.NITA_ADMIN_COLLECTION_OPTIONS = noAcc.slice();
+  function cleanTxt(v){ return String(v||'').trim(); }
+  function isAccessories(v){ return /^accessories$/i.test(cleanTxt(v)); }
+  function normalizePageProduct(p){
+    if(!p || typeof p !== 'object') return p;
+    if(isAccessories(p.collection)) p.collection='Everyday Edit';
+    if(isAccessories(p.category)) p.category='Bags';
+    if(Array.isArray(p.photos)) p.photos = p.photos.filter(Boolean);
+    if(!Array.isArray(p.photos) || !p.photos.length){ if(p.img) p.photos=[p.img]; }
+    const max = Math.max((p.photos||[]).length-1,0);
+    p.mainPhotoIndex = Math.max(0, Math.min(Number(p.mainPhotoIndex||0), max));
+    if(p.photos && p.photos.length) p.img = p.photos[p.mainPhotoIndex] || p.photos[0];
+    if(!p.status) p.status = p.soldOut ? 'out-of-stock' : 'in-stock';
+    return p;
+  }
+  const oldGet = window.getProducts;
+  if(typeof oldGet === 'function'){
+    window.getProducts = function(){
+      const list = oldGet.apply(this, arguments) || [];
+      return Array.isArray(list) ? list.map(normalizePageProduct) : list;
+    };
+  }
+  const oldSave = window.saveProducts;
+  if(typeof oldSave === 'function'){
+    window.saveProducts = function(list){
+      if(Array.isArray(list)) list = list.map(normalizePageProduct);
+      return oldSave.call(this, list);
+    };
+  }
+  // Missing function protection for older admin editor markup.
+  window.selectExistingMainPhoto = window.selectExistingMainPhoto || function(id, index){
+    const root = document.getElementById('editor-' + id);
+    if(!root) return;
+    root.dataset.mainIndex = String(index || 0);
+    root.querySelectorAll('.admin-thumb').forEach((el,i)=>{
+      el.classList.toggle('main', i === Number(index));
+      el.classList.toggle('selected-main', i === Number(index));
+      const sp=el.querySelector('span'); if(sp) sp.textContent = i === Number(index) ? 'Main photo' : 'Set as main';
+    });
+  };
+  function tidyAdminCollections(){
+    document.querySelectorAll('select, option').forEach(el=>{
+      if(el.tagName === 'OPTION' && isAccessories(el.textContent)) el.remove();
+    });
+    document.querySelectorAll('select.field').forEach(sel=>{
+      Array.from(sel.options||[]).forEach(opt=>{ if(isAccessories(opt.value) || isAccessories(opt.textContent)) opt.remove(); });
+      if(isAccessories(sel.value)) sel.value='Everyday Edit';
+    });
+  }
+  function tidyNavAndLiked(){
+    // Remove old Accessories edit links only; product categories Bags/Scarves stay.
+    document.querySelectorAll('a').forEach(a=>{
+      const t=cleanTxt(a.textContent), h=a.getAttribute('href')||'';
+      if(/^Accessories$/i.test(t) && /cat=Accessories|collection=Accessories/i.test(h)) a.remove();
+    });
+    // Keep the old liked page from breaking if still present, but remove liked header shortcut because the site workflow no longer uses it.
+    document.querySelectorAll('.liked-nav-link').forEach(el=>el.remove());
+  }
+  function stableFilterSortButtons(){
+    const tools=document.querySelector('.shop-tools,.filter-sort-bar,.nita-filter-sort-bar');
+    if(!tools) return;
+    tools.querySelectorAll('button,select').forEach(el=>{ el.classList.add('nita-control-clean'); });
+  }
+  const run=()=>{ tidyAdminCollections(); tidyNavAndLiked(); stableFilterSortButtons(); };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', run); else run();
+  window.addEventListener('load', ()=>setTimeout(run,250));
+  new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
+})();
+
+/* === NITA STYLE EDIT LISTED PRODUCT PHOTO MANAGER 20260615-EDITPHOTOS ===
+   Adds a real photo workflow inside Edit Product:
+   - existing listed-product photos can be moved left/right
+   - existing photos can be removed
+   - new filenames/paths can be added
+   - uploaded files append to the current edit gallery
+   - Save Product Changes saves the exact visible order
+*/
+(function(){
+  'use strict';
+  const EDIT_VERSION='edit-listed-photos-20260615';
+  window.nitaEditPhotoState = window.nitaEditPhotoState || {};
+  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function cssEsc(v){try{return CSS.escape(String(v));}catch(e){return String(v).replace(/[^a-zA-Z0-9_-]/g,'\\$&');}}
+  function readJSON(k,f){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f));}catch(e){return f;}}
+  function products(){try{return typeof getProducts==='function'?getProducts():readJSON('nitaProducts',[]);}catch(e){return readJSON('nitaProducts',[]);}}
+  function productById(id){return products().find(p=>String(p.id)===String(id));}
+  function unique(arr){const out=[];(Array.isArray(arr)?arr:[]).forEach(v=>{v=String(v||'').trim(); if(v && !out.some(x=>x.toLowerCase()===v.toLowerCase())) out.push(v);});return out;}
+  function normalizePhotoPath(v){
+    v=String(v||'').trim(); if(!v) return '';
+    const m=v.match(/url\((['"]?)(.*?)\1\)/i); if(m) v=m[2].trim();
+    if(/^data:image\//i.test(v) || /^https?:\/\//i.test(v) || v.startsWith('/')) return v;
+    if(/^assets\/products\//i.test(v)) return '/'+v.replace(/^\/+/, '');
+    if(/^assets\//i.test(v)) return '/'+v.replace(/^\/+/, '');
+    if(/\.(png|jpe?g|webp|gif|avif|svg)$/i.test(v)) return '/assets/products/'+v.replace(/^\/+/, '');
+    return v;
+  }
+  function photoList(p){let arr=[]; if(Array.isArray(p?.photos)) arr=arr.concat(p.photos); if(Array.isArray(p?.images)) arr=arr.concat(p.images); if(p?.img) arr.unshift(p.img); if(p?.image) arr.unshift(p.image); return unique(arr.map(normalizePhotoPath));}
+  function state(id){
+    id=String(id);
+    if(!window.nitaEditPhotoState[id]){
+      const p=productById(id)||{};
+      window.nitaEditPhotoState[id]={photos:photoList(p), ready:true};
+    }
+    return window.nitaEditPhotoState[id];
+  }
+  function imgHtml(src,alt){
+    src=normalizePhotoPath(src); const safe=esc(src);
+    if(!src) return '<div class="nita-edit-empty-img">No image</div>';
+    return '<img src="'+safe+(safe.includes('?')?'&':'?')+'v='+EDIT_VERSION+'-'+Date.now()+'" alt="'+esc(alt||'Product photo')+'" loading="eager">';
+  }
+  function render(id){
+    const root=document.getElementById('editor-'+cssEsc(id)); if(!root) return;
+    const s=state(id); s.photos=unique((s.photos||[]).map(normalizePhotoPath));
+    let mount=root.querySelector('.nita-edit-photo-manager');
+    const oldExisting=root.querySelector('.existing-photos');
+    if(!mount){
+      mount=document.createElement('div'); mount.className='nita-edit-photo-manager'; mount.dataset.productId=String(id);
+      const uploadZone=root.querySelector('.upload-zone');
+      if(oldExisting) oldExisting.insertAdjacentElement('afterend', mount);
+      else if(uploadZone) uploadZone.insertAdjacentElement('beforebegin', mount);
+      else root.appendChild(mount);
+    }
+    if(oldExisting) oldExisting.style.display='none';
+    root.querySelectorAll('.upload-zone p b').forEach(b=>{ if(/replace/i.test(b.textContent||'')) b.textContent='Add more photos'; });
+    root.querySelectorAll('.upload-zone .muted').forEach(m=>{ if(/replace|gallery/i.test(m.textContent||'')) m.textContent='Uploaded photos will be added to the editable gallery below.'; });
+    mount.innerHTML = '<div class="nita-edit-photo-head"><div><strong>Edit product photos</strong><p class="muted">Move photos, remove photos, or add new ones. The first photo becomes the main product image.</p></div><span class="nita-edit-photo-count">'+s.photos.length+' photo'+(s.photos.length===1?'':'s')+'</span></div>'+
+      '<div class="nita-edit-photo-grid">'+(s.photos.length?s.photos.map((u,i)=>'<div class="nita-edit-photo-card '+(i===0?'is-main':'')+'"><div class="nita-edit-photo-img">'+imgHtml(u,'Product photo '+(i+1))+'</div><div class="nita-edit-photo-meta"><span>'+(i===0?'Main photo':'Photo '+(i+1))+'</span><small>'+esc(String(u).replace(/^\/assets\/products\//,''))+'</small></div><div class="nita-edit-photo-actions"><button type="button" onclick="nitaMoveEditPhoto(\''+esc(String(id))+'\','+i+',-1)" '+(i===0?'disabled':'')+'>←</button><button type="button" onclick="nitaMoveEditPhoto(\''+esc(String(id))+'\','+i+',1)" '+(i===s.photos.length-1?'disabled':'')+'>→</button><button type="button" class="danger" onclick="nitaRemoveEditPhoto(\''+esc(String(id))+'\','+i+')">×</button></div></div>').join(''):'<div class="nita-edit-no-photos">No photos yet. Add photo filenames or upload images.</div>')+'</div>'+
+      '<div class="nita-edit-add-row"><label>Add photo filenames or paths</label><div class="nita-edit-add-inline"><input class="field nita-edit-add-input" placeholder="example: red-bag-4.jpg or assets/products/red-bag-4.jpg"><button type="button" class="btn light" onclick="nitaAddEditPhotoName(\''+esc(String(id))+'\')">ADD PHOTO</button></div><p class="muted">You can add one filename or several separated by commas.</p></div>'+
+      '<input type="hidden" class="nita-edit-photo-order" value="'+esc(s.photos.join('\n'))+'">';
+    const hidden=mount.querySelector('.nita-edit-photo-order'); if(hidden) hidden.value=s.photos.join('\n');
+  }
+  window.nitaRenderEditPhotoManager=render;
+  window.nitaMoveEditPhoto=function(id,i,dir){const s=state(id); i=Number(i); const j=i+Number(dir); if(j<0||j>=s.photos.length)return; const tmp=s.photos[i]; s.photos[i]=s.photos[j]; s.photos[j]=tmp; render(id);};
+  window.nitaRemoveEditPhoto=function(id,i){const s=state(id); s.photos.splice(Number(i),1); render(id);};
+  window.nitaAddEditPhotoName=function(id){const root=document.getElementById('editor-'+cssEsc(id)); const input=root?.querySelector('.nita-edit-add-input'); if(!input)return; const values=String(input.value||'').split(/[\n,]+/).map(normalizePhotoPath).filter(Boolean); if(!values.length)return; const s=state(id); s.photos=unique((s.photos||[]).concat(values)); input.value=''; render(id);};
+  function readFiles(files){return Promise.all(Array.from(files||[]).map(file=>new Promise(resolve=>{try{const r=new FileReader(); r.onload=e=>resolve(e.target.result||''); r.onerror=()=>resolve(''); r.readAsDataURL(file);}catch(e){resolve('');}}))).then(a=>a.filter(Boolean));}
+  const oldPreview=window.previewEditPhotos;
+  window.previewEditPhotos=function(e,id){
+    const files=e?.target?.files; if(!files || !files.length){ if(typeof oldPreview==='function') return oldPreview.apply(this,arguments); return; }
+    return readFiles(files).then(urls=>{const s=state(id); s.photos=unique((s.photos||[]).concat(urls)); render(id); if(e&&e.target)e.target.value='';});
+  };
+  const oldSave=window.saveProductEditor;
+  window.saveProductEditor=async function(id){
+    const s=state(id); if(s && Array.isArray(s.photos)){
+      s.photos=unique(s.photos.map(normalizePhotoPath));
+      window.editingPhotoBuffers=window.editingPhotoBuffers||{};
+      window.editingMainPhotoIndex=window.editingMainPhotoIndex||{};
+      window.editingPhotoBuffers[id]=s.photos.slice();
+      window.editingMainPhotoIndex[id]=0;
+      const root=document.getElementById('editor-'+cssEsc(id)); if(root) root.dataset.mainIndex='0';
+    }
+    let result;
+    if(typeof oldSave==='function') result=await oldSave.apply(this,arguments);
+    try{
+      const ps=products(); const p=ps.find(x=>String(x.id)===String(id));
+      if(p && s && s.photos && s.photos.length){p.photos=s.photos.slice(); p.mainPhotoIndex=0; p.img=p.photos[0]; if(typeof saveProducts==='function') await saveProducts(ps);}
+    }catch(e){console.warn('Edit photo save verification skipped',e);}
+    delete window.nitaEditPhotoState[String(id)];
+    setTimeout(()=>{ if(typeof renderAdmin==='function') renderAdmin(); },250);
+    return result;
+  };
+  function upgradeEditors(){document.querySelectorAll('.product-editor[id^="editor-"]').forEach(el=>{const id=(el.id||'').replace(/^editor-/,''); if(id) render(id);});}
+  const oldToggle=window.toggleProductEditor;
+  if(typeof oldToggle==='function') window.toggleProductEditor=function(){const r=oldToggle.apply(this,arguments); setTimeout(upgradeEditors,80); setTimeout(upgradeEditors,350); return r;};
+  const oldRenderAdmin=window.renderAdmin;
+  if(typeof oldRenderAdmin==='function') window.renderAdmin=async function(){const r=await oldRenderAdmin.apply(this,arguments); setTimeout(upgradeEditors,120); return r;};
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(upgradeEditors,600));
+  window.addEventListener('load',()=>setTimeout(upgradeEditors,900));
+  new MutationObserver(()=>{clearTimeout(window.__nitaEditPhotoTimer); window.__nitaEditPhotoTimer=setTimeout(upgradeEditors,120);}).observe(document.documentElement,{childList:true,subtree:true});
+})();
+/* === END NITA STYLE EDIT LISTED PRODUCT PHOTO MANAGER === */
