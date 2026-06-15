@@ -9992,3 +9992,115 @@ placeOrder=async function(){
     if(window.renderAddProductForm) window.renderAddProductForm=wrap;
   }
 })();
+
+/* === NITA FINAL PRICE RANGE FILTER OVERRIDE 20260615 === */
+(function(){
+  'use strict';
+  const CATEGORIES=['All','Dresses','Skirts','T-Shirts','Tops','Pants','Bags','Scarves','Overalls'];
+  const COLORS=['All','Black','White','Ivory','Cream','Beige','Taupe','Grey','Silver','Gold','Rose Gold','Bronze','Brown','Cognac','Camel','Navy','Dark Blue','Blue','Denim Blue','Cyan','Red','Burgundy','Pink','Green','Olive','Khaki','Yellow','Orange','Purple','Print / Pattern','Multi-color'];
+  const MATERIALS=['All','Leather','Pebbled leather','Linen','Cotton','Silk','Satin','Denim','Knit','Wool','Cashmere','Polyester','Viscose','Suede','Faux leather','Metal','Straw','Canvas'];
+  const SIZES=['All','XS','S','M','L','XL','One Size'];
+  const esc=s=>String(s??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  const norm=s=>String(s||'').toLowerCase().trim().replace(/\s+/g,' ');
+  const opts=(arr,val)=>arr.map(x=>`<option value="${esc(x)}" ${String(x)===String(val)?'selected':''}>${esc(x)}</option>`).join('');
+  const productList=()=>{try{return typeof getProducts==='function'?getProducts():JSON.parse(localStorage.getItem('nitaProducts')||'[]')}catch(e){return []}};
+  const priceOf=p=>Number((p&&p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price))?p.salePrice:p?.price||0);
+  const statusOf=p=>{try{return typeof productStatusValue==='function'?productStatusValue(p):String(p.status||'in-stock')}catch(e){return String(p.status||'in-stock')}};
+  const maxPrice=()=>Math.max(100,...productList().map(priceOf).filter(n=>Number.isFinite(n)&&n>0));
+  function formatPrice(n){try{if(typeof money==='function')return money(Number(n)||0)}catch(e){} return '$'+String(Number(n)||0)}
+  function rangeVals(){
+    const max=Number(document.getElementById('nitaPriceMaxRange')?.max||maxPrice());
+    let min=Number(document.getElementById('nitaPriceMinRange')?.value||0);
+    let high=Number(document.getElementById('nitaPriceMaxRange')?.value||max);
+    if(min>high){const tmp=min; min=high; high=tmp;}
+    return {min, max:high, limit:max};
+  }
+  function syncRangeUI(){
+    const a=document.getElementById('nitaPriceMinRange'), b=document.getElementById('nitaPriceMaxRange'), fill=document.getElementById('nitaPriceRangeFill'), label=document.getElementById('nitaPriceRangeLabel');
+    if(!a||!b)return;
+    let min=Number(a.value||0), high=Number(b.value||b.max||0), lim=Number(b.max||1);
+    if(min>high){ if(document.activeElement===a) b.value=min; else a.value=high; min=Number(a.value); high=Number(b.value); }
+    if(fill){ fill.style.left=(min/lim*100)+'%'; fill.style.right=(100-(high/lim*100))+'%'; }
+    if(label) label.textContent=formatPrice(min)+' – '+formatPrice(high);
+  }
+  function readFilters(){const r=rangeVals(); return {
+    cat:document.getElementById('nitaFilterCategory')?.value||new URL(location.href).searchParams.get('cat')||'All',
+    color:document.getElementById('nitaFilterColor')?.value||'All',
+    material:document.getElementById('nitaFilterMaterial')?.value||'All',
+    size:document.getElementById('nitaFilterSize')?.value||'All',
+    min:r.min,
+    max:r.max,
+    priceLimit:r.limit
+  };}
+  function filterProduct(p,f){
+    if(!p)return false; if(statusOf(p)==='hidden')return false;
+    if(f.cat!=='All' && norm(p.category)!==norm(f.cat))return false;
+    if(f.color!=='All'){
+      const cws=Array.isArray(p.colorways)?p.colorways.map(c=>norm(c.color||c.name)):[];
+      if(!norm(p.color).includes(norm(f.color)) && !cws.includes(norm(f.color)))return false;
+    }
+    if(f.material!=='All' && !norm(p.material||p.productMaterial).includes(norm(f.material)))return false;
+    if(f.size!=='All'){
+      const sizes=Array.isArray(p.sizes)?p.sizes.map(norm):[];
+      if(!sizes.includes(norm(f.size)))return false;
+    }
+    const pr=priceOf(p); if(pr<f.min)return false; if(f.max && pr>f.max)return false; return true;
+  }
+  window.nitaEnsureShopFilters=function(){
+    if(!document.getElementById('products'))return;
+    const tools=document.querySelector('.shop-tools'); if(!tools)return;
+    const oldSelect=tools.querySelector('select#filter'); if(oldSelect)oldSelect.style.display='none';
+    let shell=document.getElementById('nitaFilterShell');
+    if(shell && shell.dataset.priceRangeFinal==='1'){syncRangeUI();return;}
+    if(shell)shell.remove();
+    const currentCat=(new URL(location.href).searchParams.get('cat')||oldSelect?.value||'All');
+    const limit=Math.ceil(maxPrice()/10)*10;
+    tools.insertAdjacentHTML('afterend',`
+      <section id="nitaFilterShell" class="nita-filter-shell nita-filter-shell-pro nita-filter-range-final" data-price-range-final="1">
+        <div class="nita-filter-bar-pro">
+          <button type="button" class="nita-filter-toggle-pro" onclick="nitaToggleShopFilters()" aria-expanded="false">Filters <span>+</span></button>
+          <div class="nita-sort-wrap">
+            <button type="button" class="nita-sort-toggle nita-sort-toggle-pro" onclick="nitaToggleSortMenu()">Sort by</button>
+            <div class="nita-sort-menu" id="nitaSortMenu">
+              <button type="button" data-sort="new">New arrivals</button>
+              <button type="button" data-sort="low">Price (low-high)</button>
+              <button type="button" data-sort="high">Price (high-low)</button>
+            </div>
+          </div>
+        </div>
+        <div class="nita-filter-panel-pro" id="nitaFilterPanel">
+          <div class="nita-filter-field"><label>Category</label><select id="nitaFilterCategory">${opts(CATEGORIES,currentCat)}</select></div>
+          <div class="nita-filter-field"><label>Color</label><select id="nitaFilterColor">${opts(COLORS,'All')}</select></div>
+          <div class="nita-filter-field"><label>Material</label><select id="nitaFilterMaterial">${opts(MATERIALS,'All')}</select></div>
+          <div class="nita-filter-field"><label>Size</label><select id="nitaFilterSize">${opts(SIZES,'All')}</select></div>
+          <div class="nita-filter-field nita-price-range-field">
+            <div class="nita-price-range-head"><label>Price range</label><span id="nitaPriceRangeLabel">${formatPrice(0)} – ${formatPrice(limit)}</span></div>
+            <div class="nita-price-slider" aria-label="Price range selector">
+              <div class="nita-price-track"></div><div class="nita-price-fill" id="nitaPriceRangeFill"></div>
+              <input id="nitaPriceMinRange" type="range" min="0" max="${limit}" step="1" value="0" aria-label="Minimum price">
+              <input id="nitaPriceMaxRange" type="range" min="0" max="${limit}" step="1" value="${limit}" aria-label="Maximum price">
+            </div>
+          </div>
+          <button type="button" class="nita-clear-filters-pro" onclick="nitaClearShopFilters()">Clear</button>
+        </div>
+      </section>`);
+    ['nitaFilterCategory','nitaFilterColor','nitaFilterMaterial','nitaFilterSize'].forEach(id=>document.getElementById(id)?.addEventListener('change',()=>window.shopPage()));
+    ['nitaPriceMinRange','nitaPriceMaxRange'].forEach(id=>document.getElementById(id)?.addEventListener('input',()=>{syncRangeUI(); window.shopPage();}));
+    document.getElementById('nitaSortMenu')?.addEventListener('click',function(e){const b=e.target.closest('[data-sort]'); if(!b)return; window.nitaShopSort=b.dataset.sort; this.classList.remove('open'); window.shopPage();});
+    syncRangeUI();
+  };
+  window.nitaToggleShopFilters=function(){
+    const panel=document.getElementById('nitaFilterPanel'); const btn=document.querySelector('.nita-filter-toggle-pro'); if(!panel)return;
+    const open=!panel.classList.contains('open'); panel.classList.toggle('open',open); if(btn){btn.classList.toggle('open',open); btn.setAttribute('aria-expanded',String(open)); const s=btn.querySelector('span'); if(s)s.textContent=open?'−':'+';} syncRangeUI();
+  };
+  window.nitaToggleSortMenu=function(){document.getElementById('nitaSortMenu')?.classList.toggle('open');};
+  window.nitaClearShopFilters=function(){['nitaFilterCategory','nitaFilterColor','nitaFilterMaterial','nitaFilterSize'].forEach(id=>{const e=document.getElementById(id); if(e)e.value='All'}); const max=Number(document.getElementById('nitaPriceMaxRange')?.max||maxPrice()); const a=document.getElementById('nitaPriceMinRange'), b=document.getElementById('nitaPriceMaxRange'); if(a)a.value=0; if(b)b.value=max; syncRangeUI(); window.nitaShopSort='new'; history.replaceState(null,'','shop.html'); window.shopPage();};
+  window.shopPage=function(){
+    window.nitaEnsureShopFilters(); const f=readFilters(); let arr=productList().filter(p=>filterProduct(p,f));
+    const sort=window.nitaShopSort||'new';
+    if(sort==='low')arr.sort((a,b)=>priceOf(a)-priceOf(b)); else if(sort==='high')arr.sort((a,b)=>priceOf(b)-priceOf(a)); else arr.sort((a,b)=>String(b.id||'').localeCompare(String(a.id||'')));
+    const grid=document.getElementById('products'); if(grid)grid.innerHTML=arr.length?arr.map(p=>window.productCard?window.productCard(p):'').join(''):'<div class="nita-empty-products"><h3>No products found</h3><p class="muted">Try changing the filters.</p></div>';
+  };
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{window.nitaEnsureShopFilters(); if(document.getElementById('products'))window.shopPage();},300));
+  window.addEventListener('load',()=>setTimeout(()=>{window.nitaEnsureShopFilters(); if(document.getElementById('products'))window.shopPage();},550));
+})();
