@@ -10350,105 +10350,359 @@ placeOrder=async function(){
   new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
 })();
 
-/* === NITA STYLE EDIT LISTED PRODUCT PHOTO MANAGER 20260615-EDITPHOTOS ===
-   Adds a real photo workflow inside Edit Product:
-   - existing listed-product photos can be moved left/right
-   - existing photos can be removed
-   - new filenames/paths can be added
-   - uploaded files append to the current edit gallery
-   - Save Product Changes saves the exact visible order
-*/
+/* === NITA EMERGENCY ADMIN REPAIR: STABLE ADD + EDIT PHOTO MANAGER 20260615-1245 === */
 (function(){
   'use strict';
-  const EDIT_VERSION='edit-listed-photos-20260615';
-  window.nitaEditPhotoState = window.nitaEditPhotoState || {};
-  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-  function cssEsc(v){try{return CSS.escape(String(v));}catch(e){return String(v).replace(/[^a-zA-Z0-9_-]/g,'\\$&');}}
-  function readJSON(k,f){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f));}catch(e){return f;}}
-  function products(){try{return typeof getProducts==='function'?getProducts():readJSON('nitaProducts',[]);}catch(e){return readJSON('nitaProducts',[]);}}
-  function productById(id){return products().find(p=>String(p.id)===String(id));}
-  function unique(arr){const out=[];(Array.isArray(arr)?arr:[]).forEach(v=>{v=String(v||'').trim(); if(v && !out.some(x=>x.toLowerCase()===v.toLowerCase())) out.push(v);});return out;}
+  const VERSION='admin-repair-20260615-1245';
+  const CATEGORIES=['Dresses','Skirts','T-Shirts','Tops','Pants','Bags','Scarves','Overalls'];
+  const COLLECTIONS=['New Arrivals','Everyday Edit','Summer Pieces'];
+  const MATERIALS=['Leather','Cotton','Linen','Denim','Knit','Silk','Satin','Polyester','Viscose','Wool','Mixed'];
+  const COLORS=['Black','White','Ivory','Cream','Beige','Taupe','Grey','Silver','Gold','Brown','Cognac','Camel','Navy','Blue','Denim Blue','Red','Burgundy','Pink','Green','Olive','Khaki','Yellow','Orange','Purple','Print / Pattern','Multi-color'];
+  const SIZES=['XS','S','M','L','XL','One Size'];
+  const $=(id)=>document.getElementById(id);
+  function esc(v){return String(v==null?'':v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+  function readJSON(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d));}catch(e){return d;}}
+  function writeJSON(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function products(){try{return (typeof window.getProducts==='function'?window.getProducts():readJSON('nitaProducts',[]))||[];}catch(e){return readJSON('nitaProducts',[])||[];}}
+  async function saveProductsStable(ps){
+    writeJSON('nitaProducts', ps);
+    try{ if(typeof window.saveSharedKeyNow==='function') await window.saveSharedKeyNow('nitaProducts', ps); }
+    catch(e){ console.warn('Nita global product save skipped; local save kept.', e); }
+    try{ window.dispatchEvent(new CustomEvent('nita-products-updated')); }catch(e){}
+    return true;
+  }
+  function money(v){return '$'+Number(v||0).toFixed(2);}
+  function statusValue(p){return String(p?.status||p?.availability||'in-stock').toLowerCase().replace(/\s+/g,'-');}
+  function statusLabel(s){s=String(s||'in-stock'); return s==='coming-soon'?'Coming soon':s==='out-of-stock'?'Out of stock':'In stock';}
+  function cleanLines(v){return String(v||'').split(/[\n,]+/).map(x=>x.trim()).filter(Boolean);}
+  function normalizePhotoPath(v){
+    v=String(v||'').trim(); if(!v)return '';
+    if(/^data:image\//i.test(v)||/^https?:\/\//i.test(v)||v.startsWith('/')) return v;
+    v=v.replace(/^\.\//,'').replace(/^assets\/products\//i,'');
+    return 'assets/products/'+v;
+  }
+  function photoListFromText(id){return cleanLines(($(id)||{}).value||'').map(normalizePhotoPath).filter(Boolean);}
+  function photoLabel(src){return String(src||'').replace(/^assets\/products\//,'');}
+  function syncText(id,arr){const el=$(id); if(el) el.value=(arr||[]).map(photoLabel).join('\n');}
+  function imageHTML(src){return `<img src="${esc(src)}?v=${VERSION}-${Date.now()}" onerror="this.closest('.nita-admin-photo-card')?.classList.add('missing')" alt="Product photo">`;}
+  function renderPhotoManager(textareaId,previewId){
+    const box=$(previewId); if(!box)return;
+    const arr=photoListFromText(textareaId);
+    box.innerHTML=arr.length?arr.map((src,i)=>`<div class="nita-admin-photo-card" data-photo-index="${i}">${imageHTML(src)}<div class="nita-admin-photo-meta"><b>Photo ${i+1}</b><span>${esc(photoLabel(src))}</span></div><div class="nita-admin-photo-actions"><button type="button" onclick="nitaMovePhoto('${textareaId}','${previewId}',${i},-1)">←</button><button type="button" onclick="nitaMovePhoto('${textareaId}','${previewId}',${i},1)">→</button><button type="button" onclick="nitaRemovePhoto('${textareaId}','${previewId}',${i})">×</button></div></div>`).join(''):`<p class="muted">Write image file names, then click Preview / Order Photos.</p>`;
+  }
+  window.nitaPreviewPhotoManager=function(textareaId,previewId){renderPhotoManager(textareaId,previewId);};
+  window.nitaMovePhoto=function(textareaId,previewId,index,dir){
+    const arr=photoListFromText(textareaId); const j=index+dir; if(j<0||j>=arr.length)return;
+    const tmp=arr[index]; arr[index]=arr[j]; arr[j]=tmp; syncText(textareaId,arr); renderPhotoManager(textareaId,previewId);
+  };
+  window.nitaRemovePhoto=function(textareaId,previewId,index){
+    const arr=photoListFromText(textareaId); arr.splice(index,1); syncText(textareaId,arr); renderPhotoManager(textareaId,previewId);
+  };
+  function options(vals,current){return vals.map(v=>`<option value="${esc(v)}" ${String(v).toLowerCase()===String(current||'').toLowerCase()?'selected':''}>${esc(v)}</option>`).join('');}
+  function checkboxes(vals,selected,name){selected=(selected||[]).map(String);return vals.map(v=>`<label class="nita-check"><input type="checkbox" name="${name}" value="${esc(v)}" ${selected.includes(v)?'checked':''}> ${esc(v)}</label>`).join('');}
+  function safePhotos(p){let arr=[]; if(Array.isArray(p?.photos))arr=p.photos; else if(p?.img && !String(p.img).startsWith('linear-gradient'))arr=[p.img]; return arr.map(normalizePhotoPath).filter(Boolean);}
+  function productImg(p){const ph=safePhotos(p); return ph[0]||p?.img||'linear-gradient(135deg,#fff,#eee)';}
+  function photoBg(src){return String(src).startsWith('linear-gradient')?`background:${src}`:`background-image:url('${String(src).replace(/'/g,"\\'")}')`;}
+  function addProductForm(){
+    return `<div class="admin-form nita-stable-admin-form" data-add-product-form="true">
+      <div class="grid-2"><div><label>Product name</label><input id="pname" class="field" placeholder="Example: The Carmine Bag"></div><div><label>Price</label><input id="pprice" class="field" type="number" min="0" step="0.01" placeholder="60"></div></div>
+      <div class="grid-2"><div><label>Sale price / price drop</label><input id="psale" class="field" type="number" min="0" step="0.01" placeholder="Optional"></div><div><label>Quantity</label><input id="pquantity" class="field" type="number" min="0" step="1" placeholder="1"></div></div>
+      <div class="grid-3"><div><label>Category</label><select id="pcat" class="field">${options(CATEGORIES,'Bags')}</select></div><div><label>Collection</label><select id="pcollection" class="field">${options(COLLECTIONS,'New Arrivals')}</select></div><div><label>Status</label><select id="pstatus" class="field"><option value="in-stock">In stock</option><option value="coming-soon">Coming soon</option><option value="out-of-stock">Out of stock</option></select></div></div>
+      <div class="grid-2"><div><label>Material</label><select id="pmaterial" class="field">${options(MATERIALS,'Leather')}</select></div><div><label>Main color</label><select id="pcolor" class="field">${options(COLORS,'Red')}</select></div></div>
+      <div><label>Sizes</label><div class="nita-check-grid" id="psizeChecks">${checkboxes(SIZES,['One Size'],'psize')}</div></div>
+      <div><label>Description</label><textarea id="pdesc" class="field" rows="4" maxlength="500" placeholder="Short professional product description"></textarea></div>
+      <div class="nita-admin-photo-manager"><label>Product photo file names</label><p class="muted">Put original photos inside <b>assets/products</b>, then write the file names here in the exact order you want. The first photo becomes the main photo.</p><textarea id="pPhotoPaths" class="field" rows="5" placeholder="red-bag-1.jpg\nred-bag-2.jpg\nred-bag-3.jpg"></textarea><button type="button" class="btn light" onclick="nitaPreviewPhotoManager('pPhotoPaths','photoPreview')">PREVIEW / ORDER PHOTOS</button><div id="photoPreview" class="nita-admin-photo-grid"></div></div>
+    </div>`;
+  }
+  function productEditor(p){
+    const id=String(p.id); const tid='editPhotoPaths_'+id.replace(/[^a-zA-Z0-9_-]/g,'_'); const pid='editPhotoPreview_'+id.replace(/[^a-zA-Z0-9_-]/g,'_');
+    return `<div class="nita-edit-product-panel" id="editorPanel_${esc(id)}">
+      <div class="grid-2"><div><label>Name</label><input class="field" data-edit="name" value="${esc(p.name||'')}"></div><div><label>Price</label><input class="field" type="number" data-edit="price" value="${esc(p.price||0)}"></div></div>
+      <div class="grid-2"><div><label>Sale price</label><input class="field" type="number" data-edit="salePrice" value="${esc(p.salePrice||'')}"></div><div><label>Quantity</label><input class="field" type="number" data-edit="quantity" value="${esc(p.quantity||0)}"></div></div>
+      <div class="grid-3"><div><label>Category</label><select class="field" data-edit="category">${options(CATEGORIES,p.category)}</select></div><div><label>Collection</label><select class="field" data-edit="collection">${options(COLLECTIONS,p.collection)}</select></div><div><label>Status</label><select class="field" data-edit="status"><option value="in-stock" ${statusValue(p)==='in-stock'?'selected':''}>In stock</option><option value="coming-soon" ${statusValue(p)==='coming-soon'?'selected':''}>Coming soon</option><option value="out-of-stock" ${statusValue(p)==='out-of-stock'?'selected':''}>Out of stock</option></select></div></div>
+      <div class="grid-2"><div><label>Material</label><select class="field" data-edit="material">${options(MATERIALS,p.material)}</select></div><div><label>Main color</label><select class="field" data-edit="color">${options(COLORS,p.color||p.colors?.[0])}</select></div></div>
+      <div><label>Sizes</label><div class="nita-check-grid">${checkboxes(SIZES,p.sizes&&p.sizes.length?p.sizes:['One Size'],'editSize_'+esc(id))}</div></div>
+      <div><label>Description</label><textarea class="field" data-edit="desc" rows="4" maxlength="500">${esc(p.desc||'')}</textarea></div>
+      <div class="nita-admin-photo-manager"><label>Edit product photos</label><p class="muted">Add, remove, or move photos. The first photo saved here becomes the main product photo.</p><textarea id="${esc(tid)}" class="field" rows="5">${safePhotos(p).map(photoLabel).join('\n')}</textarea><button type="button" class="btn light" onclick="nitaPreviewPhotoManager('${tid}','${pid}')">PREVIEW / ORDER PHOTOS</button><div id="${esc(pid)}" class="nita-admin-photo-grid"></div></div>
+      <div class="admin-actions"><button type="button" class="btn" onclick="nitaSaveEditedProduct('${esc(id)}','${tid}')">SAVE PRODUCT CHANGES</button><button type="button" class="btn light" onclick="nitaCancelEditProduct('${esc(id)}')">CANCEL</button></div>
+    </div>`;
+  }
+  function adminProductsHTML(){
+    const ps=products().filter(Boolean);
+    if(!ps.length)return '<p class="muted">No products listed yet.</p>';
+    return ps.map(p=>{const img=productImg(p); const id=String(p.id); return `<article class="admin-product-card nita-stable-product-card" data-product-id="${esc(id)}"><div class="admin-product-top"><div class="admin-product-photo" style="${photoBg(img)};background-size:cover;background-position:center"></div><div class="admin-product-info"><h3>${esc(p.name||'Untitled product')}</h3><p class="muted">${esc(p.category||'')} · ${money(p.price||0)} ${p.salePrice?`· Sale ${money(p.salePrice)}`:''} · ${safePhotos(p).length} photo${safePhotos(p).length===1?'':'s'}</p><p class="stock-status ${esc(statusValue(p))}"><span class="stock-dot"></span>${statusLabel(statusValue(p))}</p></div><div class="admin-actions"><button type="button" class="btn light" onclick="nitaOpenEditProduct('${esc(id)}')">EDIT PRODUCT</button><button type="button" class="btn danger" onclick="nitaRemoveProductStable('${esc(id)}')">REMOVE</button></div></div><div class="product-editor nita-edit-holder" id="editor-${esc(id)}" style="display:none"></div></article>`;}).join('');
+  }
+  function ordersHTML(){const os=readJSON('nitaOrders',[]); return os.length?os.map((o,i)=>`<article class="admin-list-card"><div><h3>${esc(o.id||'Order')}</h3><p class="muted">${esc(o.customer||'-')} · ${esc(o.email||'')} · ${esc(o.phone||'')}</p><p><b>${money(o.total||0)}</b> · ${esc(o.status||'Order submitted')}</p></div><select class="field" onchange="nitaUpdateOrderStatus(${i},this.value)"><option>${esc(o.status||'Order submitted')}</option><option>Confirmed</option><option>Preparing</option><option>Out for delivery</option><option>Delivered</option><option>Cancelled</option></select></article>`).join(''):'<p class="muted">No orders yet.</p>';}
+  window.nitaUpdateOrderStatus=function(i,status){const os=readJSON('nitaOrders',[]); if(os[i]){os[i].status=status; writeJSON('nitaOrders',os); try{window.saveSharedKeyNow&&window.saveSharedKeyNow('nitaOrders',os)}catch(e){}}};
+  function customersHTML(){const us=readJSON('nitaUsersByEmail',{}); const keys=Object.keys(us||{}); return keys.length?keys.map(k=>`<article class="admin-list-card"><div><h3>${esc(us[k].firstName||us[k].name||'Customer')}</h3><p class="muted">${esc(k)} · ${esc(us[k].phone||'')}</p></div></article>`).join(''):'<p class="muted">No signed-up customers yet.</p>';}
+  function couponsHTML(){return '<div class="coupon-builder"><input id="couponCode" class="field" placeholder="Code"><input id="couponPercent" class="field" type="number" placeholder="Discount %"><button class="btn" onclick="addCouponAdmin&&addCouponAdmin()">CREATE COUPON</button></div><div id="adminCoupons" class="coupon-list"></div>';}
+  window.showAdminSection=function(section){document.querySelectorAll('.admin-section-page').forEach(x=>x.classList.toggle('active',x.dataset.section===section));document.querySelectorAll('.admin-nav-button').forEach(x=>x.classList.toggle('active',x.dataset.section===section));};
+  window.renderAdmin=async function(){
+    try{ if(typeof window.protectAdmin==='function' && !window.protectAdmin())return; }catch(e){}
+    try{ if(typeof window.loadSharedStore==='function') await window.loadSharedStore(); }catch(e){console.warn('Admin store load skipped',e);}
+    const page=document.querySelector('.admin-page'); if(!page)return;
+    const ps=products(); const os=readJSON('nitaOrders',[]); const us=readJSON('nitaUsersByEmail',{});
+    page.innerHTML=`<div class="admin-toolbar admin-hero"><div><p class="eyebrow">Nita Style Backend</p><h1>Admin Dashboard</h1><p class="muted">Manage products, orders, customers, and coupons.</p></div><a class="btn" href="shop.html">VIEW STORE</a></div><div class="admin-overview-grid"><button class="admin-stat-card" onclick="showAdminSection('orders')"><p>Orders</p><h3>${os.length}</h3></button><button class="admin-stat-card" onclick="showAdminSection('customers')"><p>Customers</p><h3>${Object.keys(us||{}).length}</h3></button><button class="admin-stat-card" onclick="showAdminSection('products')"><p>Products</p><h3>${ps.length}</h3></button></div><div class="admin-grid"><aside class="admin-side"><h3>Management</h3><button class="admin-nav-button active" data-section="orders" onclick="showAdminSection('orders')">Orders</button><button class="admin-nav-button" data-section="customers" onclick="showAdminSection('customers')">Signed-up customers</button><button class="admin-nav-button" data-section="products" onclick="showAdminSection('products')">Edit listed products</button><button class="admin-nav-button" data-section="add" onclick="showAdminSection('add')">Add product</button><button class="admin-nav-button" data-section="coupons" onclick="showAdminSection('coupons')">Coupon codes</button></aside><section class="admin-layout"><div class="card admin-section-page active" data-section="orders"><div class="admin-toolbar"><h2>Orders</h2></div>${ordersHTML()}</div><div class="card admin-section-page" data-section="customers"><div class="admin-toolbar"><h2>Signed-up customers</h2></div>${customersHTML()}</div><div class="card admin-section-page" data-section="products"><div class="admin-toolbar"><h2>Edit listed products</h2></div><div id="adminProducts">${adminProductsHTML()}</div></div><div class="card admin-section-page" data-section="add"><div class="admin-toolbar"><h2>Add product</h2><span class="pill on">New listing</span></div>${addProductForm()}<button type="button" class="btn" onclick="addProductAdmin()">ADD PRODUCT TO WEBSITE</button></div><div class="card admin-section-page" data-section="coupons"><div class="admin-toolbar"><h2>Coupon codes</h2></div>${couponsHTML()}</div></section></div>`;
+    try{ if(typeof window.renderCouponsAdmin==='function') window.renderCouponsAdmin(); }catch(e){}
+  };
+  window.addProductAdmin=async function(){
+    const name=String($('pname')?.value||'').trim(); const price=Number($('pprice')?.value||0);
+    if(!name){alert('Please enter a product name.'); return;} if(!price){alert('Please enter a product price.'); return;}
+    const photos=photoListFromText('pPhotoPaths');
+    const sizes=Array.from(document.querySelectorAll('input[name="psize"]:checked')).map(x=>x.value); if(!sizes.length)sizes.push('One Size');
+    const product={id:'p'+Date.now(),name,price,salePrice:Number($('psale')?.value||0)||'',quantity:Number($('pquantity')?.value||0),category:$('pcat')?.value||'Bags',collection:$('pcollection')?.value||'New Arrivals',material:$('pmaterial')?.value||'',color:$('pcolor')?.value||'',colors:[$('pcolor')?.value||''].filter(Boolean),sizes,status:$('pstatus')?.value||'in-stock',desc:String($('pdesc')?.value||'').trim(),photos,img:photos[0]||'linear-gradient(135deg,#fff,#eee)'};
+    const ps=products(); ps.push(product); await saveProductsStable(ps);
+    ['pname','pprice','psale','pquantity','pdesc','pPhotoPaths'].forEach(id=>{const el=$(id); if(el)el.value='';}); const prev=$('photoPreview'); if(prev)prev.innerHTML='';
+    await window.renderAdmin(); window.showAdminSection('products'); try{window.toast&&window.toast('Product added.')}catch(e){}
+  };
+  window.nitaOpenEditProduct=function(id){
+    const p=products().find(x=>String(x.id)===String(id)); const holder=$('editor-'+id); if(!p||!holder)return;
+    const isOpen=holder.style.display!=='none'; document.querySelectorAll('.nita-edit-holder').forEach(x=>{x.style.display='none';x.innerHTML='';}); if(isOpen)return;
+    holder.innerHTML=productEditor(p); holder.style.display='block'; const tid='editPhotoPaths_'+id.replace(/[^a-zA-Z0-9_-]/g,'_'); const pid='editPhotoPreview_'+id.replace(/[^a-zA-Z0-9_-]/g,'_'); renderPhotoManager(tid,pid);
+  };
+  window.nitaCancelEditProduct=function(id){const h=$('editor-'+id); if(h){h.style.display='none'; h.innerHTML='';}};
+  window.nitaSaveEditedProduct=async function(id,textareaId){
+    const ps=products(); const p=ps.find(x=>String(x.id)===String(id)); const root=$('editor-'+id); if(!p||!root)return;
+    const get=(k)=>root.querySelector(`[data-edit="${k}"]`);
+    p.name=String(get('name')?.value||p.name||'').trim(); p.price=Number(get('price')?.value||p.price||0); p.salePrice=Number(get('salePrice')?.value||0)||''; p.quantity=Number(get('quantity')?.value||0);
+    p.category=get('category')?.value||p.category; p.collection=get('collection')?.value||p.collection; p.status=get('status')?.value||p.status||'in-stock'; p.material=get('material')?.value||p.material; p.color=get('color')?.value||p.color; p.colors=[p.color].filter(Boolean); p.desc=String(get('desc')?.value||'').trim();
+    p.sizes=Array.from(root.querySelectorAll('input[name^="editSize_"]:checked')).map(x=>x.value); if(!p.sizes.length)p.sizes=['One Size'];
+    p.photos=photoListFromText(textareaId); p.img=p.photos[0]||p.img||'linear-gradient(135deg,#fff,#eee)';
+    await saveProductsStable(ps); await window.renderAdmin(); window.showAdminSection('products'); try{window.toast&&window.toast('Product updated.')}catch(e){}
+  };
+  window.nitaRemoveProductStable=async function(id){if(!confirm('Remove this product?'))return; const ps=products().filter(p=>String(p.id)!==String(id)); await saveProductsStable(ps); await window.renderAdmin(); window.showAdminSection('products');};
+  window.addEventListener('load',function(){ if(location.pathname.endsWith('/admin.html')||location.pathname.endsWith('admin.html')) setTimeout(()=>{try{window.renderAdmin();}catch(e){console.error('Final admin repair failed',e);}},30); });
+})();
+
+/* === NITA FINAL ADMIN + PRODUCT SMOOTH REPAIR 20260615-1315 ===
+   Fixes slow admin previews, photo order buttons, add-product save reliability,
+   and product detail flicker by using stable image URLs and one final render pass. */
+(function(){
+  'use strict';
+  var VERSION='stable-admin-product-20260615-1315';
+  function $(id){ return document.getElementById(id); }
+  function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function safe(v){ return String(v==null?'':v).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' '); }
+  function money(v){ return '$'+Number(v||0).toFixed(2); }
+  function readJSON(k,d){ try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d));}catch(e){return d;} }
+  function writeJSON(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
+  function products(){ try{return (typeof window.getProducts==='function'?window.getProducts():readJSON('nitaProducts',[]))||[];}catch(e){return readJSON('nitaProducts',[])||[];} }
+  function cleanLines(v){ return String(v||'').split(/[\n,]+/).map(function(x){return x.trim();}).filter(Boolean); }
   function normalizePhotoPath(v){
     v=String(v||'').trim(); if(!v) return '';
-    const m=v.match(/url\((['"]?)(.*?)\1\)/i); if(m) v=m[2].trim();
-    if(/^data:image\//i.test(v) || /^https?:\/\//i.test(v) || v.startsWith('/')) return v;
-    if(/^assets\/products\//i.test(v)) return '/'+v.replace(/^\/+/, '');
-    if(/^assets\//i.test(v)) return '/'+v.replace(/^\/+/, '');
-    if(/\.(png|jpe?g|webp|gif|avif|svg)$/i.test(v)) return '/assets/products/'+v.replace(/^\/+/, '');
-    return v;
+    if(/^data:image\//i.test(v)||/^https?:\/\//i.test(v)||v.charAt(0)==='/') return v;
+    v=v.replace(/^\.\//,'').replace(/^assets\/products\//i,'').replace(/^\/+/,'');
+    return 'assets/products/'+v;
   }
-  function photoList(p){let arr=[]; if(Array.isArray(p?.photos)) arr=arr.concat(p.photos); if(Array.isArray(p?.images)) arr=arr.concat(p.images); if(p?.img) arr.unshift(p.img); if(p?.image) arr.unshift(p.image); return unique(arr.map(normalizePhotoPath));}
-  function state(id){
-    id=String(id);
-    if(!window.nitaEditPhotoState[id]){
-      const p=productById(id)||{};
-      window.nitaEditPhotoState[id]={photos:photoList(p), ready:true};
-    }
-    return window.nitaEditPhotoState[id];
+  function labelFromPhoto(src){ return String(src||'').replace(/^assets\/products\//i,''); }
+  function readPhotoLines(textareaId){ var el=$(textareaId); return cleanLines(el&&el.value).map(normalizePhotoPath).filter(Boolean); }
+  function writePhotoLines(textareaId,arr){ var el=$(textareaId); if(el) el.value=(arr||[]).map(labelFromPhoto).join('\n'); }
+  function photoArray(p){ var a=[]; if(p&&Array.isArray(p.photos)) a=a.concat(p.photos); if(p&&p.img && !String(p.img).startsWith('linear-gradient')) a.unshift(p.img); var seen={}; return a.map(normalizePhotoPath).filter(function(x){ if(!x||seen[x]) return false; seen[x]=1; return true; }); }
+  function stockValue(p){ return String((p&&p.status)||'in-stock').toLowerCase().replace(/\s+/g,'-'); }
+  function stockLabel(s){ s=String(s||'in-stock'); return s==='coming-soon'?'Coming soon':(s==='out-of-stock'||s==='sold-out')?'Out of stock':'In stock'; }
+  function stockHtml(p){ var s=stockValue(p); return '<span class="stock-status '+esc(s)+'"><span class="stock-dot"></span><span>'+stockLabel(s)+'</span></span>'; }
+  function showNotice(msg,ok){ try{ if(window.toast) window.toast(msg); else if(window.nitaNotify) window.nitaNotify(msg, ok!==false, true); else alert(msg); }catch(e){ alert(msg); } }
+
+  // FAST photo manager: no Date.now cache buster on every render, so Safari does not reload all thumbnails when moving one photo.
+  function renderPhotoManager(textareaId,previewId){
+    var box=$(previewId); if(!box) return;
+    var arr=readPhotoLines(textareaId);
+    if(!arr.length){ box.innerHTML='<p class="muted">Write image file names, then click Preview / Order Photos.</p>'; return; }
+    box.innerHTML=arr.map(function(src,i){
+      return '<div class="nita-admin-photo-card" data-photo-index="'+i+'">'+
+        '<img src="'+esc(src)+'" alt="Product photo '+(i+1)+'" loading="lazy" decoding="async" draggable="false" onerror="this.closest(\'.nita-admin-photo-card\')?.classList.add(\'missing\')">'+
+        '<div class="nita-admin-photo-meta"><b>Photo '+(i+1)+'</b><span>'+esc(labelFromPhoto(src))+'</span></div>'+
+        '<div class="nita-admin-photo-actions">'+
+          '<button type="button" data-nita-move="-1" data-nita-index="'+i+'">←</button>'+
+          '<button type="button" data-nita-move="1" data-nita-index="'+i+'">→</button>'+
+          '<button type="button" data-nita-remove="1" data-nita-index="'+i+'">×</button>'+
+        '</div></div>';
+    }).join('');
+    box.dataset.textareaId=textareaId;
+    box.dataset.previewId=previewId;
   }
-  function imgHtml(src,alt){
-    src=normalizePhotoPath(src); const safe=esc(src);
-    if(!src) return '<div class="nita-edit-empty-img">No image</div>';
-    return '<img src="'+safe+(safe.includes('?')?'&':'?')+'v='+EDIT_VERSION+'-'+Date.now()+'" alt="'+esc(alt||'Product photo')+'" loading="eager">';
-  }
-  function render(id){
-    const root=document.getElementById('editor-'+cssEsc(id)); if(!root) return;
-    const s=state(id); s.photos=unique((s.photos||[]).map(normalizePhotoPath));
-    let mount=root.querySelector('.nita-edit-photo-manager');
-    const oldExisting=root.querySelector('.existing-photos');
-    if(!mount){
-      mount=document.createElement('div'); mount.className='nita-edit-photo-manager'; mount.dataset.productId=String(id);
-      const uploadZone=root.querySelector('.upload-zone');
-      if(oldExisting) oldExisting.insertAdjacentElement('afterend', mount);
-      else if(uploadZone) uploadZone.insertAdjacentElement('beforebegin', mount);
-      else root.appendChild(mount);
-    }
-    if(oldExisting) oldExisting.style.display='none';
-    root.querySelectorAll('.upload-zone p b').forEach(b=>{ if(/replace/i.test(b.textContent||'')) b.textContent='Add more photos'; });
-    root.querySelectorAll('.upload-zone .muted').forEach(m=>{ if(/replace|gallery/i.test(m.textContent||'')) m.textContent='Uploaded photos will be added to the editable gallery below.'; });
-    mount.innerHTML = '<div class="nita-edit-photo-head"><div><strong>Edit product photos</strong><p class="muted">Move photos, remove photos, or add new ones. The first photo becomes the main product image.</p></div><span class="nita-edit-photo-count">'+s.photos.length+' photo'+(s.photos.length===1?'':'s')+'</span></div>'+
-      '<div class="nita-edit-photo-grid">'+(s.photos.length?s.photos.map((u,i)=>'<div class="nita-edit-photo-card '+(i===0?'is-main':'')+'"><div class="nita-edit-photo-img">'+imgHtml(u,'Product photo '+(i+1))+'</div><div class="nita-edit-photo-meta"><span>'+(i===0?'Main photo':'Photo '+(i+1))+'</span><small>'+esc(String(u).replace(/^\/assets\/products\//,''))+'</small></div><div class="nita-edit-photo-actions"><button type="button" onclick="nitaMoveEditPhoto(\''+esc(String(id))+'\','+i+',-1)" '+(i===0?'disabled':'')+'>←</button><button type="button" onclick="nitaMoveEditPhoto(\''+esc(String(id))+'\','+i+',1)" '+(i===s.photos.length-1?'disabled':'')+'>→</button><button type="button" class="danger" onclick="nitaRemoveEditPhoto(\''+esc(String(id))+'\','+i+')">×</button></div></div>').join(''):'<div class="nita-edit-no-photos">No photos yet. Add photo filenames or upload images.</div>')+'</div>'+
-      '<div class="nita-edit-add-row"><label>Add photo filenames or paths</label><div class="nita-edit-add-inline"><input class="field nita-edit-add-input" placeholder="example: red-bag-4.jpg or assets/products/red-bag-4.jpg"><button type="button" class="btn light" onclick="nitaAddEditPhotoName(\''+esc(String(id))+'\')">ADD PHOTO</button></div><p class="muted">You can add one filename or several separated by commas.</p></div>'+
-      '<input type="hidden" class="nita-edit-photo-order" value="'+esc(s.photos.join('\n'))+'">';
-    const hidden=mount.querySelector('.nita-edit-photo-order'); if(hidden) hidden.value=s.photos.join('\n');
-  }
-  window.nitaRenderEditPhotoManager=render;
-  window.nitaMoveEditPhoto=function(id,i,dir){const s=state(id); i=Number(i); const j=i+Number(dir); if(j<0||j>=s.photos.length)return; const tmp=s.photos[i]; s.photos[i]=s.photos[j]; s.photos[j]=tmp; render(id);};
-  window.nitaRemoveEditPhoto=function(id,i){const s=state(id); s.photos.splice(Number(i),1); render(id);};
-  window.nitaAddEditPhotoName=function(id){const root=document.getElementById('editor-'+cssEsc(id)); const input=root?.querySelector('.nita-edit-add-input'); if(!input)return; const values=String(input.value||'').split(/[\n,]+/).map(normalizePhotoPath).filter(Boolean); if(!values.length)return; const s=state(id); s.photos=unique((s.photos||[]).concat(values)); input.value=''; render(id);};
-  function readFiles(files){return Promise.all(Array.from(files||[]).map(file=>new Promise(resolve=>{try{const r=new FileReader(); r.onload=e=>resolve(e.target.result||''); r.onerror=()=>resolve(''); r.readAsDataURL(file);}catch(e){resolve('');}}))).then(a=>a.filter(Boolean));}
-  const oldPreview=window.previewEditPhotos;
-  window.previewEditPhotos=function(e,id){
-    const files=e?.target?.files; if(!files || !files.length){ if(typeof oldPreview==='function') return oldPreview.apply(this,arguments); return; }
-    return readFiles(files).then(urls=>{const s=state(id); s.photos=unique((s.photos||[]).concat(urls)); render(id); if(e&&e.target)e.target.value='';});
+  window.nitaPreviewPhotoManager=function(textareaId,previewId){ renderPhotoManager(textareaId,previewId); };
+  window.nitaMovePhoto=function(textareaId,previewId,index,dir){
+    var arr=readPhotoLines(textareaId); index=Number(index); dir=Number(dir); var j=index+dir;
+    if(j<0||j>=arr.length) return;
+    var t=arr[index]; arr[index]=arr[j]; arr[j]=t;
+    writePhotoLines(textareaId,arr); renderPhotoManager(textareaId,previewId);
   };
-  const oldSave=window.saveProductEditor;
-  window.saveProductEditor=async function(id){
-    const s=state(id); if(s && Array.isArray(s.photos)){
-      s.photos=unique(s.photos.map(normalizePhotoPath));
-      window.editingPhotoBuffers=window.editingPhotoBuffers||{};
-      window.editingMainPhotoIndex=window.editingMainPhotoIndex||{};
-      window.editingPhotoBuffers[id]=s.photos.slice();
-      window.editingMainPhotoIndex[id]=0;
-      const root=document.getElementById('editor-'+cssEsc(id)); if(root) root.dataset.mainIndex='0';
+  window.nitaRemovePhoto=function(textareaId,previewId,index){
+    var arr=readPhotoLines(textareaId); arr.splice(Number(index),1);
+    writePhotoLines(textareaId,arr); renderPhotoManager(textareaId,previewId);
+  };
+  document.addEventListener('click',function(e){
+    var btn=e.target.closest('[data-nita-move],[data-nita-remove]'); if(!btn) return;
+    var box=btn.closest('.nita-admin-photo-grid'); if(!box) return;
+    e.preventDefault(); e.stopPropagation();
+    var tid=box.dataset.textareaId; var pid=box.dataset.previewId; var i=Number(btn.dataset.nitaIndex||0);
+    if(btn.dataset.nitaMove) window.nitaMovePhoto(tid,pid,i,Number(btn.dataset.nitaMove));
+    else window.nitaRemovePhoto(tid,pid,i);
+  },true);
+
+  // Compatibility for old buttons still in cached markup.
+  window.previewAssetProductPhotos=function(){ renderPhotoManager('pPhotoPaths','photoPreview'); };
+
+  async function saveProductsFinal(list){
+    var clean=(Array.isArray(list)?list:[]).filter(Boolean);
+    // Use the website's strict cloud save when available. If it fails, DO NOT clear the form.
+    if(typeof window.saveProducts==='function'){
+      var ok=await window.saveProducts(clean);
+      if(ok===false) return false;
+      return true;
     }
-    let result;
-    if(typeof oldSave==='function') result=await oldSave.apply(this,arguments);
+    writeJSON('nitaProducts',clean);
+    try{ if(typeof window.nitaSaveKeyStrict==='function') await window.nitaSaveKeyStrict('nitaProducts',clean); }catch(e){ console.warn('Cloud save skipped',e); }
+    return true;
+  }
+  function readSizes(prefix){
+    var out=Array.from(document.querySelectorAll('input[name="'+prefix+'"]:checked')).map(function(x){return x.value;});
+    return out.length?out:['One Size'];
+  }
+
+  // FINAL add product: validates, saves remotely, and only clears after a confirmed save.
+  window.addProductAdmin=async function(){
+    var addBtn=document.querySelector('button[onclick="addProductAdmin()"], button[onclick="window.addProductAdmin()"]');
+    var oldText=addBtn&&addBtn.textContent;
     try{
-      const ps=products(); const p=ps.find(x=>String(x.id)===String(id));
-      if(p && s && s.photos && s.photos.length){p.photos=s.photos.slice(); p.mainPhotoIndex=0; p.img=p.photos[0]; if(typeof saveProducts==='function') await saveProducts(ps);}
-    }catch(e){console.warn('Edit photo save verification skipped',e);}
-    delete window.nitaEditPhotoState[String(id)];
-    setTimeout(()=>{ if(typeof renderAdmin==='function') renderAdmin(); },250);
-    return result;
+      var name=String(($('pname')||{}).value||'').trim();
+      var price=Number(($('pprice')||{}).value||0);
+      if(!name){ alert('Please enter a product name.'); return; }
+      if(!price){ alert('Please enter a product price.'); return; }
+      if(addBtn){ addBtn.disabled=true; addBtn.textContent='SAVING...'; }
+      var photos=readPhotoLines('pPhotoPaths');
+      var color=($('pcolor')||{}).value||'';
+      var product={
+        id:'p'+Date.now(),
+        name:name,
+        price:price,
+        salePrice:Number(($('psale')||{}).value||0)||'',
+        quantity:Number(($('pquantity')||{}).value||0),
+        category:($('pcat')||{}).value||'Bags',
+        collection:($('pcollection')||{}).value||'New Arrivals',
+        material:($('pmaterial')||{}).value||'',
+        color:color,
+        colors:color?[color]:[],
+        sizes:readSizes('psize'),
+        status:($('pstatus')||{}).value||'in-stock',
+        desc:String(($('pdesc')||{}).value||'').trim(),
+        photos:photos,
+        img:photos[0]||'linear-gradient(135deg,#fff,#eee)'
+      };
+      var list=products(); list.push(product);
+      var ok=await saveProductsFinal(list);
+      if(!ok){ showNotice('Product was not saved. The cloud database did not accept the save. Your form was kept so you do not lose the information.',false); return; }
+      ['pname','pprice','psale','pquantity','pdesc','pPhotoPaths'].forEach(function(id){ var el=$(id); if(el) el.value=''; });
+      var prev=$('photoPreview'); if(prev) prev.innerHTML='';
+      showNotice('Product added successfully.',true);
+      if(typeof window.renderAdmin==='function'){ await window.renderAdmin(); if(window.showAdminSection) window.showAdminSection('products'); }
+    }catch(err){ console.error('Add product failed:',err); showNotice('Product was not added: '+(err&&err.message?err.message:'unknown error'),false); }
+    finally{ if(addBtn){ addBtn.disabled=false; addBtn.textContent=oldText||'ADD PRODUCT TO WEBSITE'; } }
   };
-  function upgradeEditors(){document.querySelectorAll('.product-editor[id^="editor-"]').forEach(el=>{const id=(el.id||'').replace(/^editor-/,''); if(id) render(id);});}
-  const oldToggle=window.toggleProductEditor;
-  if(typeof oldToggle==='function') window.toggleProductEditor=function(){const r=oldToggle.apply(this,arguments); setTimeout(upgradeEditors,80); setTimeout(upgradeEditors,350); return r;};
-  const oldRenderAdmin=window.renderAdmin;
-  if(typeof oldRenderAdmin==='function') window.renderAdmin=async function(){const r=await oldRenderAdmin.apply(this,arguments); setTimeout(upgradeEditors,120); return r;};
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(upgradeEditors,600));
-  window.addEventListener('load',()=>setTimeout(upgradeEditors,900));
-  new MutationObserver(()=>{clearTimeout(window.__nitaEditPhotoTimer); window.__nitaEditPhotoTimer=setTimeout(upgradeEditors,120);}).observe(document.documentElement,{childList:true,subtree:true});
+
+  // Product page smooth render: render from local immediately, then never re-render the text/buttons unless product data changed.
+  function imgTag(src,cls,alt){ src=normalizePhotoPath(src); return src?'<img class="'+cls+'" src="'+esc(src)+'" alt="'+esc(alt||'Product image')+'" loading="eager" decoding="async" draggable="false">':'<span class="'+cls+' nita-image-placeholder"></span>'; }
+  function isUnavailable(p){ var q=(p&&p.quantity!==''&&p.quantity!=null)?Number(p.quantity):null; var s=stockValue(p); return s==='out-of-stock'||s==='sold-out'||q===0; }
+  function renderSizes(p){ var sizes=Array.isArray(p&&p.sizes)&&p.sizes.length?p.sizes:['One Size']; if(!window.selectedSize||sizes.indexOf(window.selectedSize)===-1) window.selectedSize=sizes[0]; return sizes.map(function(s){return '<button type="button" class="size nita-size-choice '+(s===window.selectedSize?'active':'')+'" onclick="nitaSelectSize(\''+safe(s)+'\')">'+esc(s)+'</button>';}).join(''); }
+  window.nitaSelectSize=function(s){ window.selectedSize=s; document.querySelectorAll('.nita-size-choice').forEach(function(b){b.classList.toggle('active',b.textContent.trim()===s);}); };
+  window.nitaDetailPhoto=function(dir){ var ph=window.nitaCurrentPhotos||[]; if(!ph.length)return; window.selectedPhoto=(Number(window.selectedPhoto||0)+Number(dir||0)+ph.length)%ph.length; var im=document.querySelector('.nita-detail-real-img'); if(im) im.src=ph[window.selectedPhoto]; document.querySelectorAll('.product-thumbs button').forEach(function(b,i){b.classList.toggle('active',i===window.selectedPhoto);}); };
+  window.nitaSetDetailPhoto=function(i){ window.selectedPhoto=Number(i)||0; window.nitaDetailPhoto(0); };
+  window.productPage=function(force){
+    var detail=$('detail'); if(!detail) return;
+    var id=new URL(location.href).searchParams.get('id');
+    var list=products(); var p=(list||[]).find(function(x){return String(x.id)===String(id);})||(list||[])[0];
+    if(!p){ detail.innerHTML='<div class="card"><h1>Product not found</h1><a class="btn" href="shop.html">BACK TO SHOP</a></div>'; return; }
+    var signature=String(p.id)+'|'+String(p.name)+'|'+String(p.price)+'|'+String(p.salePrice)+'|'+String(p.status)+'|'+JSON.stringify(photoArray(p));
+    if(!force && detail.dataset.nitaRenderedSignature===signature) return;
+    detail.dataset.nitaRenderedSignature=signature;
+    var ph=photoArray(p); window.nitaCurrentPhotos=ph; window.selectedPhoto=Math.max(0,Math.min(Number(window.selectedPhoto||0),Math.max(ph.length-1,0)));
+    var sale=p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price);
+    var price=sale?'<h2><span class="old-price">'+money(p.price)+'</span> <span class="price-drop">'+money(p.salePrice)+'</span></h2>':'<h2>'+money(p.price)+'</h2>';
+    var can=!isUnavailable(p)&&stockValue(p)!=='coming-soon';
+    var arrows=ph.length>1?'<button type="button" class="detail-photo-arrow detail-photo-prev" onclick="nitaDetailPhoto(-1)"><span>‹</span></button><button type="button" class="detail-photo-arrow detail-photo-next" onclick="nitaDetailPhoto(1)"><span>›</span></button>':'';
+    var actions=can?'<button class="btn nita-action-btn add" type="button" onclick="addToCart(\''+safe(p.id)+'\',window.selectedSize||\'One Size\')">ADD TO CART</button><a class="btn light nita-action-btn buy" href="checkout.html">BUY NOW</a>':'<button class="btn disabled nita-action-btn" disabled>'+(stockValue(p)==='coming-soon'?'COMING SOON':'OUT OF STOCK')+'</button><button class="notify-btn nita-action-btn" type="button" onclick="notifyMe&&notifyMe(\''+safe(p.id)+'\')">NOTIFY ME</button>';
+    detail.innerHTML='<div class="product-media nita-premium-product-media compact-product-media"><div class="detail-img nita-premium-detail-img">'+imgTag(ph[window.selectedPhoto]||'','nita-detail-real-img',p.name)+arrows+'</div><div class="product-thumbs">'+ph.map(function(x,i){return '<button type="button" class="'+(i===window.selectedPhoto?'active':'')+'" onclick="nitaSetDetailPhoto('+i+')">'+imgTag(x,'nita-thumb-real-img',(p.name||'Product')+' photo '+(i+1))+'</button>';}).join('')+'</div></div><div class="product-info nita-premium-product-info"><p class="muted product-cat">'+esc(p.category||'')+'</p><h1>'+esc(p.name||'Product')+'</h1><div class="price-stock-line">'+price+'<div class="inline-stock">'+stockHtml(p)+'</div></div><div class="sizes product-size-list">'+renderSizes(p)+'</div><div class="product-actions nita-premium-actions">'+actions+'</div><div class="product-description-block"><h3>Product details</h3><p>'+esc(p.desc||'')+'</p></div></div>';
+  };
+  function runProductSmooth(){ if($('detail')) window.productPage(true); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',runProductSmooth); else runProductSmooth();
+  window.addEventListener('nita-store-ready',function(){ setTimeout(function(){ if($('detail')) window.productPage(false); },30); });
 })();
-/* === END NITA STYLE EDIT LISTED PRODUCT PHOTO MANAGER === */
+/* === END NITA FINAL ADMIN + PRODUCT SMOOTH REPAIR === */
+
+/* === NITA PRODUCT PAGE NO-FLICKER FINAL 20260615-1335 ===
+   Prevents product-info flash/reload by keeping the product detail hidden until
+   the final render after store init, then only updating photo/size interactions without re-rendering text/buttons. */
+(function(){
+  'use strict';
+  function $(id){ return document.getElementById(id); }
+  function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function safe(v){ return String(v==null?'':v).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' '); }
+  function money(v){ return '$'+Number(v||0).toFixed(2); }
+  function readJSON(k,d){ try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d));}catch(e){return d;} }
+  function getProductsStable(){ try{return (typeof window.getProducts==='function'?window.getProducts():readJSON('nitaProducts',[]))||[];}catch(e){return readJSON('nitaProducts',[])||[];} }
+  function normalizePhotoPath(v){
+    v=String(v||'').trim(); if(!v) return '';
+    if(/^data:image\//i.test(v)||/^https?:\/\//i.test(v)||v.charAt(0)==='/'||v.indexOf('linear-gradient')===0) return v;
+    v=v.replace(/^\.\//,'').replace(/^assets\/products\//i,'').replace(/^\/+/, '');
+    return 'assets/products/'+v;
+  }
+  function photoArray(p){
+    var a=[]; if(p&&Array.isArray(p.photos)) a=a.concat(p.photos); if(p&&p.img && !String(p.img).startsWith('linear-gradient')) a.unshift(p.img);
+    var seen={}; return a.map(normalizePhotoPath).filter(function(x){ if(!x||seen[x]) return false; seen[x]=1; return true; });
+  }
+  function imgTag(src,cls,alt){ src=normalizePhotoPath(src); if(!src || src.indexOf('linear-gradient')===0) return '<span class="'+cls+' nita-image-placeholder"></span>'; return '<img class="'+cls+'" src="'+esc(src)+'" alt="'+esc(alt||'Product image')+'" loading="eager" decoding="async" draggable="false">'; }
+  function stockValue(p){ return String((p&&p.status)||'in-stock').toLowerCase().replace(/\s+/g,'-'); }
+  function stockLabel(s){ s=String(s||'in-stock'); return s==='coming-soon'?'Coming soon':(s==='out-of-stock'||s==='sold-out')?'Out of stock':'In stock'; }
+  function stockHtml(p){ var s=stockValue(p); return '<span class="stock-status '+esc(s)+'"><span class="stock-dot"></span><span>'+stockLabel(s)+'</span></span>'; }
+  function isUnavailable(p){ var q=(p&&p.quantity!==''&&p.quantity!=null)?Number(p.quantity):null; var s=stockValue(p); return s==='out-of-stock'||s==='sold-out'||q===0; }
+  function renderSizes(p){
+    var sizes=Array.isArray(p&&p.sizes)&&p.sizes.length?p.sizes:['One Size'];
+    if(!window.selectedSize||sizes.indexOf(window.selectedSize)===-1) window.selectedSize=sizes[0];
+    return sizes.map(function(s){return '<button type="button" class="size nita-size-choice '+(s===window.selectedSize?'active':'')+'" onclick="nitaSelectSize(\''+safe(s)+'\')">'+esc(s)+'</button>';}).join('');
+  }
+  window.nitaSelectSize=function(s){ window.selectedSize=s; document.querySelectorAll('.nita-size-choice').forEach(function(b){b.classList.toggle('active',b.textContent.trim()===s);}); };
+  window.nitaDetailPhoto=function(dir){
+    var ph=window.nitaCurrentPhotos||[]; if(!ph.length)return;
+    window.selectedPhoto=(Number(window.selectedPhoto||0)+Number(dir||0)+ph.length)%ph.length;
+    var im=document.querySelector('.nita-detail-real-img'); if(im) im.src=ph[window.selectedPhoto];
+    document.querySelectorAll('.product-thumbs button').forEach(function(b,i){b.classList.toggle('active',i===window.selectedPhoto);});
+  };
+  window.nitaSetDetailPhoto=function(i){ window.selectedPhoto=Number(i)||0; window.nitaDetailPhoto(0); };
+
+  function findProduct(){
+    var id=new URL(location.href).searchParams.get('id');
+    var list=getProductsStable();
+    return (list||[]).find(function(x){return String(x.id)===String(id);}) || null;
+  }
+  function buildProductHTML(p){
+    var ph=photoArray(p); window.nitaCurrentPhotos=ph; window.selectedPhoto=Math.max(0,Math.min(Number(window.selectedPhoto||0),Math.max(ph.length-1,0)));
+    var sale=p.salePrice!==''&&p.salePrice!=null&&Number(p.salePrice)<Number(p.price);
+    var price=sale?'<h2><span class="old-price">'+money(p.price)+'</span> <span class="price-drop">'+money(p.salePrice)+'</span></h2>':'<h2>'+money(p.price)+'</h2>';
+    var can=!isUnavailable(p)&&stockValue(p)!=='coming-soon';
+    var arrows=ph.length>1?'<button type="button" class="detail-photo-arrow detail-photo-prev" onclick="nitaDetailPhoto(-1)"><span>‹</span></button><button type="button" class="detail-photo-arrow detail-photo-next" onclick="nitaDetailPhoto(1)"><span>›</span></button>':'';
+    var actions=can?'<button class="btn nita-action-btn add" type="button" onclick="addToCart(\''+safe(p.id)+'\',window.selectedSize||\'One Size\')">ADD TO CART</button><a class="btn light nita-action-btn buy" href="checkout.html">BUY NOW</a>':'<button class="btn disabled nita-action-btn" disabled>'+(stockValue(p)==='coming-soon'?'COMING SOON':'OUT OF STOCK')+'</button><button class="notify-btn nita-action-btn" type="button" onclick="notifyMe&&notifyMe(\''+safe(p.id)+'\')">NOTIFY ME</button>';
+    return '<div class="product-media nita-premium-product-media compact-product-media"><div class="detail-img nita-premium-detail-img">'+imgTag(ph[window.selectedPhoto]||'','nita-detail-real-img',p.name)+arrows+'</div><div class="product-thumbs">'+ph.map(function(x,i){return '<button type="button" class="'+(i===window.selectedPhoto?'active':'')+'" onclick="nitaSetDetailPhoto('+i+')">'+imgTag(x,'nita-thumb-real-img',(p.name||'Product')+' photo '+(i+1))+'</button>';}).join('')+'</div></div><div class="product-info nita-premium-product-info"><p class="muted product-cat">'+esc(p.category||'')+'</p><h1>'+esc(p.name||'Product')+'</h1><div class="price-stock-line">'+price+'<div class="inline-stock">'+stockHtml(p)+'</div></div><div class="sizes product-size-list">'+renderSizes(p)+'</div><div class="product-actions nita-premium-actions">'+actions+'</div><div class="product-description-block"><h3>Product details</h3><p>'+esc(p.desc||'')+'</p></div></div>';
+  }
+  window.nitaRenderProductStableFinal=function(force){
+    var detail=$('detail'); if(!detail) return;
+    var p=findProduct();
+    if(!p){ detail.innerHTML='<div class="card nita-product-shell"><h1>Product not found</h1><a class="btn" href="shop.html">BACK TO SHOP</a></div>'; document.body.classList.add('nita-product-ready'); return; }
+    var signature=String(p.id)+'|'+String(p.name)+'|'+String(p.price)+'|'+String(p.salePrice)+'|'+String(p.status)+'|'+String(p.quantity)+'|'+JSON.stringify(photoArray(p));
+    if(force || detail.dataset.nitaFinalSignature!==signature){
+      detail.dataset.nitaFinalSignature=signature;
+      detail.innerHTML=buildProductHTML(p);
+    }
+    document.body.classList.add('nita-product-ready');
+  };
+  window.productPage=window.nitaRenderProductStableFinal;
+
+  // On product pages, reveal only after the stable final render. This removes the visible one-second information reload.
+  if(document.getElementById('detail')){
+    document.body.classList.add('nita-product-page');
+    document.addEventListener('DOMContentLoaded',function(){ setTimeout(function(){ window.nitaRenderProductStableFinal(true); },80); });
+    window.addEventListener('load',function(){ setTimeout(function(){ window.nitaRenderProductStableFinal(false); },120); });
+    window.addEventListener('nita-store-ready',function(){ setTimeout(function(){ window.nitaRenderProductStableFinal(false); },80); });
+  }
+})();
+/* === END NITA PRODUCT PAGE NO-FLICKER FINAL === */
