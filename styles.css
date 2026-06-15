@@ -4408,73 +4408,132 @@ body:not(.nita-ready){background:#fff!important;}
 @media(max-width:760px){.nita-filter-bar-pro{align-items:stretch}.nita-filter-toggle-pro,.nita-sort-wrap,.nita-sort-toggle-pro{width:100%}.nita-filter-panel-pro.open{display:grid;grid-template-columns:1fr;gap:12px}.nita-clear-filters-pro{width:100%}.nita-price-range-head{display:flex;justify-content:space-between;gap:8px;align-items:center}}
 /* === END NITA VERIFIED PATCH === */
 
-
-/* === NITA FINAL AUDIT PATCH: CROSS-PAGE CONTROLS + ADMIN PHOTO SAFETY 20260615-1315 === */
-.nita-control-clean,
-.filter-toggle,
-.sort-select,
-.shop-filter-button,
-.shop-sort-select{
-  min-height:42px;
-  border:1px solid #111 !important;
-  border-radius:999px !important;
-  background:#fff !important;
-  color:#111 !important;
-  font-size:11px !important;
-  font-weight:800 !important;
-  letter-spacing:.12em !important;
-  text-transform:uppercase !important;
-  padding:0 18px !important;
-  transition:background .18s ease,color .18s ease,border-color .18s ease,transform .18s ease;
+/* === NITA SAFE REVERT FIX: CLEAN PRICE RANGE + RESTORED ADMIN 20260615-1345 === */
+/* Keep the previous admin dashboard layout intact. Only clean the shop filter slider visual. */
+.nita-filter-range-final .nita-price-range-field,
+.nita-price-range-field{
+  min-width:260px!important;
 }
-.nita-control-clean:hover,
-.filter-toggle:hover,
-.sort-select:hover,
-.shop-filter-button:hover,
-.shop-sort-select:hover{
-  background:#111 !important;
-  color:#fff !important;
+.nita-price-range-head{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:14px!important;
+  margin-bottom:14px!important;
 }
-.existing-photos .admin-thumb img,
-.photo-preview .admin-thumb img{
-  display:block !important;
-  width:100%;
-  height:120px;
-  object-fit:cover;
-  background:#f7f7f7;
+.nita-price-range-head label{
+  margin:0!important;
 }
-.admin-thumb.main,
-.admin-thumb.selected-main{
-  outline:2px solid #111;
-  outline-offset:2px;
+.nita-price-range-head span,
+#nitaPriceRangeLabel{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:74px!important;
+  padding:4px 8px!important;
+  border:1px solid #e5e5e5!important;
+  background:#fff!important;
+  color:#111!important;
+  font-size:11px!important;
+  line-height:1!important;
+  white-space:nowrap!important;
 }
-@media(max-width:700px){
-  .nita-control-clean,
-  .filter-toggle,
-  .sort-select,
-  .shop-filter-button,
-  .shop-sort-select{min-height:44px;padding:0 16px !important;}
-  .quick-view-btn,.quick-view-button{left:50% !important;right:auto !important;transform:translateX(-50%) !important;top:auto !important;bottom:14px !important;}
+.nita-price-slider{
+  position:relative!important;
+  height:30px!important;
+  width:100%!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:visible!important;
+  touch-action:none!important;
 }
-
-/* === NITA EMERGENCY ADMIN REPAIR STYLES 20260615-1245 === */
-.nita-stable-admin-form label,.nita-edit-product-panel label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;margin:14px 0 8px}.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.nita-check-grid{display:flex;flex-wrap:wrap;gap:10px}.nita-check{border:1px solid #ddd;padding:10px 12px;font-size:12px;font-weight:800;background:#fff}.nita-admin-photo-manager{margin-top:18px;padding:18px;border:1px solid #e8e8e8;background:#fff}.nita-admin-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;margin-top:14px}.nita-admin-photo-card{border:1px solid #ddd;background:#fff;padding:8px}.nita-admin-photo-card img{width:100%;aspect-ratio:1/1;object-fit:contain;background:#f8f8f8;display:block}.nita-admin-photo-card.missing img{background:#f1f1f1}.nita-admin-photo-meta{display:flex;flex-direction:column;gap:3px;margin:8px 0;font-size:11px;word-break:break-word}.nita-admin-photo-actions{display:flex;gap:6px}.nita-admin-photo-actions button{flex:1;border:1px solid #111;background:#fff;color:#111;height:30px;font-weight:900;cursor:pointer}.nita-admin-photo-actions button:hover{background:#111;color:#fff}.nita-edit-product-panel{margin-top:18px;padding-top:18px;border-top:1px solid #eee}.nita-stable-product-card .admin-product-top{align-items:center}.admin-product-info{flex:1}.admin-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}@media(max-width:760px){.grid-2,.grid-3{grid-template-columns:1fr}.nita-admin-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-actions{width:100%}.admin-actions .btn{flex:1}}
-
-/* === NITA FINAL ADMIN + PRODUCT SMOOTH REPAIR 20260615-1315 === */
-.nita-admin-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:14px;align-items:stretch}
-.nita-admin-photo-card{border:1px solid rgba(0,0,0,.10);background:#fff;padding:10px;display:flex;flex-direction:column;gap:9px;min-height:210px}
-.nita-admin-photo-card img{width:100%;height:140px;object-fit:contain;background:#fafafa;display:block}
-.nita-admin-photo-card.missing{border-color:#b00020;background:#fff8f8}
-.nita-admin-photo-meta{display:flex;flex-direction:column;gap:2px;font-size:11px;line-height:1.25;min-height:36px;overflow:hidden}
-.nita-admin-photo-meta b{font-weight:900;text-transform:uppercase;letter-spacing:.04em}.nita-admin-photo-meta span{color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nita-admin-photo-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:auto}.nita-admin-photo-actions button{border:1px solid #111;background:#fff;color:#111;min-height:32px;font-weight:900;cursor:pointer}.nita-admin-photo-actions button:hover{background:#111;color:#fff}
-.nita-stable-admin-form .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.nita-stable-admin-form .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.nita-check-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}.nita-check{border:1px solid rgba(0,0,0,.12);padding:10px 12px;background:#fff;font-weight:800;text-transform:uppercase;font-size:11px;letter-spacing:.04em}.nita-check input{margin-right:7px}.nita-admin-photo-manager{grid-column:1/-1;margin-top:8px}.product-info.nita-premium-product-info{opacity:1;transition:none}.product-info.nita-premium-product-info *{transition:background-color .18s ease,color .18s ease,border-color .18s ease}.price-stock-line{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.price-stock-line h2{margin:0}.product-description-block{margin-top:18px}
-@media(max-width:760px){.nita-stable-admin-form .grid-2,.nita-stable-admin-form .grid-3{grid-template-columns:1fr}.nita-admin-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.nita-admin-photo-card img{height:120px}}
-/* === END NITA FINAL ADMIN + PRODUCT SMOOTH REPAIR === */
-
-/* === NITA PRODUCT PAGE NO-FLICKER FINAL 20260615-1335 === */
-body.nita-product-page #detail{opacity:0;transition:opacity .18s ease;min-height:70vh;}
-body.nita-product-page.nita-product-ready #detail{opacity:1;}
-.product-detail .product-info{will-change:auto;}
-.product-detail .nita-action-btn,.product-detail .price-stock-line,.product-detail .product-size-list{transform:translateZ(0);}
-/* === END NITA PRODUCT PAGE NO-FLICKER FINAL === */
+.nita-price-track,
+.nita-price-fill{
+  position:absolute!important;
+  left:0!important;
+  right:0!important;
+  top:14px!important;
+  height:2px!important;
+  border-radius:999px!important;
+  pointer-events:none!important;
+}
+.nita-price-track{background:#e5e5e5!important;}
+.nita-price-fill{background:#111!important;right:auto!important;}
+.nita-price-slider input[type=range]{
+  position:absolute!important;
+  left:0!important;
+  top:0!important;
+  width:100%!important;
+  height:30px!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  pointer-events:none!important;
+  -webkit-appearance:none!important;
+  appearance:none!important;
+  outline:none!important;
+  box-shadow:none!important;
+}
+.nita-price-slider input[type=range]::-webkit-slider-runnable-track{
+  height:30px!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+.nita-price-slider input[type=range]::-webkit-slider-thumb{
+  pointer-events:auto!important;
+  -webkit-appearance:none!important;
+  appearance:none!important;
+  width:14px!important;
+  height:14px!important;
+  margin-top:8px!important;
+  border-radius:50%!important;
+  background:#111!important;
+  border:2px solid #fff!important;
+  box-shadow:0 0 0 1px #111!important;
+  cursor:pointer!important;
+}
+.nita-price-slider input[type=range]::-moz-range-track{
+  height:30px!important;
+  background:transparent!important;
+  border:0!important;
+}
+.nita-price-slider input[type=range]::-moz-range-thumb{
+  pointer-events:auto!important;
+  width:14px!important;
+  height:14px!important;
+  border-radius:50%!important;
+  background:#111!important;
+  border:2px solid #fff!important;
+  box-shadow:0 0 0 1px #111!important;
+  cursor:pointer!important;
+}
+.nita-filter-range-final .nita-clear-filters-pro,
+.nita-clear-filters-pro{
+  height:42px!important;
+  min-width:92px!important;
+  border:1px solid #111!important;
+  background:#fff!important;
+  color:#111!important;
+  font-size:11px!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+}
+.nita-filter-range-final .nita-clear-filters-pro:hover,
+.nita-clear-filters-pro:hover{
+  background:#111!important;
+  color:#fff!important;
+}
+@media(max-width:650px){
+  .nita-price-range-field{min-width:0!important;width:100%!important;}
+  .nita-price-range-head{align-items:flex-start!important;}
+  .nita-price-slider{height:34px!important;}
+  .nita-price-track,.nita-price-fill{top:16px!important;}
+  .nita-price-slider input[type=range]{height:34px!important;}
+  .nita-price-slider input[type=range]::-webkit-slider-runnable-track{height:34px!important;}
+  .nita-price-slider input[type=range]::-webkit-slider-thumb{width:16px!important;height:16px!important;margin-top:9px!important;}
+  .nita-price-slider input[type=range]::-moz-range-track{height:34px!important;}
+  .nita-price-slider input[type=range]::-moz-range-thumb{width:16px!important;height:16px!important;}
+}
+/* === END NITA SAFE REVERT FIX === */

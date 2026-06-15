@@ -2,7 +2,7 @@ const defaultProducts = [
   {id:'p1',name:'Firenze Wide Pants',price:64,category:'Pants',collection:'Everyday Edit',sizes:['XS','S','M','L'],img:'linear-gradient(135deg,#f8f8f8,#d7d7d7)',desc:'Soft wide-leg pants selected for an elegant everyday silhouette.'},
   {id:'p2',name:'Capri Summer Dress',price:72,category:'Dresses',collection:'Summer Pieces',sizes:['S','M','L'],img:'linear-gradient(135deg,#ffffff,#ececec)',desc:'A light feminine dress for simple, polished summer styling.'},
   {id:'p3',name:'Verona Light Jacket',price:88,category:'Jackets',collection:'New Arrivals',sizes:['S','M'],img:'linear-gradient(135deg,#eeeeee,#cfcfcf)',desc:'A refined lightweight layer with a clean Italian-inspired cut.'},
-  {id:'p4',name:'Torino Mini Bag',price:46,category:'Bags',collection:'Everyday Edit',sizes:['One Size'],img:'linear-gradient(135deg,#fafafa,#dddddd)',desc:'Minimal mini bag selected to complete everyday outfits.'},
+  {id:'p4',name:'Torino Mini Bag',price:46,category:'Accessories',collection:'Accessories',sizes:['One Size'],img:'linear-gradient(135deg,#fafafa,#dddddd)',desc:'Minimal mini bag selected to complete everyday outfits.'},
   {id:'p5',name:'Milano Knit Top',price:52,category:'Tops',collection:'Everyday Edit',sizes:['XS','S','M','L'],img:'linear-gradient(135deg,#f7f7f7,#e5e5e5)',desc:'A clean knit top with a modern feminine fit.'},
   {id:'p6',name:'Roma Linen Shirt',price:58,category:'Tops',collection:'New Arrivals',sizes:['S','M','L'],img:'linear-gradient(135deg,#fff,#dcdcdc)',desc:'A breathable shirt for effortless weekday and weekend styling.'}
 ];
