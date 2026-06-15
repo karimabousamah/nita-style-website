@@ -4537,3 +4537,38 @@ body:not(.nita-ready){background:#fff!important;}
   .nita-price-slider input[type=range]::-moz-range-thumb{width:16px!important;height:16px!important;}
 }
 /* === END NITA SAFE REVERT FIX === */
+
+/* === NITA EMERGENCY FINAL CSS: STABLE FILTER, SORT, ADMIN PHOTOS 20260616-0300 === */
+.nita-clean-filter{margin:22px 0 36px!important;border-top:1px solid #eee!important;border-bottom:1px solid #eee!important;padding:18px 0!important;overflow:visible!important;position:relative!important;z-index:20!important;background:#fff!important}
+.nita-filter-top{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:18px!important;position:relative!important;overflow:visible!important}
+#nitaFilterBtn,#nitaSortBtn{border:0!important;background:transparent!important;color:#111!important;font-weight:800!important;font-size:13px!important;letter-spacing:.02em!important;cursor:pointer!important;padding:10px 0!important}
+#nitaFilterBtn span{display:inline-block!important;margin-left:5px!important}
+.nita-filter-panel-pro{display:none!important;grid-template-columns:repeat(4,minmax(150px,1fr)) minmax(240px,1.25fr) auto!important;gap:18px!important;align-items:end!important;padding-top:20px!important;overflow:visible!important}
+.nita-filter-panel-pro.open{display:grid!important}
+.nita-filter-panel-pro label,.nita-price-range-head label{display:block!important;text-transform:uppercase!important;font-size:10px!important;letter-spacing:.08em!important;font-weight:800!important;color:#777!important;margin-bottom:9px!important}
+.nita-filter-panel-pro select{width:100%!important;height:42px!important;border:0!important;border-bottom:1px solid #ddd!important;border-radius:0!important;background:#fff!important;color:#111!important;font-size:13px!important;outline:none!important}
+.nita-price-range-field{min-width:240px!important;overflow:visible!important}
+.nita-price-range-head{display:flex!important;justify-content:space-between!important;align-items:center!important;gap:12px!important;margin-bottom:8px!important}
+#nitaPriceRangeLabel{font-size:12px!important;font-weight:800!important;color:#111!important;white-space:nowrap!important;border:0!important;background:transparent!important;padding:0!important}
+.nita-one-price-range{width:100%!important;height:22px!important;margin:0!important;accent-color:#111!important;cursor:pointer!important;background:transparent!important}
+.nita-one-price-range::-webkit-slider-runnable-track{height:2px!important;background:#111!important;border-radius:999px!important}
+.nita-one-price-range::-webkit-slider-thumb{-webkit-appearance:none!important;appearance:none!important;width:16px!important;height:16px!important;border-radius:50%!important;background:#111!important;border:2px solid #fff!important;box-shadow:0 0 0 1px #111!important;margin-top:-7px!important;cursor:pointer!important}
+.nita-one-price-range::-moz-range-track{height:2px!important;background:#111!important;border-radius:999px!important}
+.nita-one-price-range::-moz-range-thumb{width:16px!important;height:16px!important;border-radius:50%!important;background:#111!important;border:2px solid #fff!important;box-shadow:0 0 0 1px #111!important;cursor:pointer!important}
+.nita-price-range-field small{display:block!important;margin-top:6px!important;color:#888!important;font-size:11px!important}
+#nitaClearBtn{height:42px!important;border:1px solid #111!important;background:#fff!important;color:#111!important;font-weight:900!important;text-transform:uppercase!important;padding:0 24px!important;cursor:pointer!important}
+#nitaClearBtn:hover{background:#111!important;color:#fff!important}
+.nita-sort-wrap{position:relative!important;overflow:visible!important;z-index:99999!important}
+.nita-sort-menu{position:absolute!important;right:0!important;top:calc(100% + 8px)!important;display:none!important;width:220px!important;background:#fff!important;border:1px solid #111!important;box-shadow:0 18px 50px rgba(0,0,0,.14)!important;z-index:999999!important;padding:6px!important;overflow:visible!important}
+.nita-sort-menu.open{display:block!important}
+.nita-sort-menu button{display:block!important;width:100%!important;background:#fff!important;color:#111!important;border:0!important;text-align:left!important;padding:13px 14px!important;font-size:13px!important;font-weight:800!important;cursor:pointer!important;white-space:nowrap!important}
+.nita-sort-menu button:hover{background:#111!important;color:#fff!important}
+.nita-fast-photo-thumb img{width:100%!important;height:96px!important;object-fit:contain!important;background:#f7f7f7!important;display:block!important}
+.nita-fast-photo-thumb small{display:block!important;font-size:9px!important;line-height:1.2!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;color:#777!important;max-width:110px!important}
+.nita-fast-photo-thumb.missing-asset{border-color:#b00020!important;background:#fff5f6!important}
+.photo-order-controls{display:flex!important;gap:5px!important;justify-content:center!important;margin-top:8px!important}
+.photo-order-controls button{width:32px!important;height:28px!important;border:1px solid #111!important;background:#fff!important;color:#111!important;font-weight:900!important;cursor:pointer!important}
+.photo-order-controls button:hover:not(:disabled){background:#111!important;color:#fff!important}
+.photo-order-controls button:disabled{opacity:.35!important;cursor:not-allowed!important}
+@media(max-width:760px){.nita-filter-panel-pro{grid-template-columns:1fr!important;gap:16px!important}.nita-clean-filter{margin:16px 0 28px!important}.nita-sort-menu{right:0!important;left:auto!important;width:210px!important}.nita-price-range-field{min-width:0!important}}
+/* === END NITA EMERGENCY FINAL CSS === */
