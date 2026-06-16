@@ -4804,3 +4804,170 @@ body:not(.nita-ready){background:#fff!important;}
   .product-thumbs button{min-width:72px!important;width:72px!important;height:72px!important;}
 }
 /* === END NITA FINAL VISUAL FIX === */
+
+/* === NITA FINAL CUSTOMER VIEW CSS FIX 20260616-1320 === */
+.product .product-img.nita-real-card-media,.nita-real-card-media{position:relative!important;background:#f4f4f4!important;overflow:hidden!important;display:block!important;min-height:0!important;}
+.nita-real-card-img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center!important;opacity:1!important;visibility:visible!important;transform:none!important;transition:none!important;}
+.nita-real-product-card .product-img:before,.nita-real-product-card .product-img:after{display:none!important;content:none!important;}
+.nita-real-product-card .product-hit{display:block!important;}
+.nita-real-product-card .quick-view-btn,.product > .quick-view-btn{position:absolute!important;left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%)!important;z-index:30!important;margin:0!important;white-space:nowrap!important;text-align:center!important;}
+.nita-real-product-card .product-price-row,.nita-card-price-status{display:flex!important;align-items:center!important;gap:10px!important;flex-wrap:nowrap!important;margin-top:10px!important;}
+.nita-real-product-card .price-line,.nita-card-price-status .price-line{margin:0!important;line-height:1!important;display:inline-flex!important;align-items:center!important;gap:8px!important;}
+.nita-real-product-card .stock-status,.nita-card-price-status .stock-status,.price-stock-line .stock-status{display:inline-flex!important;align-items:center!important;gap:7px!important;margin:0!important;line-height:1!important;white-space:nowrap!important;vertical-align:middle!important;}
+.stock-dot{display:inline-block!important;width:10px!important;height:10px!important;border-radius:50%!important;background:#248a2a!important;flex:0 0 auto!important;}
+.stock-status.out-of-stock .stock-dot{background:#777!important}.stock-status.coming-soon .stock-dot{background:#111!important}
+.nita-product-media-fixed{position:relative!important;}
+.nita-detail-img-fixed{position:relative!important;overflow:visible!important;background:#fff!important;}
+.nita-detail-real-img{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;opacity:1!important;visibility:visible!important;transition:none!important;}
+.gallery-arrow{position:absolute!important;top:50%!important;transform:translateY(-50%)!important;width:48px!important;height:48px!important;border:1px solid #111!important;border-radius:50%!important;background:#fff!important;color:#111!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:32px!important;line-height:1!important;z-index:20!important;box-shadow:0 10px 30px rgba(0,0,0,.08)!important;cursor:pointer!important;}
+.gallery-arrow.prev{left:-80px!important;right:auto!important;}
+.gallery-arrow.next{right:-80px!important;left:auto!important;}
+.gallery-arrow:hover{background:#111!important;color:#fff!important;}
+.price-stock-line{display:flex!important;align-items:center!important;gap:16px!important;flex-wrap:nowrap!important;margin:0 0 22px!important;}
+.price-stock-line h2{margin:0!important;line-height:1!important;display:inline-flex!important;align-items:center!important;}
+.nita-actions-fixed{display:flex!important;align-items:center!important;gap:12px!important;margin-top:14px!important;}
+.nita-actions-fixed .btn{min-width:150px!important;text-align:center!important;}
+.nita-exact-collection-media{position:relative!important;overflow:hidden!important;background:#f4f4f4!important;}
+.nita-collage-single{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center!important;}
+.nita-exact-collage{display:grid!important;width:100%!important;height:100%!important;gap:2px!important;}
+.nita-exact-collage img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;}
+.nita-exact-collage.count-2{grid-template-columns:1fr 1fr!important;}
+.nita-exact-collage.count-3{grid-template-columns:1fr 1fr!important;grid-template-rows:1fr 1fr!important;}
+.nita-exact-collage.count-3 img:first-child{grid-row:1/3!important;}
+.nita-exact-collage.count-4{grid-template-columns:1fr 1fr!important;grid-template-rows:1fr 1fr!important;}
+@media(max-width:900px){.gallery-arrow.prev{left:10px!important}.gallery-arrow.next{right:10px!important}.gallery-arrow{width:42px!important;height:42px!important;font-size:28px!important}.nita-actions-fixed{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}.nita-actions-fixed .btn{min-width:0!important;width:100%!important}.price-stock-line{gap:12px!important;margin:0 0 16px!important}.nita-product-info-fixed{gap:0!important}.nita-product-info-fixed h1{margin-bottom:14px!important}.product-size-list{margin:12px 0!important}.product-description-block{margin-top:14px!important;padding-top:14px!important}.product .product-img.nita-real-card-media{min-height:280px!important}.nita-real-product-card .quick-view-btn{left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important}}
+@media(max-width:560px){.price-stock-line{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;flex-wrap:nowrap!important}.price-stock-line h2{font-size:30px!important}.price-stock-line .stock-status{font-size:14px!important}.nita-actions-fixed{grid-template-columns:1fr 1fr!important}.nita-actions-fixed .btn{height:54px!important;padding:0 8px!important}.product .product-img.nita-real-card-media{min-height:250px!important}.nita-real-product-card .quick-view-btn{min-width:132px!important}}
+/* === END NITA FINAL CUSTOMER VIEW CSS FIX === */
+
+/* === NITA FINAL PHONE BUTTON ALIGNMENT FIX 20260616-1318 === */
+@media (max-width: 760px){
+  .product-detail .product-actions,
+  .product-actions,
+  .nita-premium-actions,
+  .nita-actions-fixed{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    gap:10px!important;
+    align-items:stretch!important;
+    width:100%!important;
+    margin:14px 0 10px!important;
+  }
+  .product-detail .product-actions .btn,
+  .product-actions .btn,
+  .nita-premium-actions .btn,
+  .nita-actions-fixed .btn,
+  .product-actions .notify-btn{
+    width:100%!important;
+    min-width:0!important;
+    height:54px!important;
+    padding:0 8px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    text-align:center!important;
+    white-space:nowrap!important;
+    box-sizing:border-box!important;
+  }
+  .product-detail .product-actions .btn:only-child,
+  .product-actions .btn:only-child,
+  .product-actions .notify-btn:only-child{
+    grid-column:1 / -1!important;
+  }
+}
+/* === END NITA FINAL PHONE BUTTON ALIGNMENT FIX === */
+
+/* === NITA FINAL QUICK VIEW MOBILE CENTER FIX 20260616-1326 === */
+.product,
+.product.nita-visible-product-card,
+.product.nita-real-product-card{
+  position:relative!important;
+}
+.product .product-img,
+.product .nita-card-img-wrap,
+.product .nita-real-card-media{
+  position:relative!important;
+  overflow:hidden!important;
+}
+.product.nita-visible-product-card,
+.product.nita-real-product-card,
+.product{
+  --nita-card-image-height:360px;
+}
+.product .product-img,
+.product .nita-card-img-wrap,
+.product .nita-real-card-media{
+  height:var(--nita-card-image-height)!important;
+}
+.product > .quick-view-btn,
+.product .quick-view-btn{
+  position:absolute!important;
+  left:50%!important;
+  top:calc(var(--nita-card-image-height) / 2)!important;
+  right:auto!important;
+  bottom:auto!important;
+  transform:translate(-50%,-50%)!important;
+  margin:0!important;
+  z-index:60!important;
+  min-width:150px!important;
+  height:52px!important;
+  padding:0 24px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  border:2px solid #111!important;
+  background:#fff!important;
+  color:#111!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  box-shadow:none!important;
+}
+.product:hover > .quick-view-btn,
+.product:focus-within > .quick-view-btn,
+.product:hover .quick-view-btn,
+.product:focus-within .quick-view-btn{
+  transform:translate(-50%,-50%)!important;
+}
+@media(max-width:900px){
+  .product.nita-visible-product-card,
+  .product.nita-real-product-card,
+  .product{
+    --nita-card-image-height:300px;
+  }
+  .trending-scroll .product,
+  .new-arrivals-scroll .product,
+  .product-marquee .product{
+    --nita-card-image-height:300px;
+  }
+  .product > .quick-view-btn,
+  .product .quick-view-btn{
+    top:calc(var(--nita-card-image-height) / 2)!important;
+    left:50%!important;
+    min-width:140px!important;
+    height:50px!important;
+    padding:0 20px!important;
+    font-size:12px!important;
+  }
+}
+@media(max-width:560px){
+  .product.nita-visible-product-card,
+  .product.nita-real-product-card,
+  .product{
+    --nita-card-image-height:280px;
+  }
+  .trending-scroll .product,
+  .new-arrivals-scroll .product,
+  .product-marquee .product{
+    --nita-card-image-height:280px;
+  }
+  .product > .quick-view-btn,
+  .product .quick-view-btn{
+    top:140px!important;
+    left:50%!important;
+    min-width:136px!important;
+    height:48px!important;
+    padding:0 18px!important;
+    font-size:12px!important;
+  }
+}
+/* === END NITA FINAL QUICK VIEW MOBILE CENTER FIX === */
