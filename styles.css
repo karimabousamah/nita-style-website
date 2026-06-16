@@ -5355,3 +5355,91 @@ body.product-page .product-detail .gallery-arrow:hover{
   body.product-page .product-detail .gallery-arrow.next{right:8px!important;}
 }
 /* === END NITA FINAL LOCK: PRODUCT PRICE STATUS + GALLERY ARROWS === */
+
+/* === NITA FINAL OVERRIDE: PRODUCT PRICE STOCK NEAR + ADMIN PREVIEW STABILITY 20260616-1455 === */
+body.product-page .nita-final-price-stock-row,
+body.product-page #detail .nita-final-price-stock-row,
+body.product-page .product-detail .nita-final-price-stock-row,
+body.product-page .product-info .nita-final-price-stock-row,
+body.product-page .nita-product-info-fixed .nita-final-price-stock-row{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:10px!important;
+  flex-wrap:nowrap!important;
+  width:auto!important;
+  max-width:max-content!important;
+  min-width:0!important;
+  margin:0 0 14px!important;
+  padding:0!important;
+}
+body.product-page .nita-final-price-stock-row h2,
+body.product-page .nita-final-price-stock-row .price-line,
+body.product-page .nita-final-price-stock-row .price{
+  margin:0!important;
+  padding:0!important;
+  line-height:1!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  width:auto!important;
+  max-width:max-content!important;
+  flex:0 0 auto!important;
+}
+body.product-page .nita-final-price-stock-row .stock-status,
+body.product-page .nita-final-price-stock-row .inline-stock{
+  position:static!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:7px!important;
+  margin:0!important;
+  padding:0!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  max-width:max-content!important;
+  transform:none!important;
+  vertical-align:middle!important;
+}
+body.product-page .nita-final-price-stock-row .stock-dot,
+body.product-page .nita-final-price-stock-row .stock-status::before{
+  width:10px!important;
+  height:10px!important;
+  min-width:10px!important;
+  min-height:10px!important;
+  flex:0 0 10px!important;
+  border-radius:50%!important;
+  margin:0 2px 0 0!important;
+}
+body.product-page .gallery-arrow,
+body.product-page #detail .gallery-arrow,
+body.product-page .product-detail .gallery-arrow{
+  width:48px!important;
+  height:48px!important;
+  border:2px solid #111!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  color:#111!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  line-height:1!important;
+  padding:0!important;
+  z-index:120!important;
+  box-shadow:0 10px 26px rgba(0,0,0,.10)!important;
+}
+body.product-page .gallery-arrow.prev{left:18px!important;right:auto!important;}
+body.product-page .gallery-arrow.next{right:18px!important;left:auto!important;}
+@media(max-width:760px){
+  body.product-page .nita-final-price-stock-row{gap:9px!important;margin:0 0 12px!important;}
+  body.product-page .nita-final-price-stock-row h2{font-size:30px!important;}
+  body.product-page .nita-final-price-stock-row .stock-status{font-size:14px!important;}
+  body.product-page .gallery-arrow{width:46px!important;height:46px!important;}
+  body.product-page .gallery-arrow.prev{left:10px!important;}
+  body.product-page .gallery-arrow.next{right:10px!important;}
+}
+.admin-thumb.missing-asset{border-color:#b00020!important;}
+.admin-thumb.missing-asset::after{content:'PHOTO NOT FOUND';display:block;color:#b00020;font-size:10px;font-weight:900;margin-top:4px;}
+/* === END NITA FINAL OVERRIDE === */
