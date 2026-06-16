@@ -4622,3 +4622,58 @@ body:not(.nita-ready){background:#fff!important;}
 /* === NITA FINAL COLLECTION + FILTER + ADMIN PHOTO VERIFY 20260616-1118 === */
 .nita-pro-collections-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;margin-top:34px}.nita-pro-collection-card{display:block;text-decoration:none;color:inherit}.nita-pro-collection-media{height:560px;background:#f6f6f4 center/cover no-repeat;position:relative;overflow:hidden}.nita-pro-collection-media:after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.18),transparent 42%)}.nita-pro-collection-chip{position:absolute;left:22px;bottom:18px;z-index:2;color:#fff;text-transform:uppercase;font-weight:900;letter-spacing:.08em;font-size:12px}.nita-pro-collection-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#777;font-weight:900;text-transform:uppercase;letter-spacing:.08em}.nita-pro-collection-info{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;padding-top:14px}.nita-pro-collection-info h3{margin:0 0 6px;text-transform:uppercase;font-weight:900}.nita-pro-collection-info p{margin:0;color:#777}.nita-pro-collection-info span{font-weight:900;white-space:nowrap}.nita-final-tools{border-top:1px solid #eee;border-bottom:1px solid #eee;margin:42px 0 28px;padding:18px 0;position:relative;z-index:5}.nita-final-topline{display:flex;justify-content:space-between;align-items:center;gap:18px}.nita-final-topline button,.nita-native-sort select,.nita-final-filter-panel select,.nita-final-filter-panel button{font:inherit;font-weight:900;text-transform:uppercase}.nita-final-topline button{border:0;background:transparent;padding:0;cursor:pointer}.nita-native-sort{display:flex;align-items:center;gap:10px;font-weight:900}.nita-native-sort select{border:1px solid #111;background:#fff;padding:12px 44px 12px 14px;min-width:190px;position:relative;z-index:20}.nita-final-filter-panel{display:none;grid-template-columns:repeat(4,minmax(0,1fr)) 1.6fr auto;gap:18px;align-items:end;padding-top:26px}.nita-final-filter-panel.open{display:grid}.nita-final-filter-panel label,.nita-two-price label{font-size:11px;text-transform:uppercase;font-weight:900;letter-spacing:.08em;color:#777}.nita-final-filter-panel select{width:100%;border:0;border-bottom:1px solid #ddd;background:#fff;padding:12px 0;font-weight:700;text-transform:none}.nita-final-filter-panel button{border:1px solid #111;background:#fff;padding:14px 24px;cursor:pointer}.nita-final-filter-panel button:hover{background:#111;color:#fff}.nita-price-range-head{display:flex;justify-content:space-between;gap:18px;margin-bottom:14px}.nita-price-range-head span{font-weight:900}.nita-two-range{position:relative;height:26px}.nita-two-range:before,.nita-two-range span{content:"";position:absolute;left:0;right:0;top:11px;height:2px;background:#d8d8d8}.nita-two-range span{background:#111;left:0;right:0}.nita-two-range input[type=range]{position:absolute;left:0;top:0;width:100%;height:26px;background:transparent;pointer-events:none;-webkit-appearance:none;appearance:none}.nita-two-range input[type=range]::-webkit-slider-thumb{pointer-events:auto;-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;background:#111;border:2px solid #fff;box-shadow:0 0 0 1px #111;cursor:pointer}.nita-two-range input[type=range]::-moz-range-thumb{pointer-events:auto;width:16px;height:16px;border-radius:50%;background:#111;border:2px solid #fff;box-shadow:0 0 0 1px #111;cursor:pointer}.nita-photo-order-card{width:108px;border:1px solid #111;background:#fff;padding:8px;text-align:center}.nita-photo-order-img{height:92px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;overflow:hidden}.nita-photo-order-img img{width:100%;height:100%;object-fit:contain;display:block}.nita-photo-order-card strong{display:block;font-size:10px;margin-top:8px}.nita-photo-order-card small{display:block;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#777}.nita-photo-order-actions{display:flex;gap:4px;margin-top:7px}.nita-photo-order-actions button{flex:1;border:1px solid #111;background:#fff;cursor:pointer}.nita-photo-order-actions button:hover:not(:disabled){background:#111;color:#fff}.nita-photo-order-actions button:disabled{opacity:.35;cursor:not-allowed}@media(max-width:800px){.nita-pro-collections-grid{grid-template-columns:1fr;gap:24px}.nita-pro-collection-media{height:420px}.nita-final-filter-panel.open{grid-template-columns:1fr}.nita-final-topline{align-items:flex-start}.nita-native-sort{flex-direction:column;align-items:flex-end}.nita-native-sort select{min-width:160px}.nita-final-tools{z-index:20}}
 /* === END NITA FINAL COLLECTION + FILTER + ADMIN PHOTO VERIFY === */
+
+/* === NITA FINAL FIX: PRODUCT PHOTO FILENAME TEXTAREA MULTILINE 20260616-1155 === */
+#pPhotoPaths,
+#pphotosText,
+#pphotos,
+.nita-colorway-paths{
+  min-height:170px!important;
+  height:auto!important;
+  resize:vertical!important;
+  white-space:pre!important;
+  overflow:auto!important;
+  line-height:1.7!important;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace!important;
+  text-transform:none!important;
+  letter-spacing:0!important;
+  font-size:13px!important;
+}
+.nita-colorway-paths{min-height:130px!important;}
+#pPhotoPaths:focus,
+#pphotosText:focus,
+#pphotos:focus,
+.nita-colorway-paths:focus{
+  outline:2px solid rgba(0,0,0,.35)!important;
+  outline-offset:2px!important;
+}
+/* === END NITA FINAL FIX: PRODUCT PHOTO FILENAME TEXTAREA MULTILINE === */
+
+/* === NITA FINAL REBUILD: CLEAN SLIDING FILTER + SORT + TRUE TWO HANDLE RANGE 20260616-1208 === */
+#nitaFinalTools.nita-rebuilt-tools{margin:38px 0 30px!important;border-top:1px solid #ededed!important;border-bottom:1px solid #ededed!important;padding:18px 0!important;background:#fff!important;position:relative!important;z-index:30!important;clear:both!important;}
+.nita-rebuilt-row{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:20px!important;}
+.nita-slide-toggle,#nitaCleanSortBtn{border:0!important;background:transparent!important;color:#111!important;font-weight:900!important;text-transform:uppercase!important;letter-spacing:.03em!important;cursor:pointer!important;padding:9px 0!important;display:inline-flex!important;align-items:center!important;gap:7px!important;}
+.nita-clean-sort{position:relative!important;z-index:500!important;display:flex!important;justify-content:flex-end!important;}
+#nitaCleanSortBtn strong{margin-left:8px!important;border:1px solid #111!important;padding:10px 36px 10px 14px!important;min-width:176px!important;text-align:left!important;background:#fff!important;}
+.nita-clean-sort-menu{position:absolute!important;right:0!important;top:calc(100% + 8px)!important;width:220px!important;background:#fff!important;border:1px solid #111!important;box-shadow:0 18px 35px rgba(0,0,0,.10)!important;overflow:hidden!important;max-height:0!important;opacity:0!important;transform:translateY(-8px)!important;transition:max-height .28s ease,opacity .22s ease,transform .28s ease!important;z-index:9999!important;}
+.nita-clean-sort-menu.open{max-height:180px!important;opacity:1!important;transform:translateY(0)!important;}
+.nita-clean-sort-menu button{display:block!important;width:100%!important;border:0!important;background:#fff!important;text-align:left!important;padding:15px 16px!important;font-weight:900!important;text-transform:uppercase!important;cursor:pointer!important;color:#111!important;}
+.nita-clean-sort-menu button:hover,.nita-clean-sort-menu button.active{background:#111!important;color:#fff!important;}
+.nita-rebuilt-filter-panel{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr)) 1.45fr auto!important;gap:20px!important;align-items:end!important;max-height:0!important;overflow:hidden!important;opacity:0!important;transform:translateY(-8px)!important;padding-top:0!important;transition:max-height .38s ease,opacity .28s ease,transform .38s ease,padding-top .38s ease!important;}
+.nita-rebuilt-filter-panel.open{max-height:280px!important;opacity:1!important;transform:translateY(0)!important;padding-top:28px!important;overflow:visible!important;}
+.nita-rebuilt-filter-panel label,.nita-clean-price label{display:block!important;font-size:11px!important;text-transform:uppercase!important;font-weight:900!important;letter-spacing:.08em!important;color:#777!important;margin-bottom:8px!important;}
+.nita-rebuilt-filter-panel select{width:100%!important;border:0!important;border-bottom:1px solid #ddd!important;background:#fff!important;padding:12px 0!important;font-weight:700!important;color:#111!important;outline:none!important;appearance:auto!important;-webkit-appearance:auto!important;}
+.nita-clean-clear{border:1px solid #111!important;background:#fff!important;color:#111!important;text-transform:uppercase!important;font-weight:900!important;letter-spacing:.03em!important;padding:14px 26px!important;cursor:pointer!important;height:48px!important;}
+.nita-clean-clear:hover{background:#111!important;color:#fff!important;}
+.nita-clean-price{min-width:250px!important;overflow:visible!important;}
+.nita-price-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;margin-bottom:12px!important;}
+#nitaRangeText{font-weight:900!important;color:#111!important;font-size:12px!important;background:#fff!important;border:1px solid #eee!important;padding:4px 8px!important;white-space:nowrap!important;}
+.nita-dual-range{position:relative!important;height:34px!important;margin:0 8px!important;overflow:visible!important;touch-action:none!important;}
+.nita-dual-track{position:absolute!important;left:0!important;right:0!important;top:16px!important;height:2px!important;background:#d8d8d8!important;border-radius:999px!important;}
+.nita-dual-fill{position:absolute!important;top:16px!important;height:2px!important;background:#111!important;border-radius:999px!important;left:0;width:100%;}
+.nita-range-handle{position:absolute!important;top:7px!important;transform:translateX(-50%)!important;width:18px!important;height:18px!important;border-radius:50%!important;border:2px solid #fff!important;background:#111!important;box-shadow:0 0 0 1px #111,0 5px 14px rgba(0,0,0,.18)!important;cursor:grab!important;padding:0!important;z-index:4!important;touch-action:none!important;}
+.nita-range-handle.max{z-index:5!important;}
+.nita-range-handle:active{cursor:grabbing!important;transform:translateX(-50%) scale(1.08)!important;}
+#nitaRangeHint{display:block!important;margin-top:4px!important;color:#777!important;font-size:10px!important;}
+@media(max-width:900px){.nita-rebuilt-row{align-items:flex-start!important}.nita-rebuilt-filter-panel{grid-template-columns:1fr!important;gap:16px!important}.nita-rebuilt-filter-panel.open{max-height:760px!important}.nita-clean-sort{align-self:flex-start!important}.nita-clean-price{min-width:0!important}.nita-clean-sort-menu{right:0!important}.nita-clean-clear{width:100%!important}}
+/* === END NITA FINAL REBUILD FILTER/SORT RANGE === */

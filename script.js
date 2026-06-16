@@ -10887,3 +10887,139 @@ placeOrder=async function(){
   document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){if(window.nitaRenderExactCollections)window.nitaRenderExactCollections();},900);});
   window.addEventListener('load',function(){setTimeout(function(){if(window.nitaRenderExactCollections)window.nitaRenderExactCollections();},1000);});
 })();
+
+/* === NITA FINAL FIX: MULTI-LINE PRODUCT PHOTO FILENAME TEXTAREA 20260616-1155 === */
+(function(){
+  'use strict';
+  function $(id){ return document.getElementById(id); }
+  function normalizeFileName(v){
+    v = String(v||'').trim();
+    if(!v) return '';
+    return v.replace(/^\/+assets\/products\//i,'').replace(/^assets\/products\//i,'').replace(/^\/+/, '');
+  }
+  function splitPhotoNames(v){
+    return String(v||'')
+      .split(/\r?\n|,/)
+      .map(normalizeFileName)
+      .filter(Boolean);
+  }
+  function makeTextAreaReady(ta){
+    if(!ta || ta.dataset.nitaMultilineReady==='1') return;
+    ta.dataset.nitaMultilineReady='1';
+    ta.setAttribute('rows', ta.id==='pPhotoPaths' ? '7' : '5');
+    ta.setAttribute('wrap','off');
+    ta.style.minHeight = ta.id==='pPhotoPaths' ? '170px' : '130px';
+    ta.style.whiteSpace = 'pre';
+    ta.style.overflowX = 'auto';
+    ta.style.resize = 'vertical';
+    ta.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
+    ta.style.lineHeight = '1.7';
+  }
+  function readyAll(){
+    document.querySelectorAll('#pPhotoPaths, #pphotosText, #pphotos, .nita-colorway-paths').forEach(makeTextAreaReady);
+  }
+  // Protect the product photo filename boxes: Enter must always create a new line, not submit the admin form or trigger a re-render.
+  document.addEventListener('keydown', function(e){
+    var ta = e.target && e.target.closest && e.target.closest('#pPhotoPaths, #pphotosText, #pphotos, .nita-colorway-paths');
+    if(!ta) return;
+    makeTextAreaReady(ta);
+    if(e.key === 'Enter'){
+      e.stopPropagation();
+      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+      // Do not preventDefault: Safari will insert the new line normally.
+      return;
+    }
+  }, true);
+  // Clean pasted filenames into one filename per line while preserving the current cursor position.
+  document.addEventListener('paste', function(e){
+    var ta = e.target && e.target.closest && e.target.closest('#pPhotoPaths, #pphotosText, #pphotos, .nita-colorway-paths');
+    if(!ta || !e.clipboardData) return;
+    var raw = e.clipboardData.getData('text');
+    if(!raw || (!raw.includes(',') && !raw.includes('\n'))) return;
+    e.preventDefault(); e.stopPropagation();
+    makeTextAreaReady(ta);
+    var text = splitPhotoNames(raw).join('\n');
+    var start = ta.selectionStart || 0, end = ta.selectionEnd || 0;
+    ta.value = ta.value.slice(0,start) + text + ta.value.slice(end);
+    ta.selectionStart = ta.selectionEnd = start + text.length;
+    ta.dispatchEvent(new Event('input', {bubbles:true}));
+  }, true);
+  // When previewing, read exactly the textarea lines; do not collapse the textarea while the admin is typing.
+  var oldPreview = window.previewAssetProductPhotos;
+  window.previewAssetProductPhotos = function(){
+    readyAll();
+    var ta = $('pPhotoPaths') || $('pphotosText') || $('pphotos');
+    if(ta){
+      var lines = splitPhotoNames(ta.value);
+      ta.value = lines.join('\n');
+      try { window.pendingAdminPhotos = lines.map(function(x){ return /^https?:\/\//i.test(x)||/^data:image\//i.test(x)||x.charAt(0)==='/' ? x : '/assets/products/' + x; }); window.pendingPhotos = window.pendingAdminPhotos.slice(); } catch(e){}
+    }
+    if(typeof oldPreview === 'function') return oldPreview.apply(this, arguments);
+  };
+  readyAll();
+  document.addEventListener('DOMContentLoaded', readyAll);
+  window.addEventListener('load', function(){ setTimeout(readyAll, 300); });
+  new MutationObserver(readyAll).observe(document.documentElement, {childList:true, subtree:true});
+})();
+/* === END NITA FINAL FIX: MULTI-LINE PRODUCT PHOTO FILENAME TEXTAREA === */
+
+/* === NITA FINAL REBUILD: CLEAN FILTER/SORT + TRUE TWO-HANDLE PRICE + FAST PHOTO ORDER 20260616-1208 === */
+(function(){
+  'use strict';
+  var LAST_RENDER = 0;
+  function $(id){return document.getElementById(id);}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function norm(v){return String(v||'').toLowerCase().replace(/[-_]+/g,' ').replace(/\s+/g,' ').trim();}
+  function money(n){return '$'+Number(n||0).toFixed(2);}
+  function readJSON(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d));}catch(e){return d;}}
+  function allProducts(){try{return typeof window.getProducts==='function'?window.getProducts():readJSON('nitaProducts',[]);}catch(e){return readJSON('nitaProducts',[]);}}
+  function priceOf(p){var s=Number(p.salePrice||p.priceDrop||p.dropPrice||0), r=Number(p.price||0);return (s>0 && (!r || s<r))?s:r;}
+  function pageContext(){var u=new URL(location.href);return {cat:u.searchParams.get('cat')||u.searchParams.get('category')||'',collection:u.searchParams.get('collection')||u.searchParams.get('edit')||''};}
+  function matchesCollection(p,c){ if(!c) return true; var pc=norm(p.collection||p.edit||p.section||''); var cc=norm(c); return pc===cc || pc.replace(/s$/,'')===cc.replace(/s$/,''); }
+  function matchesCategory(p,c){ if(!c) return true; return norm(p.category||p.type||'')===norm(c); }
+  function pageProducts(){var c=pageContext();return allProducts().filter(function(p){return matchesCategory(p,c.cat)&&matchesCollection(p,c.collection);});}
+  function maxPagePrice(){var list=pageProducts(); if(!list.length) list=allProducts(); var vals=list.map(priceOf).filter(function(n){return n>0;}); return vals.length?Math.ceil(Math.max.apply(null,vals)):100;}
+  function productColorText(p){return [p.color,p.mainColor,p.note,Array.isArray(p.colorways)?p.colorways.map(function(x){return x.color||x.name||''}).join(' '):''].join(' ');}
+  var CATS=['All','Dresses','Skirts','T-Shirts','Tops','Pants','Bags','Scarves','Overalls'];
+  var COLORS=['All','Black','White','Ivory','Cream','Beige','Taupe','Grey','Silver','Gold','Rose Gold','Bronze','Brown','Cognac','Camel','Navy','Dark Blue','Blue','Denim Blue','Cyan','Red','Burgundy','Pink','Green','Olive','Khaki','Yellow','Orange','Purple','Print / Pattern','Multi-color'];
+  var MATS=['All','Leather','Cotton','Linen','Denim','Polyester','Silk','Satin','Knit','Wool','Viscose'];
+  var SIZES=['All','XS','S','M','L','XL','One Size'];
+  function opts(arr,sel){return arr.map(function(v){return '<option value="'+esc(v)+'" '+(String(v)===String(sel)?'selected':'')+'>'+esc(v)+'</option>';}).join('');}
+  function activeSort(){var b=document.querySelector('.nita-sort-option.active');return b?b.dataset.sort:'new';}
+  function setSortLabel(v){var label=$('nitaCleanSortLabel'); if(!label)return; var m={new:'New arrivals',low:'Price low to high',high:'Price high to low'}; label.textContent=m[v]||m.new;}
+  function buildTools(){var grid=$('products');if(!grid)return;document.querySelectorAll('#nitaFinalTools,.shop-tools,.nita-clean-filter,.nita-filter-shell,#nitaFilterShell').forEach(function(e){e.remove();});var ctx=pageContext(),lim=maxPagePrice();var html=''
+    +'<section id="nitaFinalTools" class="nita-rebuilt-tools">'
+    +'<div class="nita-rebuilt-row">'
+    +'<button type="button" id="nitaFinalFilterBtn" class="nita-slide-toggle">Filters <span>+</span></button>'
+    +'<div class="nita-clean-sort"><button type="button" id="nitaCleanSortBtn">Sort by <strong id="nitaCleanSortLabel">New arrivals</strong> <span>+</span></button><div id="nitaCleanSortMenu" class="nita-clean-sort-menu"><button type="button" class="nita-sort-option active" data-sort="new">New arrivals</button><button type="button" class="nita-sort-option" data-sort="low">Price low to high</button><button type="button" class="nita-sort-option" data-sort="high">Price high to low</button></div></div>'
+    +'</div>'
+    +'<div id="nitaFinalFilterPanel" class="nita-rebuilt-filter-panel">'
+    +'<label>Category<select id="nitaFinalCat" '+(ctx.cat?'disabled':'')+'>'+opts(CATS,ctx.cat||'All')+'</select></label>'
+    +'<label>Color<select id="nitaFinalColor">'+opts(COLORS,'All')+'</select></label>'
+    +'<label>Material<select id="nitaFinalMat">'+opts(MATS,'All')+'</select></label>'
+    +'<label>Size<select id="nitaFinalSize">'+opts(SIZES,'All')+'</select></label>'
+    +'<div class="nita-clean-price"><div class="nita-price-head"><label>Price range</label><span id="nitaRangeText">'+money(0)+' - '+money(lim)+'</span></div><div id="nitaDualRange" class="nita-dual-range" data-max="'+lim+'"><div class="nita-dual-track"></div><div id="nitaRangeFill" class="nita-dual-fill"></div><button type="button" id="nitaRangeMin" class="nita-range-handle min" aria-label="Minimum price"></button><button type="button" id="nitaRangeMax" class="nita-range-handle max" aria-label="Maximum price"></button></div><small id="nitaRangeHint">Drag the two dots to choose a budget.</small></div>'
+    +'<button type="button" id="nitaFinalClear" class="nita-clean-clear">Clear</button>'
+    +'</div></section>';
+    var title=document.querySelector('.shop-hero,.page-hero,main h1,.page h1'); if(title) title.insertAdjacentHTML('afterend',html); else grid.insertAdjacentHTML('beforebegin',html);
+    var state={min:0,max:lim,limit:lim};
+    function posFromValue(v){return Math.max(0,Math.min(100,state.limit? v/state.limit*100:0));}
+    function paint(){var a=posFromValue(state.min),b=posFromValue(state.max),fill=$('nitaRangeFill'),mn=$('nitaRangeMin'),mx=$('nitaRangeMax'),txt=$('nitaRangeText'); if(fill){fill.style.left=a+'%';fill.style.width=Math.max(0,b-a)+'%';} if(mn)mn.style.left=a+'%'; if(mx)mx.style.left=b+'%'; if(txt)txt.textContent=money(state.min)+' - '+money(state.max);}
+    function setFromPointer(which,ev){var bar=$('nitaDualRange'); if(!bar)return; var rect=bar.getBoundingClientRect(); var x=(ev.clientX-rect.left)/rect.width; x=Math.max(0,Math.min(1,x)); var val=Math.round(x*state.limit); if(which==='min') state.min=Math.min(val,state.max); else state.max=Math.max(val,state.min); paint(); scheduleRender();}
+    function bindHandle(id,which){var el=$(id); if(!el)return; el.onpointerdown=function(e){e.preventDefault(); el.setPointerCapture&&el.setPointerCapture(e.pointerId); function move(ev){setFromPointer(which,ev);} function up(){document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);} document.addEventListener('pointermove',move); document.addEventListener('pointerup',up); setFromPointer(which,e);};}
+    bindHandle('nitaRangeMin','min'); bindHandle('nitaRangeMax','max'); paint();
+    $('nitaFinalFilterBtn').onclick=function(){var p=$('nitaFinalFilterPanel'),open=!p.classList.contains('open');p.classList.toggle('open',open);this.querySelector('span').textContent=open?'−':'+';};
+    $('nitaCleanSortBtn').onclick=function(){var menu=$('nitaCleanSortMenu'),open=!menu.classList.contains('open');menu.classList.toggle('open',open);this.querySelector('span').textContent=open?'−':'+';};
+    document.querySelectorAll('.nita-sort-option').forEach(function(btn){btn.onclick=function(){document.querySelectorAll('.nita-sort-option').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');setSortLabel(btn.dataset.sort);$('nitaCleanSortMenu').classList.remove('open');$('nitaCleanSortBtn').querySelector('span').textContent='+';scheduleRender();};});
+    $('nitaFinalClear').onclick=function(){['nitaFinalColor','nitaFinalMat','nitaFinalSize'].forEach(function(id){var el=$(id);if(el)el.value='All';});if(!ctx.cat&&$('nitaFinalCat'))$('nitaFinalCat').value='All';state.min=0;state.max=state.limit;paint();scheduleRender();};
+    ['nitaFinalCat','nitaFinalColor','nitaFinalMat','nitaFinalSize'].forEach(function(id){var el=$(id);if(el){el.addEventListener('change',scheduleRender);el.addEventListener('input',scheduleRender);}});
+    window.nitaCleanRangeState=state;
+  }
+  function scheduleRender(){clearTimeout(LAST_RENDER);LAST_RENDER=setTimeout(render,40);}
+  function render(){var grid=$('products');if(!grid)return;if(!$('nitaFinalTools'))buildTools();var state=window.nitaCleanRangeState||{min:0,max:maxPagePrice(),limit:maxPagePrice()};var ctx=pageContext(),cat=ctx.cat||(($('nitaFinalCat')||{}).value)||'All',color=(($('nitaFinalColor')||{}).value)||'All',mat=(($('nitaFinalMat')||{}).value)||'All',size=(($('nitaFinalSize')||{}).value)||'All';var arr=pageProducts().filter(function(p){if(!ctx.cat&&cat!=='All'&&norm(p.category)!==norm(cat))return false;if(color!=='All'&&norm(productColorText(p)).indexOf(norm(color))<0)return false;if(mat!=='All'&&norm(p.material||p.productMaterial).indexOf(norm(mat))<0)return false;if(size!=='All'){var ss=Array.isArray(p.sizes)?p.sizes.map(norm):[];if(ss.indexOf(norm(size))<0)return false;}var pr=priceOf(p);return pr>=state.min && pr<=state.max;});var sort=activeSort();if(sort==='low')arr.sort(function(a,b){return priceOf(a)-priceOf(b);});else if(sort==='high')arr.sort(function(a,b){return priceOf(b)-priceOf(a);});else arr.sort(function(a,b){return Number(b.createdAt||0)-Number(a.createdAt||0);});grid.innerHTML=arr.length?arr.map(function(p){return window.productCard?window.productCard(p):'';}).join(''):'<div class="nita-empty-products"><h3>No products found</h3><p class="muted">Try changing the filters.</p></div>';}
+  window.nitaRebuildShopFilters=window.shopPage=window.nitaForceShopRender=render;
+  function install(){if(!$('products'))return;buildTools();render();}
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(install,80);setTimeout(install,700);setTimeout(install,1600);});
+  window.addEventListener('load',function(){setTimeout(install,120);setTimeout(install,1100);});
+})();
+/* === END NITA FINAL REBUILD: CLEAN FILTER/SORT + TRUE TWO-HANDLE PRICE + FAST PHOTO ORDER === */
