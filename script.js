@@ -11495,3 +11495,198 @@ placeOrder=async function(){
   });
 })();
 /* === END NITA FINAL PRODUCT PAGE INSTANT LOAD === */
+
+/* === NITA FINAL LOCK: KEEP STOCK BESIDE PRICE + ARROWS ON IMAGE 20260616-1428 === */
+(function(){
+  'use strict';
+  if(!/product\.html/i.test(location.pathname)) return;
+  function lockProductView(){
+    try{
+      document.body && document.body.classList.add('product-page','product-page-ready');
+      document.documentElement.classList.remove('nita-product-preload');
+      document.documentElement.classList.add('nita-product-ready');
+      var detail=document.getElementById('detail')||document.querySelector('.product-detail');
+      if(!detail) return;
+      detail.classList.add('product-detail');
+      var info=detail.querySelector('.nita-product-info-fixed,.product-info');
+      var priceLine=detail.querySelector('.price-stock-line');
+      var price=detail.querySelector('.price-stock-line h2, .nita-product-info-fixed h2, .product-info h2');
+      var stock=detail.querySelector('.stock-status');
+      if(info && price && stock){
+        if(!priceLine){
+          priceLine=document.createElement('div');
+          priceLine.className='price-stock-line nita-final-price-status-lock';
+          price.parentNode.insertBefore(priceLine, price);
+          priceLine.appendChild(price);
+        }
+        if(stock.parentElement!==priceLine) priceLine.appendChild(stock);
+        priceLine.classList.add('nita-final-price-status-lock');
+        priceLine.style.cssText='display:inline-flex!important;align-items:center!important;justify-content:flex-start!important;gap:10px!important;flex-wrap:nowrap!important;width:auto!important;max-width:max-content!important;margin:0 0 16px!important;padding:0!important;';
+        price.style.cssText+=';margin:0!important;line-height:1!important;display:inline-flex!important;align-items:center!important;flex:0 0 auto!important;width:auto!important;';
+        stock.style.cssText+=';position:static!important;display:inline-flex!important;align-items:center!important;gap:7px!important;margin:0!important;line-height:1!important;white-space:nowrap!important;flex:0 0 auto!important;width:auto!important;transform:none!important;';
+      }
+      var imgWrap=detail.querySelector('.nita-detail-img-fixed,.detail-img');
+      if(imgWrap){
+        imgWrap.style.position='relative';
+        imgWrap.style.overflow='visible';
+        var prev=detail.querySelector('.gallery-arrow.prev');
+        var next=detail.querySelector('.gallery-arrow.next');
+        [prev,next].forEach(function(btn){
+          if(!btn) return;
+          btn.style.cssText+=';position:absolute!important;top:50%!important;transform:translateY(-50%)!important;width:50px!important;height:50px!important;border:2px solid #111!important;border-radius:50%!important;background:#fff!important;color:#111!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;margin:0!important;font-size:34px!important;line-height:1!important;z-index:80!important;';
+        });
+        if(prev){ prev.style.left='12px'; prev.style.right='auto'; }
+        if(next){ next.style.right='12px'; next.style.left='auto'; }
+      }
+    }catch(e){console.warn('Nita product lock',e);}
+  }
+  var old=window.productPage;
+  if(typeof old==='function'){
+    window.productPage=function(){
+      var r=old.apply(this,arguments);
+      lockProductView();
+      requestAnimationFrame(lockProductView);
+      setTimeout(lockProductView,120);
+      setTimeout(lockProductView,650);
+      return r;
+    };
+  }
+  document.addEventListener('DOMContentLoaded',function(){lockProductView();setTimeout(lockProductView,200);setTimeout(lockProductView,900);});
+  window.addEventListener('load',function(){lockProductView();setTimeout(lockProductView,250);});
+  try{new MutationObserver(function(){lockProductView();}).observe(document.documentElement,{subtree:true,childList:true});}catch(e){}
+})();
+/* === END NITA FINAL LOCK: KEEP STOCK BESIDE PRICE + ARROWS ON IMAGE === */
+
+/* === NITA FINAL ADMIN ASSET PHOTO PREVIEW FALLBACK FIX 20260616 ===
+   Fixes preview boxes showing broken image icons when product photo filenames exist but
+   browser tries only one URL form. Supports /assets/products/name, assets/products/name,
+   ./assets/products/name and common extension/case fallbacks without changing admin layout. */
+(function(){
+  function byId(id){return document.getElementById(id);}
+  function esc(s){return String(s==null?'':s).replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});}
+  function cleanLines(v){return String(v||'').split(/\r?\n|,/).map(function(x){return x.trim();}).filter(Boolean);}
+  function unique(a){var seen={};return (a||[]).map(function(x){return String(x||'').trim();}).filter(function(x){if(!x||seen[x])return false;seen[x]=1;return true;});}
+  function baseName(s){
+    s=String(s||'').trim().replace(/^['"]|['"]$/g,'');
+    s=s.replace(/^https?:\/\/[^/]+/i,'');
+    s=s.replace(/^\/+/, '');
+    s=s.replace(/^\.\//,'');
+    s=s.replace(/^assets\/products\//i,'');
+    s=s.replace(/^assets\//i,'');
+    return s;
+  }
+  function extVariants(name){
+    var out=[name];
+    var m=name.match(/^(.*)\.(jpg|jpeg|png|webp)$/i);
+    if(m){
+      var b=m[1];
+      ['jpg','jpeg','png','webp','JPG','JPEG','PNG','WEBP'].forEach(function(e){out.push(b+'.'+e);});
+    }
+    return unique(out);
+  }
+  function photoCandidates(input){
+    var raw=String(input||'').trim();
+    var name=baseName(raw);
+    var names=extVariants(name);
+    var out=[];
+    if(/^https?:\/\//i.test(raw) || /^data:/i.test(raw)) out.push(raw);
+    names.forEach(function(n){
+      out.push('/assets/products/'+n);
+      out.push('assets/products/'+n);
+      out.push('./assets/products/'+n);
+    });
+    return unique(out).map(function(u){return u.indexOf(' ')>-1?encodeURI(u):u;});
+  }
+  window.nitaTryImageFallback=function(img){
+    try{
+      var list=JSON.parse(img.getAttribute('data-fallbacks')||'[]');
+      var idx=parseInt(img.getAttribute('data-fallback-index')||'0',10)+1;
+      if(idx<list.length){
+        img.setAttribute('data-fallback-index', String(idx));
+        img.src=list[idx];
+        return;
+      }
+      var card=img.closest('.admin-thumb');
+      if(card) card.classList.add('missing-asset');
+    }catch(e){
+      var card2=img.closest('.admin-thumb');
+      if(card2) card2.classList.add('missing-asset');
+    }
+  };
+  function normalizeForSave(line){
+    var raw=String(line||'').trim();
+    if(!raw) return '';
+    if(/^https?:\/\//i.test(raw) || /^data:/i.test(raw)) return raw;
+    var name=baseName(raw);
+    return '/assets/products/'+name;
+  }
+  function getLines(){
+    var el=byId('pPhotoPaths');
+    return cleanLines(el && el.value).map(normalizeForSave).filter(Boolean);
+  }
+  function syncTextarea(photos){
+    var el=byId('pPhotoPaths');
+    if(!el) return;
+    el.value=unique(photos||[]).map(function(u){return baseName(u);}).join('\n');
+  }
+  function renderAdminAssetPreview(photos){
+    var box=byId('photoPreview'); if(!box) return;
+    photos=unique(photos||[]);
+    if(!photos.length){box.innerHTML='';return;}
+    box.innerHTML=photos.map(function(u,i){
+      var fallbacks=photoCandidates(u);
+      var first=fallbacks[0] || u;
+      return '<div class="admin-thumb photo-order-thumb asset-path-thumb">'
+        + '<img src="'+esc(first)+'" data-fallback-index="0" data-fallbacks=\''+esc(JSON.stringify(fallbacks))+'\' alt="Product photo '+(i+1)+'" loading="eager" onerror="nitaTryImageFallback(this)">'
+        + '<span>'+(i===0?'Photo 1':'Photo '+(i+1))+'</span>'
+        + '<small>'+esc(baseName(u))+'</small>'
+        + '<div class="photo-order-controls">'
+        + '<button type="button" onclick="movePendingPhoto&&movePendingPhoto('+i+',-1)" '+(i===0?'disabled':'')+'>←</button>'
+        + '<button type="button" onclick="movePendingPhoto&&movePendingPhoto('+i+',1)" '+(i===photos.length-1?'disabled':'')+'>→</button>'
+        + '<button type="button" onclick="removePendingPhoto&&removePendingPhoto('+i+')">×</button>'
+        + '</div></div>';
+    }).join('');
+  }
+  window.previewAssetProductPhotos=function(){
+    var paths=getLines();
+    if(!paths.length){try{if(typeof msg==='function')msg('Write at least one image file name first.',false);else alert('Write at least one image file name first.')}catch(e){} return;}
+    window.pendingAdminPhotos=unique(paths);
+    window.pendingPhotos=window.pendingAdminPhotos;
+    window.pendingAdminMainIndex=0;
+    syncTextarea(window.pendingAdminPhotos);
+    renderAdminAssetPreview(window.pendingAdminPhotos);
+    try{if(typeof msg==='function')msg('Photo preview ready. If a card still shows missing, check the exact file name/case inside assets/products.',true);else if(typeof toast==='function')toast('Photo preview ready.')}catch(e){}
+  };
+  window.movePendingPhoto=function(i,dir){
+    var photos=unique(window.pendingAdminPhotos||getLines());
+    var j=i+dir;
+    if(j<0||j>=photos.length) return false;
+    var tmp=photos[i]; photos[i]=photos[j]; photos[j]=tmp;
+    window.pendingAdminPhotos=photos; window.pendingPhotos=photos; window.pendingAdminMainIndex=0;
+    syncTextarea(photos); renderAdminAssetPreview(photos); return false;
+  };
+  window.removePendingPhoto=function(i){
+    var photos=unique(window.pendingAdminPhotos||getLines());
+    photos.splice(i,1);
+    window.pendingAdminPhotos=photos; window.pendingPhotos=photos; window.pendingAdminMainIndex=0;
+    syncTextarea(photos); renderAdminAssetPreview(photos); return false;
+  };
+  var oldAdd=window.addProductAdmin;
+  window.addProductAdmin=async function(){
+    var paths=getLines();
+    if(paths.length){
+      window.pendingAdminPhotos=unique(paths);
+      window.pendingPhotos=window.pendingAdminPhotos;
+      window.pendingAdminMainIndex=0;
+    }
+    return oldAdd ? oldAdd.apply(this, arguments) : undefined;
+  };
+  document.addEventListener('input',function(e){
+    if(e.target && e.target.id==='pPhotoPaths'){
+      var paths=getLines();
+      window.pendingAdminPhotos=unique(paths);
+      window.pendingPhotos=window.pendingAdminPhotos;
+    }
+  },true);
+})();
+/* === END NITA FINAL ADMIN ASSET PHOTO PREVIEW FALLBACK FIX === */

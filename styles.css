@@ -5218,3 +5218,140 @@ html.nita-product-ready #detail.product-detail{
     margin:0 0 18px !important;
   }
 }
+
+/* === NITA FINAL LOCK: PRODUCT PRICE STATUS + GALLERY ARROWS 20260616-1428 === */
+body.product-page #detail .nita-product-info-fixed .price-stock-line,
+body.product-page #detail .product-info .price-stock-line,
+body.product-page .product-detail .price-stock-line,
+body.product-page .nita-product-info-fixed .price-stock-line,
+body.product-page .product-info .price-stock-line{
+  display:inline-flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:10px!important;
+  flex-wrap:nowrap!important;
+  width:auto!important;
+  max-width:max-content!important;
+  min-width:0!important;
+  margin:0 0 16px!important;
+  padding:0!important;
+}
+body.product-page #detail .price-stock-line h2,
+body.product-page .product-detail .price-stock-line h2,
+body.product-page .nita-product-info-fixed .price-stock-line h2,
+body.product-page .product-info .price-stock-line h2{
+  margin:0!important;
+  padding:0!important;
+  line-height:1!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  max-width:max-content!important;
+}
+body.product-page #detail .price-stock-line .stock-status,
+body.product-page .product-detail .price-stock-line .stock-status,
+body.product-page .nita-product-info-fixed .price-stock-line .stock-status,
+body.product-page .product-info .price-stock-line .stock-status{
+  position:static!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:7px!important;
+  margin:0!important;
+  padding:0!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  max-width:max-content!important;
+  transform:none!important;
+  vertical-align:middle!important;
+}
+body.product-page #detail .price-stock-line .stock-dot,
+body.product-page .product-detail .price-stock-line .stock-dot{
+  width:10px!important;
+  height:10px!important;
+  flex:0 0 10px!important;
+  display:inline-block!important;
+  border-radius:50%!important;
+  margin:0 1px 0 0!important;
+}
+body.product-page #detail .nita-detail-img-fixed,
+body.product-page #detail .detail-img,
+body.product-page .product-detail .nita-detail-img-fixed,
+body.product-page .product-detail .detail-img{
+  position:relative!important;
+  overflow:visible!important;
+}
+body.product-page #detail .gallery-arrow,
+body.product-page .product-detail .gallery-arrow{
+  position:absolute!important;
+  top:50%!important;
+  width:50px!important;
+  height:50px!important;
+  min-width:50px!important;
+  min-height:50px!important;
+  border:2px solid #111!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  color:#111!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  padding:0!important;
+  margin:0!important;
+  font-size:34px!important;
+  line-height:1!important;
+  font-family:Arial,Helvetica,sans-serif!important;
+  font-weight:300!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.10)!important;
+  z-index:80!important;
+  transform:translateY(-50%)!important;
+}
+body.product-page #detail .gallery-arrow.prev,
+body.product-page .product-detail .gallery-arrow.prev{
+  left:12px!important;
+  right:auto!important;
+}
+body.product-page #detail .gallery-arrow.next,
+body.product-page .product-detail .gallery-arrow.next{
+  right:12px!important;
+  left:auto!important;
+}
+body.product-page #detail .gallery-arrow:hover,
+body.product-page .product-detail .gallery-arrow:hover{
+  background:#111!important;
+  color:#fff!important;
+}
+@media(max-width:760px){
+  body.product-page #detail .nita-product-info-fixed .price-stock-line,
+  body.product-page #detail .product-info .price-stock-line,
+  body.product-page .product-detail .price-stock-line{
+    gap:9px!important;
+    margin:0 0 14px!important;
+  }
+  body.product-page #detail .price-stock-line h2,
+  body.product-page .product-detail .price-stock-line h2{
+    font-size:30px!important;
+  }
+  body.product-page #detail .price-stock-line .stock-status,
+  body.product-page .product-detail .price-stock-line .stock-status{
+    font-size:14px!important;
+  }
+  body.product-page #detail .gallery-arrow,
+  body.product-page .product-detail .gallery-arrow{
+    width:46px!important;
+    height:46px!important;
+    min-width:46px!important;
+    min-height:46px!important;
+    font-size:32px!important;
+  }
+  body.product-page #detail .gallery-arrow.prev,
+  body.product-page .product-detail .gallery-arrow.prev{left:8px!important;}
+  body.product-page #detail .gallery-arrow.next,
+  body.product-page .product-detail .gallery-arrow.next{right:8px!important;}
+}
+/* === END NITA FINAL LOCK: PRODUCT PRICE STATUS + GALLERY ARROWS === */
