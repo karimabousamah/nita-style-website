@@ -4971,3 +4971,250 @@ body:not(.nita-ready){background:#fff!important;}
   }
 }
 /* === END NITA FINAL QUICK VIEW MOBILE CENTER FIX === */
+
+/* === NITA FINAL CUSTOMER POLISH LOCK 20260616-1405 === */
+/* Product card images: visible everywhere, no grey placeholders, stable on mobile */
+.product.nita-final-card,
+.product.nita-real-product-card,
+.product{
+  position:relative!important;
+}
+.product .nita-final-card-media,
+.product .nita-real-card-media,
+.product .product-img{
+  position:relative!important;
+  overflow:hidden!important;
+  background:#f4f4f4!important;
+}
+.product .nita-final-card-media img,
+.product .nita-final-card-img,
+.nita-real-card-img{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center!important;
+  visibility:visible!important;
+}
+.product .nita-final-card-img.primary{opacity:1!important;z-index:1!important;position:absolute!important;inset:0!important;transition:opacity .28s ease, transform .28s ease!important;}
+.product .nita-final-card-img.secondary{opacity:0!important;z-index:2!important;position:absolute!important;inset:0!important;transition:opacity .28s ease, transform .28s ease!important;}
+@media (hover:hover) and (pointer:fine){
+  .product.nita-has-second:hover .nita-final-card-img.primary{opacity:0!important;transform:scale(1.01)!important;}
+  .product.nita-has-second:hover .nita-final-card-img.secondary{opacity:1!important;transform:scale(1.01)!important;}
+}
+@media (hover:none), (max-width:900px){
+  .product.nita-has-second.nita-touch-active .nita-final-card-img.primary,
+  .product.nita-has-second:hover .nita-final-card-img.primary{opacity:0!important;transform:scale(1.01)!important;}
+  .product.nita-has-second.nita-touch-active .nita-final-card-img.secondary,
+  .product.nita-has-second:hover .nita-final-card-img.secondary{opacity:1!important;transform:scale(1.01)!important;}
+  .product .quick-view-btn{opacity:0!important;pointer-events:none!important;}
+  .product.nita-touch-active .quick-view-btn,
+  .product:hover .quick-view-btn,
+  .product:focus-within .quick-view-btn{opacity:1!important;pointer-events:auto!important;}
+}
+.product .quick-view-btn{
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  transform:translate(-50%,-50%)!important;
+  margin:0!important;
+  z-index:80!important;
+  min-width:150px!important;
+  height:52px!important;
+  padding:0 24px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  border:2px solid #111!important;
+  background:rgba(255,255,255,.96)!important;
+  color:#111!important;
+  line-height:1!important;
+  box-shadow:none!important;
+  white-space:nowrap!important;
+}
+.product:hover .quick-view-btn,
+.product:focus-within .quick-view-btn,
+.product.nita-touch-active .quick-view-btn{transform:translate(-50%,-50%)!important;}
+@media(max-width:760px){
+  .product .quick-view-btn{min-width:140px!important;height:50px!important;padding:0 18px!important;font-size:12px!important;}
+}
+/* Product detail: price + stock locked on one line, no delayed override */
+.product-info .price-stock-line,
+.nita-product-info-fixed .price-stock-line,
+#detail .price-stock-line,
+.product-detail .price-stock-line{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:12px!important;
+  width:auto!important;
+  max-width:100%!important;
+  flex-wrap:nowrap!important;
+  margin:0 0 16px!important;
+}
+#detail .price-stock-line h2,
+.product-info .price-stock-line h2,
+.nita-product-info-fixed .price-stock-line h2{
+  display:inline-flex!important;
+  align-items:center!important;
+  margin:0!important;
+  line-height:1!important;
+  flex:0 0 auto!important;
+}
+#detail .price-stock-line .stock-status,
+.product-info .price-stock-line .stock-status,
+.nita-product-info-fixed .price-stock-line .stock-status{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:7px!important;
+  margin:0!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  flex:0 0 auto!important;
+  transform:none!important;
+}
+/* Product detail buttons on phone: both buttons same line */
+@media(max-width:760px){
+  #detail .product-actions,
+  #detail .nita-actions-fixed,
+  .product-detail .product-actions,
+  .nita-actions-fixed{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    gap:10px!important;
+    width:100%!important;
+    align-items:stretch!important;
+    margin:14px 0 12px!important;
+  }
+  #detail .product-actions .btn,
+  #detail .nita-actions-fixed .btn,
+  .product-detail .product-actions .btn,
+  .nita-actions-fixed .btn{
+    min-width:0!important;
+    width:100%!important;
+    height:54px!important;
+    padding:0 8px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    text-align:center!important;
+    white-space:nowrap!important;
+    box-sizing:border-box!important;
+  }
+}
+/* Product gallery arrows: restore left/right sides and center icon inside circle */
+#detail .detail-img,
+#detail .nita-detail-img-fixed,
+.product-detail .detail-img{
+  position:relative!important;
+  overflow:visible!important;
+}
+#detail .gallery-arrow,
+#detail .detail-photo-arrow,
+.gallery-arrow,
+.detail-photo-arrow{
+  position:absolute!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  width:54px!important;
+  height:54px!important;
+  border:2px solid #111!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  color:#111!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:0!important;
+  margin:0!important;
+  font-size:38px!important;
+  font-family:Arial,Helvetica,sans-serif!important;
+  font-weight:300!important;
+  line-height:1!important;
+  text-align:center!important;
+  z-index:50!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.08)!important;
+  cursor:pointer!important;
+}
+#detail .gallery-arrow.prev,
+#detail .detail-photo-prev,
+.gallery-arrow.prev,
+.detail-photo-prev{left:-78px!important;right:auto!important;}
+#detail .gallery-arrow.next,
+#detail .detail-photo-next,
+.gallery-arrow.next,
+.detail-photo-next{right:-78px!important;left:auto!important;}
+#detail .gallery-arrow:hover,
+#detail .detail-photo-arrow:hover,
+.gallery-arrow:hover,
+.detail-photo-arrow:hover{background:#111!important;color:#fff!important;}
+@media(max-width:900px){
+  #detail .gallery-arrow,
+  #detail .detail-photo-arrow,
+  .gallery-arrow,
+  .detail-photo-arrow{width:48px!important;height:48px!important;font-size:34px!important;}
+  #detail .gallery-arrow.prev,
+  #detail .detail-photo-prev,
+  .gallery-arrow.prev,
+  .detail-photo-prev{left:10px!important;}
+  #detail .gallery-arrow.next,
+  #detail .detail-photo-next,
+  .gallery-arrow.next,
+  .detail-photo-next{right:10px!important;}
+}
+/* === END NITA FINAL CUSTOMER POLISH LOCK === */
+
+/* === NITA FINAL PRODUCT PAGE INSTANT LOAD / NO OLD-LAYOUT FLICKER 20260616-1415 === */
+html.nita-product-preload body.product-page #detail,
+html.nita-product-preload #detail.product-detail{
+  opacity:0 !important;
+  visibility:hidden !important;
+}
+html.nita-product-ready #detail.product-detail{
+  opacity:1 !important;
+  visibility:visible !important;
+  transition:opacity .12s ease !important;
+}
+/* Keep price + status locked in final position for every availability state */
+.product-info .price-stock-line,
+.nita-product-info-fixed .price-stock-line{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:14px !important;
+  flex-wrap:nowrap !important;
+  margin:0 0 22px !important;
+}
+.product-info .price-stock-line h2,
+.nita-product-info-fixed .price-stock-line h2{
+  margin:0 !important;
+  line-height:1 !important;
+  display:flex !important;
+  align-items:center !important;
+}
+.product-info .price-stock-line .stock-status,
+.nita-product-info-fixed .price-stock-line .stock-status{
+  margin:0 !important;
+  line-height:1 !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:7px !important;
+  white-space:nowrap !important;
+  transform:none !important;
+}
+.product-info .price-stock-line .stock-dot,
+.nita-product-info-fixed .price-stock-line .stock-dot{
+  flex:0 0 auto !important;
+}
+@media(max-width:760px){
+  .product-info .price-stock-line,
+  .nita-product-info-fixed .price-stock-line{
+    gap:12px !important;
+    margin:0 0 18px !important;
+  }
+}
