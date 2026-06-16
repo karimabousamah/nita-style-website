@@ -4768,3 +4768,39 @@ body:not(.nita-ready){background:#fff!important;}
 .nita-edit-photo-preview .photo-order-controls button{flex:1;border:1px solid #111;background:#fff;height:26px;cursor:pointer;font-weight:900;}
 .nita-edit-photo-preview .photo-order-controls button:hover:not(:disabled){background:#111;color:#fff;}
 .nita-edit-photo-preview .photo-order-controls button:disabled{opacity:.35;cursor:not-allowed;}
+
+/* === NITA FINAL VISUAL FIX: MOBILE CARD STABILITY + PRODUCT PAGE CLEAN 20260616-1305 === */
+.product .product-img-secondary,
+.product .product-img .product-img-secondary{display:none!important;opacity:0!important;visibility:hidden!important;}
+.product .product-img-primary,
+.product .product-img .product-img-primary{opacity:1!important;transform:none!important;transition:none!important;}
+.product .product-img,
+.product .nita-stable-product-img{background-color:#f3f3f3!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;transition:none!important;}
+.product:hover .product-img{transform:none!important;}
+.product > .quick-view-btn{left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%)!important;margin:0!important;z-index:20!important;text-align:center!important;white-space:nowrap!important;}
+.product:hover > .quick-view-btn,.product:focus-within > .quick-view-btn{transform:translate(-50%,-50%) scale(1.02)!important;}
+.nita-exact-collection-media{position:relative;overflow:hidden;background:#f4f4f4;}
+.nita-collage-single{width:100%;height:100%;object-fit:cover;display:block;}
+.nita-collage-empty{height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#f7f7f7,#ededed);font-weight:900;color:#777;letter-spacing:.08em;}
+.nita-exact-collage{display:grid;width:100%;height:100%;gap:0;}
+.nita-exact-collage.count-2{grid-template-columns:1fr 1fr;}
+.nita-exact-collage.count-3{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+.nita-exact-collage.count-3 img:first-child{grid-row:1/3;}
+.nita-exact-collage.count-4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+.nita-exact-collage img{width:100%;height:100%;object-fit:cover;display:block;}
+@media(max-width:760px){
+  .product > .quick-view-btn{opacity:1!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;min-width:134px!important;padding:12px 16px!important;font-size:11px!important;}
+  .product-img,.product-marquee .product-img,.trending-scroll .product-img,.new-arrivals-scroll .product-img{background-size:cover!important;background-position:center!important;}
+  .price-stock-line{display:flex!important;align-items:center!important;gap:14px!important;margin:0 0 14px!important;}
+  .price-stock-line h2{margin:0!important;line-height:1!important;}
+  .price-stock-line .inline-stock,.price-stock-line .stock-status{margin:0!important;display:inline-flex!important;align-items:center!important;white-space:nowrap!important;}
+  .nita-premium-product-info,.product-info{padding-top:0!important;margin-top:10px!important;}
+  .nita-premium-product-info h1,.product-info h1{margin:0 0 16px!important;}
+  .product-size-list,.sizes{margin:14px 0!important;}
+  .product-actions,.nita-premium-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;margin:14px 0 10px!important;}
+  .product-actions .btn,.nita-premium-actions .btn,.product-actions .notify-btn{width:100%!important;min-width:0!important;padding-left:10px!important;padding-right:10px!important;}
+  .product-description-block{margin-top:14px!important;padding-top:14px!important;}
+  .product-thumbs{gap:10px!important;overflow-x:auto!important;padding-bottom:6px!important;}
+  .product-thumbs button{min-width:72px!important;width:72px!important;height:72px!important;}
+}
+/* === END NITA FINAL VISUAL FIX === */
