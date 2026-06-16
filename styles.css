@@ -5510,3 +5510,25 @@ body.product-page #detail .product-info > .inline-stock{
 .nita-admin-preview-card .nita-admin-missing-note{font-size:10px!important;color:#b00020!important;font-weight:900!important;margin-top:4px!important;display:none;}
 .nita-admin-preview-card.missing-asset .nita-admin-missing-note{display:block!important;}
 /* === END NITA FINAL REAL LOCK === */
+
+/* === NITA FINAL CUSTOMER STABLE CSS 20260616-1530 === */
+.product-img.nita-stable-product-img{position:relative!important;overflow:hidden!important;background:#f5f5f5!important;display:block!important;aspect-ratio:3/4!important;}
+.product-img.nita-stable-product-img .nita-card-img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;display:block!important;opacity:1!important;transition:opacity .28s ease!important;}
+.product-img.nita-stable-product-img .nita-card-img-secondary{opacity:0!important;}
+@media (hover:hover){.product:hover .nita-card-img-primary{opacity:0!important}.product:hover .nita-card-img-secondary{opacity:1!important}.product:hover .quick-view-btn{opacity:1!important;visibility:visible!important;transform:translate(-50%,-50%)!important;}}
+.product .quick-view-btn{position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;z-index:20!important;}
+@media (hover:none){.product .quick-view-btn{opacity:0!important;visibility:hidden!important}.product:active .quick-view-btn,.product:focus-within .quick-view-btn{opacity:1!important;visibility:visible!important;transform:translate(-50%,-50%)!important;}}
+.nita-card-price-status{display:flex!important;align-items:center!important;gap:10px!important;flex-wrap:nowrap!important;line-height:1!important;margin-top:8px!important;}
+.nita-card-price-status p{margin:0!important;display:inline-flex!important;align-items:center!important;gap:8px!important;white-space:nowrap!important;}
+.product-stock-status{display:inline-flex!important;align-items:center!important;gap:6px!important;line-height:1!important;white-space:nowrap!important;margin:0!important;color:#247d24!important;font-weight:800!important;}
+.product-stock-status .stock-dot{width:10px!important;height:10px!important;border-radius:50%!important;background:#258a2a!important;display:inline-block!important;flex:0 0 auto!important;}
+.nita-price-stock-final{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:14px!important;margin:12px 0 18px!important;line-height:1!important;}
+.nita-price-stock-final .nita-final-price{margin:0!important;line-height:1!important;display:inline-flex!important;align-items:center!important;}
+.nita-price-stock-final .product-stock-status{position:static!important;transform:none!important;margin:0!important;align-self:center!important;}
+.detail-img.nita-premium-detail-img{position:relative!important;background:#f7f7f7!important;overflow:visible!important;}
+.detail-img .nita-detail-real-img{width:100%!important;height:100%!important;object-fit:cover!important;display:block!important;}
+.detail-photo-arrow{position:absolute!important;top:50%!important;transform:translateY(-50%)!important;width:48px!important;height:48px!important;border:1px solid #111!important;border-radius:50%!important;background:#fff!important;color:#111!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:34px!important;line-height:0!important;z-index:30!important;box-shadow:0 10px 25px rgba(0,0,0,.08)!important;padding:0!important;font-family:Arial,sans-serif!important;}
+.detail-photo-prev{left:-62px!important}.detail-photo-next{right:-62px!important}
+.product-thumbs img{width:100%!important;height:100%!important;object-fit:cover!important;display:block!important;}
+@media(max-width:760px){.nita-price-stock-final{gap:12px!important;margin:10px 0 14px!important}.nita-price-stock-final .nita-final-price{font-size:30px!important}.product-actions.nita-premium-actions{display:flex!important;flex-direction:row!important;gap:10px!important}.product-actions.nita-premium-actions .btn{flex:1 1 0!important;min-width:0!important;height:56px!important;padding:0 10px!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:12px!important}.detail-photo-arrow{width:44px!important;height:44px!important;font-size:30px!important}.detail-photo-prev{left:10px!important}.detail-photo-next{right:10px!important}.product-img.nita-stable-product-img{aspect-ratio:3/4!important}.product .quick-view-btn{top:50%!important;left:50%!important}}
+/* === END NITA FINAL CUSTOMER STABLE CSS === */
