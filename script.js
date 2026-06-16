@@ -12021,3 +12021,292 @@ placeOrder=async function(){
   document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){if(document.getElementById('products')) window.renderProducts('#products', (window.nitaCurrentShopProducts|| (typeof getProducts==='function'?getProducts():[]))); if(document.getElementById('detail')) window.productPage();},80);});
 })();
 /* === END NITA FINAL EMERGENCY STABLE CUSTOMER + ADMIN IMAGE SYSTEM === */
+
+/* === NITA TRUE FINAL: STABLE PRODUCT IMAGES + FAST ADMIN PREVIEW 20260616-1635 === */
+(function(){
+  'use strict';
+  var EXT=['jpg','jpeg','png','webp','JPG','JPEG','PNG','WEBP'];
+  function qs(s,r){return (r||document).querySelector(s)}
+  function qsa(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function money(v){var n=Number(v||0);return '$'+n.toFixed(2)}
+  function cleanFile(v){
+    var s=String(v||'').normalize?String(v||'').normalize('NFKC'):String(v||'');
+    s=s.replace(/\u00a0/g,' ')
+     .replace(/[\u2010\u2011\u2012\u2013\u2014\u2212]/g,'-')
+     .replace(/[\u200B-\u200D\uFEFF]/g,'')
+     .replace(/^['"]+|['"]+$/g,'')
+     .trim();
+    if(/^data:image\//i.test(s)||/^https?:\/\//i.test(s)) return s;
+    s=s.replace(/^https?:\/\/[^/]+/i,'')
+       .replace(/^\/+/, '')
+       .replace(/^\.\//,'')
+       .replace(/^public\//i,'')
+       .replace(/^assets\/products\//i,'')
+       .replace(/^assets\//i,'')
+       .replace(/^products\//i,'')
+       .replace(/^images\//i,'');
+    // This fixes filenames copied as “red-bag-1 .jpg”, “red – bag – 1.jpg”, etc.
+    s=s.replace(/\s*\.\s*/g,'.').replace(/\s*-\s*/g,'-').replace(/\s+/g,'');
+    return s;
+  }
+  function unique(a){var m={};return (a||[]).filter(function(x){x=String(x||'').trim();var k=x.toLowerCase();if(!x||m[k])return false;m[k]=1;return true})}
+  function variants(name){
+    name=cleanFile(name); if(!name)return[]; if(/^data:image\//i.test(name)||/^https?:\/\//i.test(name))return[name];
+    var out=[name];
+    // hyphen variants in case GitHub accidentally stored a unicode dash name.
+    out.push(name.replace(/-/g,'\u2011'));out.push(name.replace(/-/g,'\u2013'));out.push(name.replace(/-/g,'\u2014'));
+    var m=name.match(/^(.*)\.([a-z0-9]+)$/i), base=m?m[1]:name;
+    EXT.forEach(function(e){out.push(base+'.'+e)});
+    return unique(out);
+  }
+  function candidates(raw){
+    var rawClean=cleanFile(raw); if(!rawClean)return[]; if(/^data:image\//i.test(rawClean)||/^https?:\/\//i.test(rawClean))return[rawClean];
+    var out=[];
+    variants(rawClean).forEach(function(n){
+      ['/assets/products/','assets/products/','./assets/products/','/assets/','assets/','./assets/','/products/','products/','./products/','/images/','images/','./images/','/','./',''].forEach(function(p){out.push(p+n)});
+    });
+    return unique(out);
+  }
+  function canonical(raw){var c=candidates(raw);return c[0]||''}
+  function attachFallback(img){
+    if(!img||img.dataset.nitaTrueFallback==='1')return; img.dataset.nitaTrueFallback='1';
+    img.addEventListener('error',function(){
+      var list=[];try{list=JSON.parse(img.getAttribute('data-nita-candidates')||'[]')}catch(e){}
+      var i=Number(img.dataset.nitaTry||0)+1; img.dataset.nitaTry=String(i);
+      if(list[i]){ img.src=list[i]; return; }
+      img.classList.add('nita-img-missing');
+    });
+  }
+  function applyFallbacks(root){qsa('img[data-nita-candidates]',root||document).forEach(attachFallback)}
+  function photoArray(p){
+    p=p||{}; var arr=[];
+    ['photos','images','gallery','photoOrder','photoPaths','productPhotos','productImages','colorPhotos','colourPhotos'].forEach(function(k){
+      var v=p[k]; if(!v)return;
+      if(Array.isArray(v)) arr=arr.concat(v); else if(typeof v==='string') arr=arr.concat(v.split(/\r?\n|,|\|/));
+    });
+    if(p.img)arr.push(p.img); if(p.image)arr.push(p.image);
+    return unique(arr.map(cleanFile).filter(function(x){return x&&!/^linear-gradient|^radial-gradient/i.test(x)}));
+  }
+  function priceOf(p){return Number(p&&p.salePrice? p.salePrice : p&&p.price? p.price : 0)}
+  function statusOf(p){var s=String((p&&p.status)||'In stock').toLowerCase(); if(s.indexOf('out')>-1)return'Out of stock'; if(s.indexOf('coming')>-1)return'Coming soon'; return'In stock'}
+  function stockEl(p){var t=statusOf(p), cls=t==='In stock'?'in':(t==='Out of stock'?'out':'soon');return '<span class="product-stock '+cls+'"><i></i>'+esc(t)+'</span>'}
+  function allProducts(){try{return (typeof getProducts==='function'?getProducts():window.products||[]).filter(Boolean)}catch(e){return[]}}
+
+  window.nitaCleanImageFilename=cleanFile;
+  window.nitaImageCandidates=candidates;
+  window.nitaCanonicalProductImage=canonical;
+
+  window.productMainImage=function(p){return canonical(photoArray(p)[0]||p&&p.img||p&&p.image||'')};
+  window.productCard=function(p){
+    p=p||{}; var ph=photoArray(p), first=ph[0]||'', second=ph[1]||ph[0]||'';
+    var firstList=candidates(first), secondList=candidates(second);
+    var price=p.salePrice?'<p class="product-price-row"><span class="muted" style="text-decoration:line-through;margin-right:8px">'+money(p.price)+'</span><span class="price-drop">'+money(p.salePrice)+'</span>'+stockEl(p)+'</p>':'<p class="product-price-row"><span>'+money(priceOf(p))+'</span>'+stockEl(p)+'</p>';
+    return '<a class="product nita-true-card" href="product.html?id='+encodeURIComponent(p.id||'')+'"><div class="product-img nita-card-imagebox">'
+      +(first?'<img class="nita-card-primary" src="'+esc(firstList[0]||canonical(first))+'" data-nita-candidates="'+esc(JSON.stringify(firstList))+'" alt="'+esc(p.name||'Product')+'" loading="lazy" decoding="async">':'<span class="nita-card-placeholder"></span>')
+      +(second&&second!==first?'<img class="nita-card-secondary" src="'+esc(secondList[0]||canonical(second))+'" data-nita-candidates="'+esc(JSON.stringify(secondList))+'" alt="" loading="lazy" decoding="async">':'')
+      +'<button class="quick-view-btn" type="button" onclick="event.preventDefault();event.stopPropagation(); if(window.openQuickView)openQuickView(\''+esc(p.id||'')+'\')">QUICK VIEW</button></div><h3>'+esc(p.name||'Product')+'</h3>'+price+'</a>';
+  };
+  window.renderProducts=function(sel,list){var node=typeof sel==='string'?qs(sel):sel;if(!node)return; var arr=list||window.nitaCurrentShopProducts||allProducts(); node.innerHTML=(arr||[]).map(window.productCard).join('')||'<div class="nita-empty-products">No products found<br><small>Try changing the filters.</small></div>'; applyFallbacks(node)};
+  function renderHome(){
+    var tr=qs('#trendingMarquee'), na=qs('#newArrivalsMarquee'); if(!tr&&!na)return;
+    var ps=allProducts();
+    function sec(p){return String(p.homeSection||p.section||p.displaySection||p.home||'').toLowerCase().replace(/\s+/g,'-')}
+    function fill(node,arr){if(!node)return; var list=arr.length?arr:ps.slice(0,8); var loop=list.concat(list,list); node.innerHTML=loop.map(window.productCard).join('')||'<p class="muted">No products listed yet.</p>'; applyFallbacks(node)}
+    fill(tr,ps.filter(function(p){return sec(p)==='trending-now'||sec(p)==='trending'}));
+    fill(na,ps.filter(function(p){return sec(p)==='new-arrivals'||String(p.collection||'').toLowerCase()==='new arrivals'}));
+  }
+
+  window.productPage=function(){
+    var root=qs('#detail'); if(!root)return;
+    root.classList.add('nita-product-final-rendering');
+    var id=new URLSearchParams(location.search).get('id');
+    var ps=allProducts(), p=ps.find(function(x){return String(x.id)===String(id)})||ps[0];
+    if(!p){root.innerHTML='<p>Product not found.</p>';root.classList.add('nita-product-ready');return;}
+    var imgs=photoArray(p); if(!imgs.length&&(p.img||p.image))imgs=[p.img||p.image];
+    var current=0;
+    function render(){
+      imgs=unique(imgs.map(cleanFile)); var im=imgs[current]||imgs[0]||'', mainList=candidates(im);
+      var canBuy=statusOf(p)!=='Out of stock';
+      root.innerHTML='<div class="p-gallery nita-gallery-final"><button class="gallery-arrow gallery-prev" type="button" data-gprev aria-label="Previous photo">‹</button><div class="p-main-img"><img src="'+esc(mainList[0]||canonical(im))+'" data-nita-candidates="'+esc(JSON.stringify(mainList))+'" alt="'+esc(p.name||'Product')+'" loading="eager" decoding="async"></div><button class="gallery-arrow gallery-next" type="button" data-gnext aria-label="Next photo">›</button><div class="p-thumbs">'+imgs.map(function(x,i){var list=candidates(x);return '<button type="button" class="p-thumb '+(i===current?'active':'')+'" data-pthumb="'+i+'"><img src="'+esc(list[0]||canonical(x))+'" data-nita-candidates="'+esc(JSON.stringify(list))+'" alt=""></button>'}).join('')+'</div></div>'+
+      '<div class="p-info nita-product-info-final"><p class="muted">'+esc(p.category||'')+'</p><h1>'+esc(p.name||'Product')+'</h1><div class="product-price-stock-lock"><strong>'+money(priceOf(p))+'</strong>'+stockEl(p)+'</div><div class="product-size-row"><button class="size selected">ONE SIZE</button></div><div class="product-actions-lock"><button class="btn" '+(!canBuy?'disabled':'')+' onclick="addToCart(\''+esc(p.id||'')+'\',\'ONE SIZE\')">ADD TO CART</button><button class="btn light" '+(!canBuy?'disabled':'')+' onclick="addToCart(\''+esc(p.id||'')+'\',\'ONE SIZE\');location.href=\'checkout.html\'">BUY NOW</button></div><hr><h4>Product Details</h4><p>'+esc(p.desc||p.description||'')+'</p></div>';
+      applyFallbacks(root); root.classList.add('nita-product-ready');
+    }
+    render();
+    root.onclick=function(e){var t=e.target.closest('[data-pthumb]'); if(t){current=Number(t.dataset.pthumb)||0;render();return} if(e.target.closest('[data-gprev]')){current=(current-1+imgs.length)%imgs.length;render();return} if(e.target.closest('[data-gnext]')){current=(current+1)%imgs.length;render();return}};
+  };
+
+  // Admin preview: ONE preview grid only, no cache busting, no duplicate old preview blocks, fast reorder.
+  function adminTA(){return qs('#pPhotoPaths')||qs('textarea[name="photoPaths"]')||qs('textarea[name="photos"]')}
+  function adminRead(){var ta=adminTA();return unique(String(ta?ta.value:'').split(/\r?\n|,|\|/).map(cleanFile).filter(Boolean))}
+  function adminWrite(arr){var ta=adminTA(); if(ta)ta.value=unique(arr).map(cleanFile).join('\n'); window.pendingAdminPhotos=unique(arr).map(function(n){return '/assets/products/'+cleanFile(n)}); window.pendingPhotos=window.pendingAdminPhotos.slice();}
+  function adminBox(){var ta=adminTA(); if(!ta)return null; var box=qs('#nitaTrueAdminPreview'); if(!box){
+      // Hide old boxes, create a single reliable preview right below the file-name panel.
+      qsa('#photoPreview,#assetPreviewBox,#photoPreviewBox,#assetPhotoPreview,#pPhotoPreview,.asset-preview-grid,.photo-preview-grid,.admin-photo-preview-grid').forEach(function(b){if(b.id!=='nitaTrueAdminPreview')b.style.display='none'});
+      box=document.createElement('div'); box.id='nitaTrueAdminPreview'; box.className='asset-preview-grid nita-true-admin-preview';
+      var panel=ta.closest('.asset-photo-box,.form-section,section,div')||ta.parentNode; panel.insertAdjacentElement('afterend',box);
+    } return box;}
+  function adminRender(arr){var box=adminBox(); if(!box)return; box.innerHTML=unique(arr).map(function(name,i){var list=candidates(name);return '<div class="admin-thumb nita-true-preview-card"><img src="'+esc(list[0]||canonical(name))+'" data-nita-candidates="'+esc(JSON.stringify(list))+'" alt="Product photo '+(i+1)+'" loading="eager" decoding="async"><span>'+(i===0?'MAIN PHOTO':'PHOTO '+(i+1))+'</span><small>'+esc(cleanFile(name))+'</small><div class="photo-order-controls"><button type="button" data-true-left="'+i+'" '+(i===0?'disabled':'')+'>←</button><button type="button" data-true-right="'+i+'" '+(i===arr.length-1?'disabled':'')+'>→</button><button type="button" data-true-remove="'+i+'">×</button></div><em>PHOTO NOT FOUND</em></div>'}).join(''); applyFallbacks(box)}
+  window.previewAssetProductPhotos=function(){var arr=adminRead();adminWrite(arr);adminRender(arr)};
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('[data-true-left],[data-true-right],[data-true-remove],#previewPhotoPaths'); if(!b)return;
+    if(b.id==='previewPhotoPaths'){e.preventDefault();e.stopImmediatePropagation();window.previewAssetProductPhotos();return;}
+    e.preventDefault(); e.stopImmediatePropagation(); var arr=adminRead();
+    var idx=Number(b.getAttribute('data-true-left')||b.getAttribute('data-true-right')||b.getAttribute('data-true-remove')||0);
+    if(b.hasAttribute('data-true-left')&&idx>0){var a=arr[idx-1];arr[idx-1]=arr[idx];arr[idx]=a;}
+    if(b.hasAttribute('data-true-right')&&idx<arr.length-1){var c=arr[idx+1];arr[idx+1]=arr[idx];arr[idx]=c;}
+    if(b.hasAttribute('data-true-remove'))arr.splice(idx,1);
+    adminWrite(arr);adminRender(arr);
+  },true);
+
+  function boot(){applyFallbacks(document); if(qs('#detail'))window.productPage(); if(qs('#trendingMarquee')||qs('#newArrivalsMarquee'))renderHome(); if(qs('#products'))applyFallbacks(qs('#products'));}
+  document.addEventListener('DOMContentLoaded',function(){boot();[100,350,900,1800,3200].forEach(function(t){setTimeout(boot,t)})});
+  window.addEventListener('load',function(){boot();setTimeout(boot,700)});
+})();
+/* === END NITA TRUE FINAL === */
+
+/* === NITA FINAL REPAIR: IMAGE LOADER + NO-LAG PRODUCT/COLLECTION/ADMIN 20260616-1705 === */
+(function(){
+  'use strict';
+  var EXT=['jpg','jpeg','png','webp','JPG','JPEG','PNG','WEBP'];
+  function q(s,r){return (r||document).querySelector(s)}
+  function qa(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function clean(v){
+    var s=String(v||'');
+    try{s=s.normalize('NFKC')}catch(e){}
+    s=s.replace(/\u00a0/g,' ')
+      .replace(/[\u2010\u2011\u2012\u2013\u2014\u2212]/g,'-')
+      .replace(/[\u200B-\u200D\uFEFF]/g,'')
+      .replace(/^['"]+|['"]+$/g,'')
+      .trim();
+    if(/^data:image\//i.test(s)||/^https?:\/\//i.test(s))return s;
+    s=s.replace(/^https?:\/\/[^/]+/i,'')
+      .replace(/^\/+/, '')
+      .replace(/^\.\//,'')
+      .replace(/^public\//i,'')
+      .replace(/^assets\/products\//i,'')
+      .replace(/^assets\//i,'')
+      .replace(/^products\//i,'')
+      .replace(/^images\//i,'')
+      .replace(/\s*\.\s*/g,'.')
+      .replace(/\s*-\s*/g,'-')
+      .replace(/\s+/g,'');
+    return s;
+  }
+  function unique(a){var m={};return (a||[]).map(String).filter(function(x){x=x.trim();var k=x.toLowerCase();if(!x||m[k])return false;m[k]=1;return true})}
+  function variants(raw){
+    raw=clean(raw); if(!raw)return[]; if(/^data:image\//i.test(raw)||/^https?:\/\//i.test(raw))return[raw];
+    var out=[raw];
+    var m=raw.match(/^(.*)\.([a-z0-9]+)$/i), base=m?m[1]:raw;
+    EXT.forEach(function(e){out.push(base+'.'+e)});
+    // Also try encoded spaces and plain original, but never add cache query strings.
+    return unique(out);
+  }
+  function candidates(raw){
+    var name=clean(raw); if(!name)return[]; if(/^data:image\//i.test(name)||/^https?:\/\//i.test(name))return[name];
+    var prefixes=['/','./','','/assets/products/','assets/products/','./assets/products/','/assets/','assets/','./assets/','/products/','products/','./products/','/images/','images/','./images/'];
+    var out=[]; variants(name).forEach(function(n){prefixes.forEach(function(p){out.push(p+n)})});
+    return unique(out);
+  }
+  function imgHTML(raw,cls,alt,eager){
+    var list=candidates(raw), src=list[0]||'';
+    return '<img class="'+esc(cls||'')+' nita-safe-img" data-nita-src="'+esc(src)+'" data-nita-list="'+esc(JSON.stringify(list))+'" alt="'+esc(alt||'')+'" '+(eager?'loading="eager"':'loading="lazy"')+' decoding="async">';
+  }
+  function activateImages(root){
+    qa('img.nita-safe-img',root||document).forEach(function(img){
+      if(img.dataset.nitaSafeReady==='1')return;
+      img.dataset.nitaSafeReady='1';
+      img.addEventListener('error',function(){
+        var list=[]; try{list=JSON.parse(img.getAttribute('data-nita-list')||'[]')}catch(e){}
+        var i=Number(img.dataset.nitaIndex||0)+1; img.dataset.nitaIndex=String(i);
+        if(list[i]){ img.src=list[i]; }
+        else { img.classList.add('nita-img-missing'); }
+      });
+      var src=img.getAttribute('data-nita-src');
+      if(src) img.src=src;
+    });
+  }
+  function allProducts(){try{return (typeof getProducts==='function'?getProducts():window.products||[]).filter(Boolean)}catch(e){return[]}}
+  function photos(p){
+    p=p||{}; var arr=[];
+    ['photos','images','gallery','photoOrder','photoPaths','productPhotos','productImages'].forEach(function(k){
+      var v=p[k]; if(!v)return; if(Array.isArray(v))arr=arr.concat(v); else if(typeof v==='string')arr=arr.concat(v.split(/\r?\n|,|\|/));
+    });
+    if(p.img)arr.push(p.img); if(p.image)arr.push(p.image);
+    return unique(arr.map(clean).filter(function(x){return x&&!/^linear-gradient|^radial-gradient/i.test(x)}));
+  }
+  function money(v){var n=Number(v||0); return '$'+n.toFixed(2)}
+  function price(p){return Number(p&&p.salePrice? p.salePrice : p&&p.price? p.price : 0)}
+  function status(p){var s=String((p&&p.status)||'In stock').toLowerCase(); if(s.indexOf('out')>-1)return'Out of stock'; if(s.indexOf('coming')>-1)return'Coming soon'; return'In stock'}
+  function stock(p){var t=status(p); return '<span class="product-stock '+(t==='In stock'?'in':t==='Out of stock'?'out':'soon')+'"><i></i>'+esc(t)+'</span>'}
+  function card(p){
+    p=p||{}; var ph=photos(p), first=ph[0]||'', second=ph[1]||'';
+    return '<a class="product nita-final-card" href="product.html?id='+encodeURIComponent(p.id||'')+'"><div class="product-img nita-card-imagebox">'
+      +(first?imgHTML(first,'nita-card-primary',p.name||'Product',false):'<span class="nita-card-placeholder"></span>')
+      +(second?imgHTML(second,'nita-card-secondary','',false):'')
+      +'<button class="quick-view-btn" type="button" onclick="event.preventDefault();event.stopPropagation(); if(window.openQuickView)openQuickView(\''+esc(p.id||'')+'\')">QUICK VIEW</button></div><h3>'+esc(p.name||'Product')+'</h3><p class="product-price-row"><span>'+money(price(p))+'</span>'+stock(p)+'</p></a>';
+  }
+  window.productCard=card;
+  window.renderProducts=function(sel,list){var node=typeof sel==='string'?q(sel):sel;if(!node)return; var arr=list||window.nitaCurrentShopProducts||allProducts(); node.innerHTML=(arr||[]).map(card).join('')||'<div class="nita-empty-products">No products found<br><small>Try changing the filters.</small></div>'; activateImages(node);};
+
+  function sectionOf(p){return String(p.homeSection||p.section||p.displaySection||p.home||'').toLowerCase().replace(/\s+/g,'-')}
+  function renderHome(){
+    var ps=allProducts();
+    function fill(id,arr){var node=q(id); if(!node)return; var list=arr.length?arr:ps.slice(0,8); node.innerHTML=list.concat(list).map(card).join('')||'<p class="muted">No products listed yet.</p>'; activateImages(node)}
+    fill('#trendingMarquee',ps.filter(function(p){var s=sectionOf(p);return s==='trending-now'||s==='trending'}));
+    fill('#newArrivalsMarquee',ps.filter(function(p){return sectionOf(p)==='new-arrivals'||String(p.collection||'').toLowerCase()==='new arrivals'}));
+  }
+  function collKey(v){return String(v||'').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,' ').trim()}
+  function renderCollections(){
+    if(!/collections\.html/i.test(location.pathname)&&!/Collections/i.test(document.title||''))return;
+    var page=q('main .container')||q('main')||q('.container'); if(!page)return;
+    var ps=allProducts();
+    var metas=[['New Arrivals','Freshly added pieces'],['Everyday Edit','Clean everyday wardrobe'],['Summer Pieces','Light seasonal styling']];
+    function ccard(m){
+      var title=m[0], key=collKey(title); var items=ps.filter(function(p){return collKey(p.collection)===key});
+      var imgs=items.map(function(p){return photos(p)[0]}).filter(Boolean).slice(0,4);
+      var visual=imgs.length===0?'<div class="collection-empty">No products yet</div>':(imgs.length===1?'<div class="collection-one">'+imgHTML(imgs[0],'',title,true)+'</div>':'<div class="collection-collage nita-collage-'+imgs.length+'">'+imgs.map(function(im){return '<div>'+imgHTML(im,'',title,true)+'</div>'}).join('')+'</div>');
+      return '<a class="collection-card nita-clean-collection-card" href="shop.html?collection='+encodeURIComponent(title)+'"><div class="collection-visual">'+visual+'<span>'+esc(title)+'</span></div><div class="collection-meta"><h3>'+esc(title)+'</h3><b>'+items.length+' '+(items.length===1?'piece':'pieces')+' →</b></div><p>'+esc(m[1])+'</p></a>';
+    }
+    page.innerHTML='<section class="nita-exact-collections-page"><h1>Collections</h1><p class="muted">Explore selected edits created for easy styling.</p><div class="nita-exact-collections-grid">'+metas.map(ccard).join('')+'</div></section>';
+    activateImages(page);
+  }
+
+  window.productPage=function(){
+    var root=q('#detail'); if(!root)return;
+    var id=new URLSearchParams(location.search).get('id'); var ps=allProducts(); var p=ps.find(function(x){return String(x.id)===String(id)})||ps[0];
+    if(!p){root.innerHTML='<p>Product not found.</p>';return;}
+    var ph=photos(p); if(!ph.length){ph=[p.img||p.image||''].filter(Boolean)}; var current=0;
+    function render(){
+      current=Math.max(0,Math.min(current,ph.length-1)); var canBuy=status(p)!=='Out of stock';
+      root.innerHTML='<div class="p-gallery nita-gallery-final"><button class="gallery-arrow gallery-prev" type="button" data-gprev aria-label="Previous photo"><span></span></button><div class="p-main-img">'+imgHTML(ph[current]||ph[0]||'','',p.name||'Product',true)+'</div><button class="gallery-arrow gallery-next" type="button" data-gnext aria-label="Next photo"><span></span></button><div class="p-thumbs">'+ph.map(function(im,i){return '<button class="p-thumb '+(i===current?'active':'')+'" type="button" data-pthumb="'+i+'">'+imgHTML(im,'','',true)+'</button>'}).join('')+'</div></div><div class="p-info nita-product-info-final"><p class="muted">'+esc(p.category||'')+'</p><h1>'+esc(p.name||'Product')+'</h1><div class="product-price-stock-lock"><strong>'+money(price(p))+'</strong>'+stock(p)+'</div><div class="product-size-row"><button class="size selected">ONE SIZE</button></div><div class="product-actions-lock"><button class="btn" '+(!canBuy?'disabled':'')+' onclick="addToCart(\''+esc(p.id||'')+'\',\'ONE SIZE\')">ADD TO CART</button><button class="btn light" '+(!canBuy?'disabled':'')+' onclick="addToCart(\''+esc(p.id||'')+'\',\'ONE SIZE\');location.href=\'checkout.html\'">BUY NOW</button></div><hr><h4>Product Details</h4><p>'+esc(p.desc||p.description||'')+'</p></div>';
+      activateImages(root);
+    }
+    render();
+    root.onclick=function(e){var t=e.target.closest('[data-pthumb]');if(t){current=Number(t.dataset.pthumb)||0;render();return} if(e.target.closest('[data-gprev]')){current=(current-1+ph.length)%ph.length;render();return} if(e.target.closest('[data-gnext]')){current=(current+1)%ph.length;render();return}};
+  };
+
+  function adminTA(){return q('#pPhotoPaths')||q('textarea[name="photoPaths"]')||q('textarea[name="photos"]')}
+  function adminRead(){var ta=adminTA();return unique(String(ta?ta.value:'').split(/\r?\n|,|\|/).map(clean).filter(Boolean))}
+  function adminWrite(a){var ta=adminTA(); var arr=unique(a).map(clean); if(ta)ta.value=arr.join('\n'); window.pendingAdminPhotos=arr.map(function(n){return '/'+n}); window.pendingPhotos=window.pendingAdminPhotos.slice();}
+  function adminBox(){var ta=adminTA(); if(!ta)return null; var box=q('#nitaFinalOnePreview'); if(!box){qa('#nitaTrueAdminPreview,#assetPreviewBox,#photoPreviewBox,#photoPreview,#assetPhotoPreview,.asset-preview-grid,.photo-preview-grid,.admin-photo-preview-grid').forEach(function(x){x.style.display='none'}); box=document.createElement('div'); box.id='nitaFinalOnePreview'; box.className='asset-preview-grid nita-final-one-preview'; (ta.closest('.asset-photo-box,.form-section,section,div')||ta.parentNode).insertAdjacentElement('afterend',box)} return box}
+  function renderAdmin(arr){var box=adminBox(); if(!box)return; box.innerHTML=unique(arr).map(function(n,i){return '<div class="admin-thumb nita-final-preview-card">'+imgHTML(n,'','Product photo '+(i+1),true)+'<span>'+(i===0?'MAIN PHOTO':'PHOTO '+(i+1))+'</span><small>'+esc(clean(n))+'</small><div class="photo-order-controls"><button type="button" data-final-left="'+i+'" '+(i===0?'disabled':'')+'>←</button><button type="button" data-final-right="'+i+'" '+(i===arr.length-1?'disabled':'')+'>→</button><button type="button" data-final-remove="'+i+'">×</button></div></div>'}).join(''); activateImages(box)}
+  window.previewAssetProductPhotos=function(){var a=adminRead(); adminWrite(a); renderAdmin(a)};
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('[data-final-left],[data-final-right],[data-final-remove]'); if(!b)return;
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+    var arr=adminRead(); var i=Number(b.getAttribute('data-final-left')||b.getAttribute('data-final-right')||b.getAttribute('data-final-remove')||0);
+    if(b.hasAttribute('data-final-left')&&i>0){var x=arr[i-1];arr[i-1]=arr[i];arr[i]=x;}
+    if(b.hasAttribute('data-final-right')&&i<arr.length-1){var y=arr[i+1];arr[i+1]=arr[i];arr[i]=y;}
+    if(b.hasAttribute('data-final-remove'))arr.splice(i,1);
+    adminWrite(arr); renderAdmin(arr);
+  },true);
+  document.addEventListener('click',function(e){var btn=e.target.closest('#previewPhotoPaths,[onclick*="previewAssetProductPhotos"]'); if(btn){setTimeout(function(){window.previewAssetProductPhotos()},0)}},true);
+
+  function boot(){activateImages(document); if(q('#detail'))window.productPage(); if(q('#trendingMarquee')||q('#newArrivalsMarquee'))renderHome(); renderCollections(); if(q('#products')){try{window.renderProducts('#products',window.nitaCurrentShopProducts||allProducts())}catch(e){}}}
+  document.addEventListener('DOMContentLoaded',function(){boot();setTimeout(boot,250);setTimeout(boot,900)});
+  window.addEventListener('load',function(){boot();setTimeout(boot,500)});
+  window.addEventListener('nita-store-ready',function(){setTimeout(boot,100)});
+})();
+/* === END NITA FINAL REPAIR 20260616-1705 === */
