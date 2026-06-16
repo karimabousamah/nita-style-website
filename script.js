@@ -11778,3 +11778,127 @@ placeOrder=async function(){
   },true);
 })();
 /* === END NITA FINAL OVERRIDE === */
+
+/* === NITA FINAL REAL FIX: PRODUCT PRICE/STOCK ROW + ADMIN ASSET PREVIEW CACHE PATH 20260616-1510 === */
+(function(){
+  'use strict';
+  function qs(s,r){return (r||document).querySelector(s);} 
+  function qsa(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+  function isProduct(){return /product\.html/i.test(location.pathname)||!!qs('#detail .product-info,#detail .nita-product-info-fixed,.product-detail');}
+  function isStockText(t){t=String(t||'').toLowerCase();return /in stock|out of stock|coming soon/.test(t);}
+  function lockPriceStockFinal(){
+    if(!isProduct())return;
+    var detail=qs('#detail')||qs('.product-detail')||document;
+    var info=qs('.nita-product-info-fixed',detail)||qs('.product-info',detail)||detail;
+    if(!info)return;
+    var price=qs('.nita-price-stock-real-lock h2,.nita-price-stock-real-lock .price-line,.nita-price-stock-real-lock .price',info)||qs('.price-stock-line h2,.price-stock-line .price-line,.product-price-row h2,.product-price-row .price-line,h2,.price',info);
+    var stock=qs('.nita-price-stock-real-lock .stock-status',info)||qsa('.stock-status',info).filter(function(el){return isStockText(el.textContent);})[0];
+    if(!price||!stock)return;
+    var row=qs('.nita-price-stock-real-lock',info);
+    if(!row){
+      row=document.createElement('div');
+      row.className='nita-price-stock-real-lock price-stock-line';
+      var h1=qs('h1',info);
+      if(h1&&h1.parentNode) h1.parentNode.insertBefore(row,h1.nextSibling); else info.insertBefore(row,info.firstChild);
+    }
+    if(price.parentNode!==row)row.appendChild(price);
+    if(stock.parentNode!==row)row.appendChild(stock);
+    // Remove empty old price rows that can re-apply old spacing.
+    qsa('.price-stock-line',info).forEach(function(el){if(el!==row && !el.textContent.trim())el.remove();});
+    row.style.setProperty('display','inline-flex','important');
+    row.style.setProperty('align-items','center','important');
+    row.style.setProperty('justify-content','flex-start','important');
+    row.style.setProperty('gap','10px','important');
+    row.style.setProperty('width','auto','important');
+    row.style.setProperty('max-width','max-content','important');
+    row.style.setProperty('margin','0 0 14px 0','important');
+    row.style.setProperty('padding','0','important');
+    row.style.setProperty('line-height','1','important');
+    [price,stock].forEach(function(el){
+      el.style.setProperty('display','inline-flex','important');
+      el.style.setProperty('align-items','center','important');
+      el.style.setProperty('width','auto','important');
+      el.style.setProperty('max-width','max-content','important');
+      el.style.setProperty('margin','0','important');
+      el.style.setProperty('padding','0','important');
+      el.style.setProperty('line-height','1','important');
+      el.style.setProperty('position','static','important');
+      el.style.setProperty('transform','none','important');
+      el.style.setProperty('flex','0 0 auto','important');
+    });
+  }
+  function runLocks(){lockPriceStockFinal();}
+  document.addEventListener('DOMContentLoaded',function(){runLocks();[50,150,400,900,1600,2800].forEach(function(t){setTimeout(runLocks,t);});});
+  window.addEventListener('load',function(){runLocks();[250,800,1800].forEach(function(t){setTimeout(runLocks,t);});});
+  try{new MutationObserver(function(){runLocks();}).observe(document.documentElement,{childList:true,subtree:true,characterData:true});}catch(e){}
+
+  function esc(s){return String(s==null?'':s).replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});}
+  function byId(id){return document.getElementById(id);} 
+  function cleanName(raw){
+    var s=String(raw||'').trim().replace(/^['"]|['"]$/g,'');
+    s=s.replace(/[\u2010\u2011\u2012\u2013\u2014\u2212]/g,'-').replace(/[\u200B-\u200D\uFEFF]/g,'').replace(/\s+/g,'');
+    s=s.replace(/^https?:\/\/[^/]+/i,'').replace(/^\/+/, '').replace(/^\.\//,'');
+    s=s.replace(/^assets\/products\//i,'').replace(/^assets\//i,'');
+    return s;
+  }
+  function splitLines(v){return String(v||'').split(/\r?\n|,/).map(cleanName).filter(Boolean);}
+  function unique(arr){var seen={};return (arr||[]).filter(function(x){x=String(x||'').trim();var k=x.toLowerCase();if(!x||seen[k])return false;seen[k]=1;return true;});}
+  function nameVariants(n){
+    n=cleanName(n); var vars=[n];
+    // handle hyphen variants both ways, in case GitHub has a unicode dash file name.
+    vars.push(n.replace(/-/g,'\u2011')); vars.push(n.replace(/-/g,'\u2013')); vars.push(n.replace(/-/g,'\u2014'));
+    var m=n.match(/^(.*)\.(jpe?g|png|webp|avif)$/i); var base=m?m[1]:n;
+    ['jpg','jpeg','png','webp','JPG','JPEG','PNG','WEBP'].forEach(function(ext){vars.push(base+'.'+ext);});
+    return unique(vars);
+  }
+  function previewCandidates(raw,bust){
+    if(/^data:image\//i.test(raw)||/^https?:\/\//i.test(raw))return [raw];
+    var paths=[];
+    nameVariants(raw).forEach(function(n){
+      [
+        '/assets/products/','assets/products/','./assets/products/',
+        '/assets/','assets/','./assets/',
+        '/products/','products/','./products/',
+        '/images/','images/','./images/',
+        '/product-photos/','product-photos/','./product-photos/',
+        '/','./',''
+      ].forEach(function(prefix){paths.push(prefix+n);});
+    });
+    return unique(paths).map(function(u){return encodeURI(u)+(u.indexOf('?')>-1?'&':'?')+'preview='+bust;});
+  }
+  function textarea(){return byId('pPhotoPaths')||byId('pphotosText')||byId('pphotos')||qs('textarea[name="photos"]');}
+  function readNames(){var ta=textarea();return unique(splitLines(ta?ta.value:''));}
+  function writeNames(arr){var ta=textarea();if(ta)ta.value=unique(arr).map(cleanName).join('\n');window.pendingAdminPhotos=unique(arr).map(function(n){return '/assets/products/'+cleanName(n);});window.pendingPhotos=window.pendingAdminPhotos.slice();}
+  function attachFallbacks(box){
+    qsa('img[data-nita-preview-list]',box).forEach(function(img){
+      img.onerror=function(){
+        var list=[];try{list=JSON.parse(img.getAttribute('data-nita-preview-list')||'[]');}catch(e){}
+        var i=Number(img.getAttribute('data-nita-preview-index')||0)+1;
+        if(i<list.length){img.setAttribute('data-nita-preview-index',String(i));img.src=list[i];return;}
+        var card=img.closest('.nita-admin-preview-card'); if(card){card.classList.add('missing-asset');}
+      };
+    });
+  }
+  function renderPreview(arr){
+    var box=byId('photoPreview')||byId('assetPhotoPreview')||byId('pPhotoPreview'); if(!box)return;
+    var stamp=String(Date.now());
+    box.innerHTML=unique(arr).map(function(name,i){
+      var list=previewCandidates(name,stamp), first=list[0]||cleanName(name);
+      return '<div class="admin-thumb asset-path-thumb nita-admin-preview-card"><img src="'+esc(first)+'" data-nita-preview-index="0" data-nita-preview-list="'+esc(JSON.stringify(list))+'" loading="eager" decoding="async" alt="Product photo '+(i+1)+'"><span>PHOTO '+(i+1)+'</span><small>'+esc(cleanName(name))+'</small><div class="photo-order-controls"><button type="button" data-final-left="'+i+'" '+(i===0?'disabled':'')+'>←</button><button type="button" data-final-right="'+i+'" '+(i===arr.length-1?'disabled':'')+'>→</button><button type="button" data-final-remove="'+i+'">×</button></div><div class="nita-admin-missing-note">PHOTO NOT FOUND</div></div>';
+    }).join('');
+    attachFallbacks(box);
+  }
+  window.previewAssetProductPhotos=function(){var arr=readNames();writeNames(arr);renderPreview(arr);};
+  document.addEventListener('click',function(e){
+    var left=e.target.closest&&e.target.closest('[data-final-left]');
+    var right=e.target.closest&&e.target.closest('[data-final-right]');
+    var remove=e.target.closest&&e.target.closest('[data-final-remove]');
+    if(!left&&!right&&!remove)return;
+    var arr=readNames();
+    if(left){var i=Number(left.getAttribute('data-final-left')); if(i>0){var t=arr[i-1];arr[i-1]=arr[i];arr[i]=t;}}
+    if(right){var j=Number(right.getAttribute('data-final-right')); if(j<arr.length-1){var t2=arr[j+1];arr[j+1]=arr[j];arr[j]=t2;}}
+    if(remove){arr.splice(Number(remove.getAttribute('data-final-remove')),1);}
+    writeNames(arr); renderPreview(arr); e.preventDefault(); e.stopPropagation();
+  },true);
+})();
+/* === END NITA FINAL REAL FIX === */

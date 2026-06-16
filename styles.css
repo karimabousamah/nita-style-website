@@ -5443,3 +5443,70 @@ body.product-page .gallery-arrow.next{right:18px!important;left:auto!important;}
 .admin-thumb.missing-asset{border-color:#b00020!important;}
 .admin-thumb.missing-asset::after{content:'PHOTO NOT FOUND';display:block;color:#b00020;font-size:10px;font-weight:900;margin-top:4px;}
 /* === END NITA FINAL OVERRIDE === */
+
+/* === NITA FINAL REAL LOCK: PRICE/STOCK + ADMIN PREVIEW 20260616-1510 === */
+body.product-page #detail .nita-price-stock-real-lock,
+body.product-page .product-detail .nita-price-stock-real-lock{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:10px!important;
+  width:auto!important;
+  max-width:max-content!important;
+  min-width:0!important;
+  flex:0 0 auto!important;
+  margin:0 0 14px 0!important;
+  padding:0!important;
+  line-height:1!important;
+  position:relative!important;
+  transform:none!important;
+}
+body.product-page #detail .nita-price-stock-real-lock h2,
+body.product-page #detail .nita-price-stock-real-lock .price-line,
+body.product-page #detail .nita-price-stock-real-lock .price,
+body.product-page .product-detail .nita-price-stock-real-lock h2{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  max-width:max-content!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  line-height:1!important;
+  position:static!important;
+  transform:none!important;
+}
+body.product-page #detail .nita-price-stock-real-lock .stock-status,
+body.product-page #detail .nita-price-stock-real-lock .inline-stock,
+body.product-page .product-detail .nita-price-stock-real-lock .stock-status{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  max-width:max-content!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  position:static!important;
+  transform:none!important;
+  vertical-align:middle!important;
+}
+body.product-page #detail .nita-price-stock-real-lock .stock-dot,
+body.product-page .product-detail .nita-price-stock-real-lock .stock-dot{
+  width:10px!important;height:10px!important;min-width:10px!important;min-height:10px!important;flex:0 0 10px!important;margin:0 6px 0 0!important;border-radius:999px!important;display:inline-block!important;
+}
+body.product-page #detail .nita-product-info-fixed > .stock-status,
+body.product-page #detail .product-info > .stock-status,
+body.product-page #detail .nita-product-info-fixed > .inline-stock,
+body.product-page #detail .product-info > .inline-stock{
+  display:none!important;
+}
+.nita-admin-preview-card.missing-asset{border-color:#b00020!important;color:#b00020!important;}
+.nita-admin-preview-card .nita-admin-missing-note{font-size:10px!important;color:#b00020!important;font-weight:900!important;margin-top:4px!important;display:none;}
+.nita-admin-preview-card.missing-asset .nita-admin-missing-note{display:block!important;}
+/* === END NITA FINAL REAL LOCK === */
